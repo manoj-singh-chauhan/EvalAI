@@ -1,0 +1,66 @@
+import axios from "axios";
+import axiosClient from "./axiosClient";
+
+interface TypedQuestionPayload {
+  text: string;
+}
+
+export const QuestionAPI = {
+  submitTyped: async (data: TypedQuestionPayload) => {
+    const res = await axiosClient.post("/questions/submit-typed-job", data);
+    return res.data;
+  },
+
+  uploadPaper: async (file: File) => {
+    try {
+      const sigResponse = await axiosClient.get(
+        "/questions/get-upload-signature"
+      );
+
+      const { signature, timestamp, folder, apiKey, cloudName } =
+        sigResponse.data;
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("signature", signature);
+      formData.append("timestamp", timestamp);
+      formData.append("folder", folder);
+      formData.append("api_key", apiKey);
+
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`;
+
+      const cloudinaryResponse = await axios.post(uploadUrl, formData);
+
+      const { secure_url, format, resource_type } = cloudinaryResponse.data;
+
+      let mimeType = file.type;
+      if (resource_type === "raw" && format === "pdf") {
+        mimeType = "application/pdf";
+      }
+
+      const jobResponse = await axiosClient.post(
+        "/questions/submit-file-job",
+        {
+          fileUrl: secure_url,
+          mimeType: mimeType,
+        }
+      );
+
+      return jobResponse.data;
+    } catch (error: any) {
+      console.error("Direct upload failed:", error.message);
+      throw error;
+    }
+  },
+
+  getStatus: async (id: string | number) => {
+    const res = await axiosClient.get(`/questions/${id}`);
+    return res.data;
+  },
+
+
+  retryJob: async (id: string | number) => {
+    const res = await axiosClient.post(`/questions/${id}/retry`);
+    return res.data;
+  },
+};
