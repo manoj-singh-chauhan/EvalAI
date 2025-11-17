@@ -38,18 +38,21 @@ export const QuestionAPI = {
         mimeType = "application/pdf";
       }
 
-      const jobResponse = await axiosClient.post(
-        "/questions/submit-file-job",
-        {
-          fileUrl: secure_url,
-          mimeType: mimeType,
-        }
-      );
+      const jobResponse = await axiosClient.post("/questions/submit-file-job", {
+        fileUrl: secure_url,
+        mimeType: mimeType,
+      });
 
       return jobResponse.data;
-    } catch (error: any) {
-      console.error("Direct upload failed:", error.message);
-      throw error;
+    } catch (error: unknown) {
+      // catch (error: any) {
+      //   console.error("Direct upload failed:", error.message);
+      //   throw error;
+      // }
+      if (axios.isAxiosError(error)) {
+        console.error("Direct upload failed:", error.response?.data?.message);
+        throw error;
+      }
     }
   },
 
@@ -57,7 +60,6 @@ export const QuestionAPI = {
     const res = await axiosClient.get(`/questions/${id}`);
     return res.data;
   },
-
 
   retryJob: async (id: string | number) => {
     const res = await axiosClient.post(`/questions/${id}/retry`);

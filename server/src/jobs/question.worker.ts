@@ -2,6 +2,7 @@ import { Worker, Job } from "bullmq";
 import { redisConnection } from "../config/redis";
 import { QuestionService } from "../modules/question/question.service";
 import logger from "../config/logger";
+import { io } from "../server";
 
 const QUEUE_NAME = "question-creation";
 
@@ -10,15 +11,25 @@ export const questionWorker = new Worker(
   async (job: Job) => {
     const { type, recordId, data } = job.data;
 
+    io.emit(`job-status-${recordId}`, { message: "Processing started..." });
+
     try {
-      logger.info(`Processing job: type=${type}, recordId=${recordId}`);
+      const result = await QuestionService.processQuestionJob(
+        type,
+        recordId,
+        data
+      );
 
-      const result = await QuestionService.processQuestionJob(type, recordId, data);
+      // io.emit(`job-status-${recordId}`, {
+      //   message: "question pepar extracted successfully",
+      // });
 
-      logger.info(`Job ${recordId} completed with ${result?.questions?.length || 0} questions.`);
       return result;
     } catch (error: any) {
-      logger.error(`Job ${recordId} failed: ${error.message}`);
+      io.emit(`job-status-${recordId}`, {
+        message: "Worker failed: " + error.message,
+      });
+
       throw error;
     }
   },
@@ -29,9 +40,9 @@ export const questionWorker = new Worker(
 );
 
 questionWorker.on("completed", (job) => {
-  logger.info(`Finished job ${job.id} successfully.`);
+  logger.info(`job finished.`);
 });
 
 questionWorker.on("failed", (job, err) => {
-  logger.error(`Job ${job?.id} FAILED: ${err.message}`);
+  logger.error(`Job FAILED: ${err.message}`);
 });

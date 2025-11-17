@@ -4,7 +4,6 @@ import logger from "./logger";
 
 dotenv.config({ path: ".env.development" });
 
-
 const DB_NAME = process.env.DB_NAME as string;
 const DB_USER = process.env.DB_USER as string;
 const DB_PASS = process.env.DB_PASS as string;

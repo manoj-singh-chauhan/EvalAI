@@ -1,285 +1,104 @@
-// import { QuestionPaper } from "../question/question.model";
-// import AnswerSheet from "./answer.model";
-// import { GoogleGenerativeAI } from "@google/generative-ai";
-// import { extractTextFromFile } from "../../utils/textExtractor"; 
-// import { buildEvaluationPrompt } from "../../utils/aiPromptBuilder"; 
-// import { evaluationQueue } from "../../jobs/job.queues"; 
-// import { downloadFile } from "../../utils/fileDownloader"; 
-// import logger from "../../config/logger";
-
-// const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-// const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
-
-
-// interface FileJobData {
-//   fileUrl: string;
-//   mimeType: string;
-// }
-// type JobData = FileJobData | string; 
-
-// export class AnswerService {
-
-//   static async scheduleEvaluation(jobs: any[]) {
-    
-//     const bulkJobs = jobs.map((job) => ({
-//       name: `evaluate-${job.type}-paper-${job.paperId}`,
-//       data: job,
-//     }));
-
-    
-//     await evaluationQueue.addBulk(bulkJobs);
-//     logger.info(`Service: ${jobs.length} add on jobs queue`);
-//   }
-
-
-//   static async processEvaluation(
-//     paperId: number,
-//     type: "file" | "text",
-//     data: JobData
-//   ) {
-//     logger.info(
-//       `Service: Job processing shuru... (Type: ${type}, Paper: ${paperId})`
-//     );
-
-    
-//     const paper = await QuestionPaper.findByPk(paperId);
-//     if (!paper) {
-//       throw new Error(`Question Paper ${paperId} not found.`);
-//     }
-//     const questions = paper.questions; 
-//     const totalMarks = paper.totalMarks; 
-
-//     let extractedText = "";
-//     let fileUrl = null;
-
-    
-//     if (type === "file") {
-      
-//       const fileData = data as FileJobData;
-//       fileUrl = fileData.fileUrl; 
-//       logger.info(`Service: File job... ${fileUrl}`);
-
-     
-//       const fileBuffer = await downloadFile(fileUrl);
-
-     
-//       extractedText = await extractTextFromFile(fileBuffer, fileData.mimeType);
-//     } else if (type === "text") {
-      
-//       logger.info("Service: Typed text job... text seedha mil gaya.");
-//       extractedText = data as string;
-      
-//     }
-    
-
-    
-//     if (!extractedText || extractedText.trim().length === 0) {
-//       logger.warn(
-//         `Service: Job (Paper ${paperId}) se koi text extract nahi hua. 0 marks.`
-//       );
-      
-//       return await AnswerSheet.create({
-//         questionPaperId: paperId,
-//         fileUrl: fileUrl,
-//         extractedText: "",
-//         evaluationResult: { error: "No text extracted from answer sheet." },
-//         marksAwarded: 0,
-//       });
-//     }
-
-//     logger.info(
-//       `Service: AI ko grading ke liye bhej raha hai (Paper ${paperId})`
-//     );
-    
-//     const prompt = buildEvaluationPrompt(questions, extractedText);
-
-//     let gradedResult: { totalMarksAwarded: number; feedback: any[] };
-
-//     try {
-//       const aiRes = await model.generateContent(prompt);
-//       const cleanRes = aiRes.response.text().replace(/```json|```/g, "").trim();
-//       gradedResult = JSON.parse(cleanRes);
-//     } catch (aiError: any) {
-//       logger.error(`AI Grading Failed: ${aiError.message}`);
-//       return await AnswerSheet.create({
-//         questionPaperId: paperId,
-//         fileUrl: fileUrl,
-//         extractedText: extractedText,
-//         evaluationResult: {
-//           error: "AI grading failed.",
-//           details: aiError.message,
-//         },
-//         marksAwarded: 0,
-//       });
-//     }
-
-    
-//     logger.info(
-//       `Service: Job complete (Paper ${paperId}). Marks: ${gradedResult.totalMarksAwarded}`
-//     );
-
-//     return await AnswerSheet.create({
-//       questionPaperId: paperId,
-//       fileUrl: fileUrl,
-//       extractedText: extractedText,
-//       evaluationResult: gradedResult.feedback,
-//       marksAwarded: gradedResult.totalMarksAwarded,
-//     });
-//   }
-// }
-
-
-import { QuestionPaper } from "../question/question.model";
 import AnswerSheet from "./answer.model";
+import QuestionPaper from "../question/question.model";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { extractTextFromFile } from "../../utils/textExtractor"; 
-import { buildEvaluationPrompt } from "../../utils/aiPromptBuilder"; 
-import { evaluationQueue } from "../../jobs/job.queues"; 
-import { downloadFile } from "../../utils/fileDownloader"; 
+import { downloadFile } from "../../utils/fileDownloader";
+import { answerQueue } from "../../jobs/answer.queue";
 import logger from "../../config/logger";
+import { io } from "../../server";
+import { ANSWER_EVAL_PROMPT } from "../../utils/prompt";
 
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
 
-
-interface FileJobData {
-  fileUrl: string;
-  mimeType: string;
-}
-type JobData = FileJobData | string; 
-
 export class AnswerService {
-
-  static async scheduleEvaluation(jobs: any[]) {
-    
-    const bulkJobs = jobs.map((job) => ({
-      name: `evaluate-${job.type}-paper-${job.paperId}`,
-      data: job,
-    }));
-
-    
-    await evaluationQueue.addBulk(bulkJobs);
-    logger.info(`Service: ${jobs.length} add on jobs queue`);
+  static emitStatus(recordId: number, message: string) {
+    io.emit(`answer-status-${recordId}`, { message });
   }
 
+  
+  static async scheduleAnswerJob(job: {
+    recordId: number;
+    questionPaperId: number;
+    answerSheetFiles: { fileUrl: string; mimeType: string }[];
+  }) {
+    await answerQueue.add(`evaluate-answer`, job);
+    logger.info(`Answer job added for record ${job.recordId}`);
+  }
 
-  static async processEvaluation(
-    paperId: number,
-    type: "file" | "text",
-    data: JobData
+  
+  static async processAnswerJob(
+    recordId: number,
+    questionPaperId: number,
+    answerSheetFiles: { fileUrl: string; mimeType: string }[]
   ) {
-    logger.info(
-      `Service: Job processing shuru... (Type: ${type}, Paper: ${paperId})`
-    );
+    const record = await AnswerSheet.findByPk(recordId);
+    if (!record) return;
 
-    
-    const paper = await QuestionPaper.findByPk(paperId);
-    if (!paper) {
-      throw new Error(`Question Paper ${paperId} not found.`);
-    }
-    const questions = paper.questions; 
-    const totalMarks = paper.totalMarks; 
+    await record.update({ status: "processing", errorMessage: null });
+    this.emitStatus(recordId, "Processing answer sheet…");
 
-    let extractedText = "";
-    let fileUrl = null;
-
-    
-    if (type === "file") {
-      
-      const fileData = data as FileJobData;
-      fileUrl = fileData.fileUrl; 
-      logger.info(`Service: File job... ${fileUrl}`);
-
-      
-      const fileBuffer = await downloadFile(fileUrl);
-
-      
-      extractedText = await extractTextFromFile(fileBuffer, fileData.mimeType);
-    } else if (type === "text") {
-      
-      logger.info("Service: Typed text job... text seedha mil gaya.");
-      extractedText = data as string;
-    
-    }
-    
-
-    
-    if (!extractedText || extractedText.trim().length === 0) {
-      logger.warn(
-        `Service: Job (Paper ${paperId}) se koi text extract nahi hua. 0 marks.`
-      );
-      
-      return await AnswerSheet.create({
-        questionPaperId: paperId,
-        fileUrl: fileUrl,
-        extractedText: "",
-        evaluationResult: { error: "No text extracted from answer sheet." },
-        marksAwarded: 0,
-      });
-    }
-
-    logger.info(
-      ` AI ko  bhej rahe hai (Paper ${paperId})`
-    );
-    
-    const prompt = buildEvaluationPrompt(questions, extractedText);
-
-    let gradedResult: { totalMarksAwarded: number; feedback: any[] };
-
-    
     try {
-      const aiRes = await model.generateContent(prompt);
-      const cleanRes = aiRes.response.text().replace(/```json|```/g, "").trim();
+      const qp = await QuestionPaper.findByPk(questionPaperId);
+      if (!qp) throw new Error("Question paper not found.");
+
+      const questions = qp.questions;
+      if (!questions?.length) throw new Error("No questions found.");
+
+      this.emitStatus(recordId, "Downloading answer sheet pages…");
+
+      const pagesBase64 = [];
 
       
-      if (!cleanRes.startsWith("{") || !cleanRes.endsWith("}")) {
-        
-        throw new Error("AI did not return valid JSON. Response: " + cleanRes.substring(0, 100));
+      for (const file of answerSheetFiles) {
+        const buffer = await downloadFile(file.fileUrl);
+        pagesBase64.push(buffer.toString("base64"));
       }
-      
-      gradedResult = JSON.parse(cleanRes);
 
-    } catch (aiError: any) {
-      logger.error(`AI Grading Failed: ${aiError.message}`);
+      this.emitStatus(recordId, "Extracting text from answer sheets…");
 
-      
-      const errorMessage = aiError.message.toLowerCase();
-      
-      if (
-        errorMessage.includes("503") ||
-        errorMessage.includes("overloaded") ||
-        errorMessage.includes("service unavailable") ||
-        errorMessage.includes("500")
-      ) {
-        logger.warn("AI model overloaded. Throwing error to RETRY job...");
-        throw aiError;
-      }
- 
-      logger.error("Permanent AI error or invalid JSON. Saving error record to DB...");
-      return await AnswerSheet.create({
-        questionPaperId: paperId,
-        fileUrl: fileUrl,
-        extractedText: extractedText,
-        evaluationResult: {
-          error: "AI grading failed permanently.",
-          details: aiError.message,
+      const aiRes = await model.generateContent({
+        generationConfig: {
+          responseMimeType: "application/json",
         },
-        marksAwarded: 0,
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: ANSWER_EVAL_PROMPT },
+              { text: JSON.stringify({ questions, pagesBase64 }) },
+            ],
+          },
+        ],
       });
+
+      this.emitStatus(recordId, "AI evaluation completed.");
+
+      const parsed = JSON.parse(aiRes.response.text());
+
+      const { answers, totalScore, feedback } = parsed;
+      console.log(parsed);
+
+      this.emitStatus(recordId, "Saving evaluation results…");
+
+      await record.update({
+        answers,
+        totalScore,
+        feedback,
+        status: "completed",
+      });
+
+      this.emitStatus(recordId, "Completed successfully!");
+      return record;
+    } catch (err: any) {
+      logger.error(`Answer job failed: ${err.message}`);
+
+      await record.update({
+        status: "failed",
+        errorMessage: err.message,
+      });
+
+      this.emitStatus(recordId, "Failed: " + err.message);
+      return;
     }
-    
-
-    
-    logger.info(
-      `Service: Job complete (Paper ${paperId}). Marks: ${gradedResult.totalMarksAwarded}`
-    );
-
-    return await AnswerSheet.create({
-      questionPaperId: paperId,
-      fileUrl: fileUrl,
-      extractedText: extractedText,
-      evaluationResult: gradedResult.feedback,
-      marksAwarded: gradedResult.totalMarksAwarded,
-    });
   }
 }

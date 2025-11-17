@@ -4,16 +4,38 @@ import { sequelize } from "../../config/db";
 interface AnswerSheetAttributes {
   id: number;
   questionPaperId: number;
-  fileUrl: string | null;
-  extractedText: string;
-  evaluationResult: any | null;
-  marksAwarded: number;
+  answerSheetFiles: any | null; 
+  answers: any | null;
+  /*
+    [
+      {
+        questionNumber: 1,
+        questionText: "...",
+        studentAnswer: "... long text ...",
+        score: 4,
+        maxScore: 5,
+        feedback: "Good explanation, missing diagram."
+      }
+    ]
+  */
+
+  totalScore?: number | null;
+  feedback?: string | null;
+
+  status: "pending" | "processing" | "completed" | "failed";
+  errorMessage?: string | null;
 }
 
 interface AnswerSheetCreation
   extends Optional<
     AnswerSheetAttributes,
-    "id" | "fileUrl" | "evaluationResult" | "marksAwarded"
+    | "id"
+    | "answers"
+    | "answerSheetFiles"
+    | "totalScore"
+    | "feedback"
+    | "status"
+    | "errorMessage"
   > {}
 
 export class AnswerSheet
@@ -22,13 +44,15 @@ export class AnswerSheet
 {
   public id!: number;
   public questionPaperId!: number;
-  public fileUrl!: string | null;
-  public extractedText!: string;
-  public evaluationResult!: any | null;
-  public marksAwarded!: number;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  public answerSheetFiles!: any | null;
+  public answers!: any | null;
+
+  public totalScore!: number | null;
+  public feedback!: string | null;
+
+  public status!: "pending" | "processing" | "completed" | "failed";
+  public errorMessage!: string | null;
 }
 
 AnswerSheet.init(
@@ -38,30 +62,42 @@ AnswerSheet.init(
       autoIncrement: true,
       primaryKey: true,
     },
+
     questionPaperId: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: false,
-      references: {
-        model: "question_papers",
-        key: "id",
-      },
     },
-    fileUrl: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    extractedText: {
-      type: DataTypes.TEXT("long"),
-      allowNull: false,
-    },
-    evaluationResult: {
+
+    answerSheetFiles: {
       type: DataTypes.JSON,
       allowNull: true,
+      defaultValue: [],
     },
-    marksAwarded: {
+
+    answers: {
+      type: DataTypes.JSON,
+      allowNull: true,
+      defaultValue: [],
+    },
+
+    totalScore: {
       type: DataTypes.INTEGER,
-      allowNull: false,
       defaultValue: 0,
+    },
+
+    feedback: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+
+    status: {
+      type: DataTypes.ENUM("pending", "processing", "completed", "failed"),
+      defaultValue: "pending",
+    },
+
+    errorMessage: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
   },
   {
@@ -71,8 +107,5 @@ AnswerSheet.init(
     timestamps: true,
   }
 );
-
-// QuestionPaper.hasMany(AnswerSheet, { foreignKey: 'questionPaperId' });
-// AnswerSheet.belongsTo(QuestionPaper, { foreignKey: 'questionPaperId' });
 
 export default AnswerSheet;

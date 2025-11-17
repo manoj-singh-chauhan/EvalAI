@@ -3,6 +3,7 @@ import { QuestionService } from "./question.service";
 import logger from "../../config/logger";
 import { v2 as cloudinary } from "cloudinary";
 import QuestionPaper from "./question.model";
+import { typedQuestionSchema, fileJobSchema, retrySchema } from "./question.validation";
 
 export class QuestionController {
   static async getUploadSignature(req: Request, res: Response) {
@@ -27,21 +28,27 @@ export class QuestionController {
       logger.error(`Signature Error (Question): ${error.message}`);
       res.status(500).json({
         success: false,
+
+        
         message: "Could not get upload signature.",
       });
     }
   }
 
+
   static async submitFileJob(req: Request, res: Response) {
     try {
-      const { fileUrl, mimeType } = req.body;
-
-      if (!fileUrl || !mimeType) {
+      const parsed = fileJobSchema.safeParse(req.body);
+      if (!parsed.success) {
         return res.status(400).json({
           success: false,
-          message: "File URL or MimeType missing.",
+
+          
+          message: parsed.error.issues[0].message,
         });
       }
+
+      const { fileUrl, mimeType } = parsed.data;
 
       const record = await QuestionPaper.create({
         mode: "upload",
@@ -55,31 +62,38 @@ export class QuestionController {
         data: { fileUrl, mimeType },
       });
 
-      res.status(202).json({
+      return res.status(202).json({
         success: true,
         id: record.id,
-        message: "File accepted & queued for processing.",
+
+      
+        message:
+          "Your file has been uploaded successfully. We're analyzing it — this usually takes a few seconds.",
       });
     } catch (error: any) {
       logger.error(`Controller Error: ${error.message}`);
       res.status(500).json({
         success: false,
+
+        
         message: "File job submission failed.",
       });
     }
   }
 
-
   static async submitTypedJob(req: Request, res: Response) {
     try {
-      const { text } = req.body;
-
-      if (!text || text.trim().length < 10) {
+      const parsed = typedQuestionSchema.safeParse(req.body);
+      if (!parsed.success) {
         return res.status(400).json({
           success: false,
-          message: "Question text is too short.",
+
+          
+          message: parsed.error.issues[0].message,
         });
       }
+
+      const { text } = parsed.data;
 
       const record = await QuestionPaper.create({
         mode: "typed",
@@ -93,20 +107,23 @@ export class QuestionController {
         data: text,
       });
 
-      res.status(202).json({
+      return res.status(202).json({
         success: true,
         id: record.id,
-        message: "Typed question accepted for processing.",
+
+        
+        message: "Thanks! We're analyzing your question now. This won't take long.",
       });
     } catch (error: any) {
       logger.error(`Controller Error: ${error.message}`);
       res.status(500).json({
         success: false,
+
+        
         message: "Typed submission failed.",
       });
     }
   }
-
 
   static async getStatus(req: Request, res: Response) {
     try {
@@ -117,6 +134,8 @@ export class QuestionController {
       if (!record) {
         return res.status(404).json({
           success: false,
+
+          
           message: "Record not found.",
         });
       }
@@ -129,21 +148,34 @@ export class QuestionController {
       logger.error(`Status Error: ${error.message}`);
       res.status(500).json({
         success: false,
+
+        
         message: "Failed to fetch status.",
       });
     }
   }
 
-
   static async retryJob(req: Request, res: Response) {
     try {
-      const { id } = req.params;
+      const parsed = retrySchema.safeParse(req.params);
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+
+          
+          message: parsed.error.issues[0].message,
+        });
+      }
+
+      const { id } = parsed.data;
 
       const record = await QuestionPaper.findByPk(id);
 
       if (!record) {
         return res.status(404).json({
           success: false,
+
+          
           message: "Record not found.",
         });
       }
@@ -151,34 +183,42 @@ export class QuestionController {
       if (record.status !== "failed") {
         return res.status(400).json({
           success: false,
+
+          
           message: "Only failed jobs can be retried.",
         });
       }
 
-      
       await record.update({
         status: "pending",
         errorMessage: null,
       });
 
-      
+
       await QuestionService.scheduleQuestionJob({
         type: record.mode === "upload" ? "file" : "text",
         recordId: record.id,
         data:
           record.mode === "upload"
-            ? { fileUrl: record.fileUrl, mimeType: "application/pdf" }
-            : record.rawText,
+            ? {
+                fileUrl: record.fileUrl || "",
+                mimeType: "application/pdf",
+              }
+            : record.rawText || "",
       });
 
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
-        message: "Job retry started.",
+
+        
+        message: "Retrying… we’ll take another look at your job.",
       });
     } catch (error: any) {
       logger.error(`Retry Error: ${error.message}`);
       res.status(500).json({
         success: false,
+
+        
         message: "Failed to retry job.",
       });
     }

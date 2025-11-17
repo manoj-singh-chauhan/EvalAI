@@ -3,11 +3,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { downloadFile } from "../../utils/fileDownloader";
 import { questionQueue } from "../../jobs/question.queue";
 import logger from "../../config/logger";
+import { io } from "../../server";
+import { QUESTION_EXTRACTION_PROMPT } from "../../utils/prompt";
 
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
 const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
-// const model = ai.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
 
 interface FileJobData {
   fileUrl: string;
@@ -17,14 +17,51 @@ interface FileJobData {
 type JobData = FileJobData | string;
 
 export class QuestionService {
+  static emitStatus(recordId: number, message: string) {
+    io.emit(`job-status-${recordId}`, { message });
+  }
+
   static async scheduleQuestionJob(job: {
     type: string;
     recordId: number;
     data: JobData;
   }) {
     await questionQueue.add(`create-question-${job.type}`, job);
-    logger.info(`Job type '${job.type}' added with recordId ${job.recordId}`);
+    logger.info(`Job added: ${job.type}, recordId ${job.recordId}`);
   }
+
+  // static normalizeQuestions(questions: any[]) {
+  //   return questions.map((q) => {
+  //     const marks = typeof q.marks === "number" ? q.marks : null;
+  //     return {
+  //       ...q,
+  //       marks,
+  //       flagged: marks === null,
+  //     };
+  //   });
+  // }
+
+
+  static normalizeQuestions(questions: any[]) {
+  return questions.map((q) => {
+    const marks = typeof q.marks === "number" ? q.marks : null;
+
+    if (marks === null) {
+      return {
+        ...q,
+        marks: null,
+        flagged: true,   // only when missing
+      };
+    }
+
+    // marks present → flagged field REMOVE
+    return {
+      ...q,
+      marks,
+    };
+  });
+}
+
 
   static async processQuestionJob(
     type: "file" | "text",
@@ -32,18 +69,14 @@ export class QuestionService {
     data: JobData
   ) {
     const record = await QuestionPaper.findByPk(recordId);
-    if (!record) {
-      logger.error("Record not found for processing");
-      return;
-    }
+    if (!record) return;
 
     await record.update({ status: "processing", errorMessage: null });
+    this.emitStatus(recordId, "Processing started...");
 
     try {
       let parsedData: { questions: any[]; totalMarks: number };
-      let fileUrl: string | null = null;
 
-      
       const jsonConfig = {
         generationConfig: {
           responseMimeType: "application/json",
@@ -51,15 +84,15 @@ export class QuestionService {
       };
 
       if (type === "file") {
-        const fileData = data as FileJobData;
+        const { fileUrl, mimeType } = data as FileJobData;
 
-        fileUrl = fileData.fileUrl;
-        logger.info(`Downloading file ${fileUrl}`);
+        this.emitStatus(recordId, "Downloading file");
+        const buffer = await downloadFile(fileUrl);
+        this.emitStatus(recordId, "Download complete.");
 
-        const fileBuffer = await downloadFile(fileUrl);
-        const base64File = fileBuffer.toString("base64");
+        const base64 = buffer.toString("base64");
 
-        logger.info("Sending PDF directly to Gemini (in JSON mode)...");
+        this.emitStatus(recordId, "Sending file to AI for extract user question pepar...");
 
         const aiRes = await model.generateContent({
           ...jsonConfig,
@@ -67,16 +100,11 @@ export class QuestionService {
             {
               role: "user",
               parts: [
-                {
-                  text:
-                    "Extract ALL questions and total marks from this question paper. " +
-                    "Return ONLY pure JSON:\n\n" +
-                    '{ "questions": [ {"question": "...", "marks": number} ], "totalMarks": number }',
-                },
+                { text: QUESTION_EXTRACTION_PROMPT },
                 {
                   inlineData: {
-                    mimeType: fileData.mimeType,
-                    data: base64File,
+                    mimeType,
+                    data: base64,
                   },
                 },
               ],
@@ -84,47 +112,45 @@ export class QuestionService {
           ],
         });
 
-        
+        this.emitStatus(recordId, "AI finished processing.");
         parsedData = JSON.parse(aiRes.response.text());
+        console.log(parsedData);
       } else {
-        const rawText = data as string;
+        const text = data as string;
 
-        logger.info("Sending typed question text to Gemini (in JSON mode)...");
+        this.emitStatus(recordId, "Sending text to AI...");
 
         const aiRes = await model.generateContent({
           ...jsonConfig,
           contents: [
             {
               role: "user",
-              parts: [
-                {
-                  text:
-                    "Extract questions and marks from the following text. " +
-                    "Return ONLY JSON:\n\n" +
-                    '{ "questions": [ {"question": "...", "marks": number} ], "totalMarks": number }\n\n' +
-                    rawText,
-                },
-              ],
+              parts: [{ text: QUESTION_EXTRACTION_PROMPT + "\n\n" + text }],
             },
           ],
         });
 
+        this.emitStatus(recordId, "Gemini finished processing.");
         parsedData = JSON.parse(aiRes.response.text());
+        console.log(parsedData);
       }
 
       if (!parsedData.questions || parsedData.questions.length === 0) {
-        throw new Error("AI returned no valid questions.");
+        throw new Error("AI returned zero questions.");
       }
 
-      logger.info(`${parsedData.questions.length} questions found.`);
+      const cleanedQuestions = this.normalizeQuestions(parsedData.questions);
+
+      this.emitStatus(recordId, "Saving extracted data...");
 
       await record.update({
-        questions: parsedData.questions,
+        questions: cleanedQuestions,
         totalMarks: parsedData.totalMarks || 0,
         status: "completed",
         errorMessage: null,
       });
 
+      this.emitStatus(recordId, "Completed successfully!");
       return record;
     } catch (err: any) {
       logger.error(`Job failed: ${err.message}`);
@@ -134,6 +160,7 @@ export class QuestionService {
         errorMessage: err.message,
       });
 
+      this.emitStatus(recordId, "Failed: " + err.message);
       return;
     }
   }

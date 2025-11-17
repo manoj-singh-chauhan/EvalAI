@@ -1,111 +1,156 @@
 import { Request, Response } from "express";
+import { submitAnswerSchema, retryAnswerSchema } from "./answer.validation";
+import AnswerSheet from "./answer.model";
+import { v2 as cloudinary } from "cloudinary";
 import { AnswerService } from "./answer.service";
 import logger from "../../config/logger";
 
-import { v2 as cloudinary } from "cloudinary";
-
 export class AnswerController {
-  static async getUploadSignature(req: Request, res: Response) {
+    static async getUploadSignature(req: Request, res: Response) {
+      try {
+        const timestamp = Math.round(Date.now() / 1000);
+        const folder = "answer-sheets";
+  
+        const signature = cloudinary.utils.api_sign_request(
+          { timestamp, folder },
+          process.env.CLOUDINARY_API_SECRET!
+        );
+  
+        res.status(200).json({
+          success: true,
+          timestamp,
+          signature,
+          folder,
+          apiKey: process.env.CLOUDINARY_API_KEY!,
+          cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+        });
+      } catch (error: any) {
+        logger.error(`Signature Error (Question): ${error.message}`);
+        res.status(500).json({
+          success: false,
+  
+          message: "Could not get upload signature.",
+        });
+      }
+    }
+
+  static async submitAnswerSheet(req: Request, res: Response) {
     try {
-      const timestamp = Math.round(new Date().getTime() / 1000);
-      const folder = "answer-sheets";
+      const parsed = submitAnswerSchema.safeParse(req.body);
+      console.log(req.body);
 
-      const signature = cloudinary.utils.api_sign_request(
-        {
-          timestamp: timestamp,
-          folder: folder,
-        },
-        process.env.CLOUDINARY_API_SECRET!
-      );
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+          message: parsed.error.issues[0].message,
+        });
+      }
 
-      res.status(200).json({
+      const { questionPaperId, answerSheetFiles } = parsed.data;
+      console.log(parsed.data);
+
+      const record = await AnswerSheet.create({
+        questionPaperId,
+        answerSheetFiles,
+        status: "pending",
+      });
+
+      
+      await AnswerService.scheduleAnswerJob({
+        recordId: record.id,
+        questionPaperId,
+        answerSheetFiles,
+      });
+
+      return res.status(202).json({
         success: true,
-        timestamp,
-        signature,
-        folder,
-        apiKey: process.env.CLOUDINARY_API_KEY!,
-        cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+        id: record.id,
+        message: "Answer sheet received. We're evaluating it…",
       });
     } catch (error: any) {
-      logger.error(`Signature Error: ${error.message}`);
-      res
-        .status(500)
-        .json({ success: false, message: "Could not get upload signature." });
+      logger.error(`AnswerController Submit Error: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to submit answer sheet.",
+      });
     }
   }
 
-  static async submitFileJobs(req: Request, res: Response) {
+  static async getStatus(req: Request, res: Response) {
     try {
-      const paperId = Number(req.params.paperId);
+      const { id } = req.params;
+      const record = await AnswerSheet.findByPk(id);
 
-      const { files } = req.body as {
-        files: { fileUrl: string; mimeType: string }[];
-      };
-
-      if (!files || files.length === 0) {
-        return res
-          .status(400)
-          .json({ success: false, message: "No file URLs provided." });
+      if (!record) {
+        return res.status(404).json({
+          success: false,
+          message: "AnswerSheet record not found.",
+        });
       }
 
-      logger.info(
-        `Controller: Received ${files.length} file URLs for paper ${paperId}. Creating jobs...`
-      );
-
-      const jobs = files.map((file) => ({
-        paperId: paperId,
-        type: "file",
-        data: {
-          fileUrl: file.fileUrl,
-          mimeType: file.mimeType,
-        },
-      }));
-
-      await AnswerService.scheduleEvaluation(jobs);
-
-      res.status(202).json({
+      return res.status(200).json({
         success: true,
-        message: `${jobs.length} files accepted for evaluation. You will be notified.`,
-        jobCount: jobs.length,
+        data: record,
       });
     } catch (error: any) {
-      logger.error(`Controller Error (File Jobs): ${error.message}`);
-      res
-        .status(500)
-        .json({ success: false, message: "File job submission failed." });
+      logger.error(`AnswerController Status Error: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retrieve status.",
+      });
     }
   }
 
-  static async submitTypedJob(req: Request, res: Response) {
+  static async retryJob(req: Request, res: Response) {
     try {
-      const paperId = Number(req.params.paperId);
-      const { text } = req.body;
+      const parsed = retryAnswerSchema.safeParse(req.params);
 
-      if (!text || text.trim().length < 10) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Answer text is too short." });
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+          message: parsed.error.issues[0].message,
+        });
+      }
+      
+      const { id } = parsed.data;
+
+      const record = await AnswerSheet.findByPk(id);
+
+      if (!record) {
+        return res.status(404).json({
+          success: false,
+          message: "AnswerSheet not found.",
+        });
       }
 
-      logger.info(`Controller: Received typed answer for paper ${paperId}.`);
+      if (record.status !== "failed") {
+        return res.status(400).json({
+          success: false,
+          message: "Only failed jobs can be retried.",
+        });
+      }
 
-      const job = {
-        paperId: paperId,
-        type: "text",
-        data: text,
-      };
+      await record.update({
+        status: "pending",
+        errorMessage: null,
+      });
 
-      await AnswerService.scheduleEvaluation([job]);
+      await AnswerService.scheduleAnswerJob({
+        recordId: record.id,
+        questionPaperId: record.questionPaperId,
+        answerSheetFiles: record.answerSheetFiles,
+      });
 
-      res.status(202).json({
+      return res.status(200).json({
         success: true,
-        message: "Typed answer accepted for evaluation. You will be notified.",
+        message: "Retry started. Please wait…",
       });
     } catch (error: any) {
-      logger.error(`Controller Error (Typed): ${error.message}`);
-      res
-        .status(500)
-        .json({ success: false, message: "Typed answer submission failed." });
+      logger.error(`AnswerController Retry Error: ${error.message}`);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to retry job.",
+      });
     }
   }
 }

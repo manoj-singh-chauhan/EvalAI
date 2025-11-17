@@ -1,20 +1,29 @@
 import { z } from "zod";
 
 export const typedQuestionSchema = z.object({
-  mode: z.literal("typed"),
   text: z
     .string()
-    .min(10, "Question paper text must contain at least 10 characters"),
+    .min(1, "Text is required.")
+    .min(10, "Question text must be at least 10 characters."),
 });
 
-export const uploadQuestionSchema = z.object({
-  body: z.object({
-    mode: z.literal("upload"),
-  }),
+
+export const fileJobSchema = z.object({
+  fileUrl: z
+    .string()
+    .min(1, "File URL is required.")
+    .url("Invalid file URL."),
+
+  mimeType: z
+    .string()
+    .min(1, "MimeType is required.")
+    .min(3, "Invalid mimeType."),
 });
 
-export const validateMode = (mode: string) => {
-  if (mode !== "typed" && mode !== "upload") {
-    throw new Error("Invalid mode! Only 'typed' or 'upload' are supported.");
-  }
-};
+
+export const retrySchema = z.object({
+  id: z
+    .string()
+    .min(1, "ID is required.")
+    .refine((val) => !isNaN(Number(val)), "Invalid ID format."),
+});

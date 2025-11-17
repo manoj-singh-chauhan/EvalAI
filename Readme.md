@@ -1,57 +1,25 @@
-1. Who wrote the play "Romeo and Juliet"? (10 Marks)
- 2. What is the chemical formula for water? (5 Marks)
- 3. Explain the difference between hardware and software. (10 Marks)
+ 1. Who wrote the play "Romeo and Juliet"? (10 Marks)
+ 2. What is the chemical formula for water? 
+ Explain the difference between hardware and software. (10 Marks)
  4. What is 15 × 6? (5 Marks)
  5. Define "photosynthesis" in your own words. (15 Marks)
  6. If you have a bag with 5 red balls and 10 blue balls, what is the probability of picking a red ball? (15
  Marks)
- 7. What are the primary colors? (20 Marks)
+ 7. What are the primary colors?
 
- // import Tesseract from "tesseract.js";
-// import pdfParse from "pdf-parse";
-// import logger from "../config/logger";
 
-// export const extractTextFromFile = async (
-//   fileBuffer: Buffer,
-//   mimeType: string
-// ): Promise<string> => {
-//   let extractedText = "";
-//   logger.info(`Extracting text of  ${mimeType}`);
+1.Who discovered the law of gravity? (5 Marks)
+2.Define the term ecosystem. (5 Marks)
+3.Convert 2500 meters into kilometers. (5 Marks)
+4.Explain any two uses of the Internet. (10 Marks)
+5.Option A: Explain the structure of an atom with a neat diagram. (10 Marks)
+OR
+Option B: Differentiate between elements, compounds, and mixtures with examples. (10 Marks)
+6.Diagram Question: A right-angled triangle ABC where angle C = 90 degrees, AB = 10 cm (hypotenuse), and AC = 6 cm. Find the length of BC. (10 Marks)
+7.What is the difference between RAM and ROM? (5 Marks)
+8. shopkeeper sells a product for ₹800 after giving 20% discount. What was the original price? (10 Marks)
+9.Option A: Technology improves quality of life. Justify with examples. (15 Marks)
+OR
+Option B: Write a short note on Cyber Security. (15 Marks)
 
-//   if (mimeType.includes("pdf")) {
-//     logger.info("Extracting text from PDF using pdf-parse...");
-//     try {
-//       const data = await pdfParse(fileBuffer);
-//       extractedText = data.text?.trim() || "";
-//     } catch (e: any) {
-//       logger.error(`pdf-parse failed: ${e.message}`);
-//       throw new Error("Failed to parse PDF file.");
-//     }
 
-//     if (!extractedText) {
-//       logger.warn(
-//         "PDF contained no text. This might be a scanned (image-only) PDF."
-//       );
-
-//       return "";
-//     }
-//   } else if (
-//     mimeType.includes("image") ||
-//     mimeType.includes("png") ||
-//     mimeType.includes("jpeg")
-//   ) {
-//     logger.info("Extracting text from image using Tesseract OCR...");
-//     try {
-//       const { data } = await Tesseract.recognize(fileBuffer, "eng");
-//       extractedText = data.text;
-//     } catch (e: any) {
-//       logger.error(`Tesseract OCR failed: ${e.message}`);
-//       throw new Error("Failed to run OCR on image.");
-//     }
-//   } else {
-//     logger.warn(`Unsupported file type: ${mimeType}`);
-//     throw new Error(`Unsupported file type: ${mimeType}`);
-//   }
-
-//   return extractedText.trim();
-// };

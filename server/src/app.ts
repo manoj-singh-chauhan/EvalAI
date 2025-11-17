@@ -6,10 +6,10 @@ import questionRoutes from "./modules/question/question.routes";
 import answerRoutes from "./modules/answer/answer.routes";
 import cors from "cors";
 
-
-import "./jobs/job.worker";
-import "./jobs/question.worker"; 
 import './utils/cloudinaryUpload';
+import "./jobs/answer.worker"
+import "./jobs/question.worker"; 
+
 
 dotenv.config({ path: ".env.development" });
 const app = express();

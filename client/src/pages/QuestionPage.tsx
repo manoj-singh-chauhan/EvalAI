@@ -1,16 +1,19 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuestionAPI } from "../api/question.api";
 import { FiUpload } from "react-icons/fi";
+import { io as socketIO } from "socket.io-client";
+import { SOCKET_URL } from "../config/env";
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const socket = socketIO(SOCKET_URL);
 
 const QuestionPage: React.FC = () => {
   const [mode, setMode] = useState<"typed" | "upload">("typed");
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
+
   const [loading, setLoading] = useState(false);
-  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  const [currentJobId, setCurrentJobId] = useState<number | null>(null);
 
   const [message, setMessage] = useState<{
     type: "success" | "error" | "info" | null;
@@ -23,41 +26,58 @@ const QuestionPage: React.FC = () => {
     setMessage({ type, text });
   };
 
-  const pollJobStatus = async (jobId: string) => {
-    try {
-      const res = await QuestionAPI.getStatus(jobId);
-      const job = res.data;
+  useEffect(() => {
+    if (!currentJobId) return;
 
-      if (job.status === "completed") {
+    const channel = `job-status-${currentJobId}`;
+
+    socket.on(channel, async (data) => {
+      const text = data.message;
+
+      console.log(data.message);
+      setMessage({ type: "info", text });
+
+      
+      if (
+        text.toLowerCase().includes("completed successfully") ||
+        text.toLowerCase().includes("question pepar extracted successfully")
+      ) {
+        setMessage({ type: "success", text });
         setLoading(false);
-        showMessage(
-          "success",
-          "Processing complete! Redirecting to results..."
-        );
-        setTimeout(() => navigate(`/answers/${job.id}`), 1500);
-      } else if (job.status === "failed") {
-        setLoading(false);
-        showMessage("error", `Failed: ${job.errorMessage || "Unknown error"}`);
-      } else if (job.status === "pending" || job.status === "processing") {
-        await sleep(3000);
-        pollJobStatus(jobId);
+
+        
+        const status = await QuestionAPI.getStatus(currentJobId);
+        if (status.data.status === "completed") {
+          setTimeout(() => {
+            navigate(`/answers/${currentJobId}`);
+          }, 2000);
+        }
       }
-    } catch (error: any) {
-      setLoading(false);
-      showMessage("error", "Failed to get job status.");
-    }
-  };
+
+      
+      if (text.toLowerCase().startsWith("failed")) {
+        setMessage({ type: "error", text });
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      socket.off(channel);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentJobId]);
 
   const handleSubmit = async () => {
     setLoading(true);
     setCurrentJobId(null);
     showMessage("info", "Submitting your request...");
 
-    if (mode === "typed" && text.trim() === "") {
+    if (mode === "typed" && !text.trim()) {
       showMessage("error", "Text area cannot be empty.");
       setLoading(false);
       return;
     }
+
     if (mode === "upload" && !file) {
       showMessage("error", "Please select a file to upload.");
       setLoading(false);
@@ -69,27 +89,23 @@ const QuestionPage: React.FC = () => {
 
       if (mode === "typed") {
         response = await QuestionAPI.submitTyped({ text });
-      } else if (mode === "upload" && file) {
-        response = await QuestionAPI.uploadPaper(file);
+      } else {
+        response = await QuestionAPI.uploadPaper(file as File);
       }
 
-      if (!response?.success) {
-        showMessage("error", response?.message || "Submission failed.");
+      if (!response.success) {
+        showMessage("error", response.message || "Submission failed.");
         setLoading(false);
         return;
       }
 
-      const paperId = response?.id;
-      setCurrentJobId(paperId);
-      showMessage("info", "Upload successful! Waiting for processing...");
+      const jobId = response.id;
+      setCurrentJobId(jobId);
 
-      pollJobStatus(paperId);
-    } catch (error: any) {
-      let errMsg = "Something went wrong. Please try again!";
-      if (error?.response?.data?.message) {
-        errMsg = error.response.data.message;
-      }
-      showMessage("error", errMsg);
+      showMessage("info", "Job queued. Waiting for updates...");
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      showMessage("error", err.response?.data?.message || "Something went wrong.");
       setLoading(false);
     }
   };
@@ -103,23 +119,22 @@ const QuestionPage: React.FC = () => {
     try {
       const response = await QuestionAPI.retryJob(currentJobId);
 
-      if (!response?.success) {
-        showMessage("error", response?.message || "Retry failed.");
+      if (!response.success) {
+        showMessage("error", response.message || "Retry failed.");
         setLoading(false);
         return;
       }
 
-      showMessage("info", "Retry successful! Waiting for processing...");
-
-      pollJobStatus(currentJobId);
-    } catch (error: any) {
-      let errMsg = "Retry failed. Please try again!";
-      if (error?.response?.data?.message) {
-        errMsg = error.response.data.message;
-      }
-      showMessage("error", errMsg);
-      setLoading(false);
+      showMessage("info", "Retry successful! Waiting for updates...");
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      showMessage(
+        "error",
+        err.response?.data?.message || "Retry failed. Please try again."
+      );
     }
+
+    setLoading(false);
   };
 
   const messageColors = {
@@ -155,7 +170,7 @@ const QuestionPage: React.FC = () => {
 
       {mode === "typed" && (
         <textarea
-          className="w-full border border-gray-300 p-4 rounded-lg min-h-[220px] text-base focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          className="w-full border border-gray-300 p-4 rounded-lg min-h-[200px]"
           placeholder="Enter your typed questions here..."
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -164,40 +179,31 @@ const QuestionPage: React.FC = () => {
       )}
 
       {mode === "upload" && (
-        <div className="mt-6">
-          <label
-            htmlFor="fileUpload"
-            className={`flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-xl transition-all duration-200 ${
-              loading
-                ? "opacity-50 cursor-not-allowed"
-                : "cursor-pointer hover:bg-blue-100"
-            } ${
-              file
-                ? "border-green-400 bg-green-50"
-                : "border-blue-300 bg-blue-50"
-            }`}
-          >
-            {file ? (
-              <span className="text-green-700 font-medium">{file.name}</span>
-            ) : (
-              <>
-                <FiUpload className="text-blue-500 text-5xl mb-3" />
-                <span className="text-gray-700 font-medium">
-                  Click to upload your question paper
-                </span>
-              </>
-            )}
+        <label
+          htmlFor="fileUpload"
+          className={`flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-xl cursor-pointer ${
+            file ? "border-green-400 bg-green-50" : "border-blue-300 bg-blue-50"
+          }`}
+        >
+          {file ? (
+            <span className="text-green-700 font-medium">{file.name}</span>
+          ) : (
+            <>
+              <FiUpload className="text-blue-500 text-5xl mb-3" />
+              <span className="text-gray-700">
+                Click to upload a question paper
+              </span>
+            </>
+          )}
 
-            <input
-              id="fileUpload"
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="hidden"
-              disabled={loading}
-            />
-          </label>
-        </div>
+          <input
+            id="fileUpload"
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="hidden"
+          />
+        </label>
       )}
 
       {message.type && (
@@ -211,21 +217,16 @@ const QuestionPage: React.FC = () => {
       )}
 
       <div className="mt-8 flex justify-end">
-        {message.type === "error" && currentJobId && !loading ? (
-          <button
-            onClick={handleRetry}
-            className="px-6 py-2 rounded-md font-medium text-white bg-yellow-500 hover:bg-yellow-600 transition-all duration-200"
-          >
+        {message.type === "error" && currentJobId ? (
+          <button className="btn-warning" onClick={handleRetry}>
             Retry
           </button>
         ) : (
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className={`px-6 py-2 rounded-md font-medium transition-all duration-200 ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
+            className={`px-6 py-2 rounded-md text-white ${
+              loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {loading ? "Processing..." : "Submit"}
