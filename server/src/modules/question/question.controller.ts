@@ -42,8 +42,6 @@ export class QuestionController {
       if (!parsed.success) {
         return res.status(400).json({
           success: false,
-
-          
           message: parsed.error.issues[0].message,
         });
       }
