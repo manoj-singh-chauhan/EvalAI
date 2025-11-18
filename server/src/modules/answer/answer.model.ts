@@ -4,7 +4,7 @@ import { sequelize } from "../../config/db";
 interface AnswerSheetAttributes {
   id: number;
   questionPaperId: number;
-  answerSheetFiles: any | null; 
+  answerSheetFiles: any | null;
   answers: any | null;
   /*
     [
@@ -105,6 +105,10 @@ AnswerSheet.init(
     modelName: "AnswerSheet",
     tableName: "answer_sheets",
     timestamps: true,
+    indexes: [
+      { fields: ["questionPaperId"] },
+      { fields: ["status"] },
+    ],
   }
 );
 

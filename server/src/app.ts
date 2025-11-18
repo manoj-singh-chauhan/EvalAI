@@ -4,6 +4,7 @@ import morgan from "morgan";
 import { connectDB } from "./config/db";
 import questionRoutes from "./modules/question/question.routes";
 import answerRoutes from "./modules/answer/answer.routes";
+import resultRoutes from "./modules/results/results.routes"
 import cors from "cors";
 
 import './utils/cloudinaryUpload';
@@ -27,5 +28,6 @@ app.use(morgan("dev"));
 
 app.use("/api/questions", questionRoutes);
 app.use("/api/answers", answerRoutes);
+app.use("/api/results", resultRoutes)
 
 export default app;

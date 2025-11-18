@@ -1,3 +1,4 @@
+
 import { Request, Response } from "express";
 import { QuestionService } from "./question.service";
 import logger from "../../config/logger";
@@ -28,13 +29,10 @@ export class QuestionController {
       logger.error(`Signature Error (Question): ${error.message}`);
       res.status(500).json({
         success: false,
-
-        
         message: "Could not get upload signature.",
       });
     }
   }
-
 
   static async submitFileJob(req: Request, res: Response) {
     try {
@@ -51,6 +49,7 @@ export class QuestionController {
       const record = await QuestionPaper.create({
         mode: "upload",
         fileUrl,
+        fileMimeType: mimeType,
         status: "pending",
       });
 
@@ -63,17 +62,12 @@ export class QuestionController {
       return res.status(202).json({
         success: true,
         id: record.id,
-
-      
-        message:
-          "Your file has been uploaded successfully. We're analyzing it — this usually takes a few seconds.",
+        message: "Your file has been uploaded successfully. We're analyzing it.",
       });
     } catch (error: any) {
       logger.error(`Controller Error: ${error.message}`);
       res.status(500).json({
         success: false,
-
-        
         message: "File job submission failed.",
       });
     }
@@ -85,8 +79,6 @@ export class QuestionController {
       if (!parsed.success) {
         return res.status(400).json({
           success: false,
-
-          
           message: parsed.error.issues[0].message,
         });
       }
@@ -108,16 +100,12 @@ export class QuestionController {
       return res.status(202).json({
         success: true,
         id: record.id,
-
-        
-        message: "Thanks! We're analyzing your question now. This won't take long.",
+        message: "We're analyzing your question now.",
       });
     } catch (error: any) {
       logger.error(`Controller Error: ${error.message}`);
       res.status(500).json({
         success: false,
-
-        
         message: "Typed submission failed.",
       });
     }
@@ -126,14 +114,11 @@ export class QuestionController {
   static async getStatus(req: Request, res: Response) {
     try {
       const { id } = req.params;
-
       const record = await QuestionPaper.findByPk(id);
 
       if (!record) {
         return res.status(404).json({
           success: false,
-
-          
           message: "Record not found.",
         });
       }
@@ -146,8 +131,6 @@ export class QuestionController {
       logger.error(`Status Error: ${error.message}`);
       res.status(500).json({
         success: false,
-
-        
         message: "Failed to fetch status.",
       });
     }
@@ -159,21 +142,16 @@ export class QuestionController {
       if (!parsed.success) {
         return res.status(400).json({
           success: false,
-
-          
           message: parsed.error.issues[0].message,
         });
       }
 
       const { id } = parsed.data;
-
       const record = await QuestionPaper.findByPk(id);
 
       if (!record) {
         return res.status(404).json({
           success: false,
-
-          
           message: "Record not found.",
         });
       }
@@ -181,8 +159,6 @@ export class QuestionController {
       if (record.status !== "failed") {
         return res.status(400).json({
           success: false,
-
-          
           message: "Only failed jobs can be retried.",
         });
       }
@@ -192,7 +168,6 @@ export class QuestionController {
         errorMessage: null,
       });
 
-
       await QuestionService.scheduleQuestionJob({
         type: record.mode === "upload" ? "file" : "text",
         recordId: record.id,
@@ -200,24 +175,63 @@ export class QuestionController {
           record.mode === "upload"
             ? {
                 fileUrl: record.fileUrl || "",
-                mimeType: "application/pdf",
+                mimeType: record.fileMimeType || "application/pdf",
               }
             : record.rawText || "",
       });
 
       return res.status(200).json({
         success: true,
-
-        
-        message: "Retrying… we’ll take another look at your job.",
+        message: "Retrying…",
       });
     } catch (error: any) {
       logger.error(`Retry Error: ${error.message}`);
       res.status(500).json({
         success: false,
-
-        
         message: "Failed to retry job.",
+      });
+    }
+  }
+
+ static async updateQuestions(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { questions } = req.body;
+
+      if (!Array.isArray(questions)) {
+        return res.status(400).json({
+          success: false,
+          message: "Questions must be an array.",
+        });
+      }
+
+      const record = await QuestionPaper.findByPk(id);
+
+      if (!record) {
+        return res.status(404).json({
+          success: false,
+          message: "Question paper not found.",
+        });
+      }
+      const cleaned = questions.map((q: any) => ({
+        ...q,
+        flagged: false,
+      }));
+
+      await record.update({
+        questions: cleaned,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Questions updated successfully.",
+        questions: cleaned,
+      });
+
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        message: err.message || "Failed to update questions.",
       });
     }
   }

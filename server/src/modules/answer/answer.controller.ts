@@ -6,38 +6,38 @@ import { AnswerService } from "./answer.service";
 import logger from "../../config/logger";
 
 export class AnswerController {
-    static async getUploadSignature(req: Request, res: Response) {
-      try {
-        const timestamp = Math.round(Date.now() / 1000);
-        const folder = "answer-sheets";
-  
-        const signature = cloudinary.utils.api_sign_request(
-          { timestamp, folder },
-          process.env.CLOUDINARY_API_SECRET!
-        );
-  
-        res.status(200).json({
-          success: true,
-          timestamp,
-          signature,
-          folder,
-          apiKey: process.env.CLOUDINARY_API_KEY!,
-          cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
-        });
-      } catch (error: any) {
-        logger.error(`Signature Error (Question): ${error.message}`);
-        res.status(500).json({
-          success: false,
-  
-          message: "Could not get upload signature.",
-        });
-      }
+  static async getUploadSignature(req: Request, res: Response) {
+    try {
+      const timestamp = Math.round(Date.now() / 1000);
+      const folder = "answer-sheets";
+
+      const signature = cloudinary.utils.api_sign_request(
+        { timestamp, folder },
+        process.env.CLOUDINARY_API_SECRET!
+      );
+
+      res.status(200).json({
+        success: true,
+        timestamp,
+        signature,
+        folder,
+        apiKey: process.env.CLOUDINARY_API_KEY!,
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+      });
+    } catch (error: any) {
+      logger.error(`Signature Error (Question): ${error.message}`);
+      res.status(500).json({
+        success: false,
+
+        message: "Could not get upload signature.",
+      });
     }
+  }
 
   static async submitAnswerSheet(req: Request, res: Response) {
     try {
       const parsed = submitAnswerSchema.safeParse(req.body);
-      console.log(req.body);
+      // console.log(req.body);
 
       if (!parsed.success) {
         return res.status(400).json({
@@ -55,7 +55,6 @@ export class AnswerController {
       //   status: "pending",
       // });
 
-      
       // await AnswerService.scheduleAnswerJob({
       //   recordId: record.id,
       //   questionPaperId,
@@ -75,7 +74,7 @@ export class AnswerController {
       for (const singleFile of answerSheetFiles) {
         const record = await AnswerSheet.create({
           questionPaperId,
-          answerSheetFiles: [singleFile], 
+          answerSheetFiles: [singleFile],
           status: "pending",
         });
 
@@ -93,7 +92,6 @@ export class AnswerController {
         ids: createdRecords,
         message: "Answer sheets received. Evaluating...",
       });
-
     } catch (error: any) {
       logger.error(`AnswerController Submit Error: ${error.message}`);
       return res.status(500).json({
@@ -138,7 +136,7 @@ export class AnswerController {
           message: parsed.error.issues[0].message,
         });
       }
-      
+
       const { id } = parsed.data;
 
       const record = await AnswerSheet.findByPk(id);
@@ -170,7 +168,7 @@ export class AnswerController {
 
       return res.status(200).json({
         success: true,
-        message: "Retry started. Please wait…",
+        message: "Retry. Please wait…",
       });
     } catch (error: any) {
       logger.error(`AnswerController Retry Error: ${error.message}`);

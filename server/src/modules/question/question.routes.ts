@@ -28,4 +28,10 @@ router.post(
   QuestionController.retryJob
 );
 
+router.post(
+  "/:id/update-questions",
+  QuestionController.updateQuestions
+);
+
+
 export default router;

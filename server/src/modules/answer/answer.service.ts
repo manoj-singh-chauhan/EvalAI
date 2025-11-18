@@ -15,17 +15,15 @@ export class AnswerService {
     io.emit(`answer-status-${recordId}`, { message });
   }
 
-  
   static async scheduleAnswerJob(job: {
     recordId: number;
     questionPaperId: number;
     answerSheetFiles: { fileUrl: string; mimeType: string }[];
   }) {
     await answerQueue.add(`evaluate-answer`, job);
-    logger.info(`Answer job added for record ${job.recordId}`);
+    // logger.info(`Answer job added for record ${job.recordId}`);
   }
 
-  
   static async processAnswerJob(
     recordId: number,
     questionPaperId: number,
@@ -44,17 +42,16 @@ export class AnswerService {
       const questions = qp.questions;
       if (!questions?.length) throw new Error("No questions found.");
 
-      this.emitStatus(recordId, "Downloading answer sheet pages…");
+      this.emitStatus(recordId, "Reading answer sheet pages…");
 
       const pagesBase64 = [];
 
-      
       for (const file of answerSheetFiles) {
         const buffer = await downloadFile(file.fileUrl);
         pagesBase64.push(buffer.toString("base64"));
       }
 
-      this.emitStatus(recordId, "Extracting text from answer sheets…");
+      this.emitStatus(recordId, "Answersheet and question pepar going to ai for evaluation ");
 
       const aiRes = await model.generateContent({
         generationConfig: {

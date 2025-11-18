@@ -23,3 +23,25 @@ OR
 Option B: Write a short note on Cyber Security. (15 Marks)
 
 
+1. Who wrote the play "Romeo and Juliet"? (2 marks)
+2. What is the chemical formula for water? (1 mark)
+3. Define photosynthesis. (5 marks)
+4. Explain Newton's Second Law of Motion. (5 marks)
+5. What is 25 × 14? (2 marks)
+
+
+1. (a) Explain mitosis. OR (b) Explain meiosis. (5 marks)
+2. (a) What is a conductor? OR (b) What is an insulator? (3 marks)
+3. Describe the water cycle. (5 marks)
+
+
+1. What is climate change?
+2. Define gravity.
+3. Explain the greenhouse effect.
+
+uuid for secure 
+id: {
+  type: DataTypes.UUID,
+  defaultValue: DataTypes.UUIDV4,
+  primaryKey: true,
+},

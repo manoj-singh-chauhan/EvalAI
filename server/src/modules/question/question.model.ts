@@ -5,6 +5,7 @@ interface QuestionPaperAttributes {
   id: number;
   mode: "typed" | "upload";
   fileUrl?: string | null;
+  fileMimeType?: string | null;
   rawText?: string | null;
 
   questions: any | null;
@@ -19,6 +20,7 @@ interface QuestionPaperCreation
     QuestionPaperAttributes,
     | "id"
     | "fileUrl"
+    | "fileMimeType"
     | "rawText"
     | "questions"
     | "totalMarks"
@@ -33,6 +35,7 @@ export class QuestionPaper
   public id!: number;
   public mode!: "typed" | "upload";
   public fileUrl?: string | null;
+  public fileMimeType?: string | null;
   public rawText?: string | null;
 
   public questions!: any | null;
@@ -56,6 +59,11 @@ QuestionPaper.init(
     },
 
     fileUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    fileMimeType: {
       type: DataTypes.STRING,
       allowNull: true,
     },
@@ -91,7 +99,11 @@ QuestionPaper.init(
     modelName: "QuestionPaper",
     tableName: "question_papers",
     timestamps: true,
+    indexes: [
+      { fields: ["status"] },
+    ],
   }
+
 );
 
 export default QuestionPaper;

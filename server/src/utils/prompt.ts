@@ -1,38 +1,88 @@
+// export const QUESTION_EXTRACTION_PROMPT = `
+// Extract all questions and marks from the question paper.
+
+// RULES:
+// 1. If a question contains an OR (example: "Q4: (a) ... OR (b) ..."), treat it as ONE question.
+// 2. Structure OR questions like:
+//    {
+//      "question": {
+//        "optionA": "...",
+//        "optionB": "..."
+//      },
+//      "marks": number
+//    }
+// 3. Normal questions should be:
+//    { "question": "...", "marks": number }
+
+// 4. For OR questions, use a SINGLE marks value (not separate for A and B).
+
+// 5. If images or diagrams appear, describe them in text inside the question.
+
+// 6. If marks are missing or unclear, set "marks": null.
+
+// 7. Return ONLY pure JSON with this structure:
+// {
+//   "questions": [...],
+//   "totalMarks": number
+// }
+
+// IMPORTANT:
+// - Do NOT include explanations.
+// - Do NOT add any text outside of JSON.
+// - Output must be valid JSON parseable by JSON.parse().
+
+// Now extract questions from the input below:
+
+// `;
+
+
 export const QUESTION_EXTRACTION_PROMPT = `
-Extract all questions and marks from the question paper.
+You are an OCR + question extraction engine.
 
-RULES:
-1. If a question contains an OR (example: "Q4: (a) ... OR (b) ..."), treat it as ONE question.
-2. Structure OR questions like:
-   {
-     "question": {
-       "optionA": "...",
-       "optionB": "..."
-     },
-     "marks": number
-   }
-3. Normal questions should be:
-   { "question": "...", "marks": number }
+Your job:
+1. Read the provided text OR image content.
+2. Extract questions exactly as they appear.
+3. Detect marks (e.g., "5 Marks", "(10 marks)", "[15M]", etc.).
+4. Never invent questions or modify meaning.
 
-4. For OR questions, use a SINGLE marks value (not separate for A and B).
+STRICT RULES:
 
-5. If images or diagrams appear, describe them in text inside the question.
+1. If the input is an image, perform OCR and extract the text exactly.
+2. Use ONLY the text that appears in the input. DO NOT guess or generate new questions.
+3. Clean small OCR noise, but keep the question meaning identical.
 
-6. If marks are missing or unclear, set "marks": null.
+4. OR-type questions (A/B) must be structured like:
+{
+  "question": {
+    "optionA": "...",
+    "optionB": "..."
+  },
+  "marks": number | null
+}
 
-7. Return ONLY pure JSON with this structure:
+5. Normal questions must be structured like:
+{
+  "question": "...",
+  "marks": number | null
+}
+
+6. Important marks rules:
+   - If a question ends with "(5 Marks)" or "5 Marks", extract 5.
+   - If marks are missing → set marks: null.
+   - If multiple marks found → pick the most relevant one.
+
+7. Output format (STRICT):
 {
   "questions": [...],
   "totalMarks": number
 }
 
-IMPORTANT:
-- Do NOT include explanations.
-- Do NOT add any text outside of JSON.
-- Output must be valid JSON parseable by JSON.parse().
+8. DO NOT add explanations.
+DO NOT add comments.
+DO NOT add text outside JSON.
+DO NOT hallucinate missing questions.
 
-Now extract questions from the input below:
-
+Now process the following input:
 `;
 
 

@@ -6,7 +6,7 @@ import { Server } from "socket.io";
 
 dotenv.config({ path: ".env.development" });
 
-const PORT = Number(process.env.PORT) || 5000;
+const PORT = Number(process.env.PORT);
 
 const httpServer = createServer(app);
 

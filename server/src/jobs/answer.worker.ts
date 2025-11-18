@@ -12,6 +12,7 @@ export const answerWorker = new Worker(
     const { recordId, questionPaperId, answerSheetFiles } = job.data;
 
     io.emit(`answer-status-${recordId}`, { message: "Worker picked your job…" });
+    // io.emit(`answer-status-`, { message: "Worker picked your job…" })
 
     try {
       return await AnswerService.processAnswerJob(
@@ -29,7 +30,8 @@ export const answerWorker = new Worker(
   },
   {
     connection: redisConnection,
-    concurrency: 5,
+    // concurrency: 5,
+    concurrency:1,
   }
 );
 

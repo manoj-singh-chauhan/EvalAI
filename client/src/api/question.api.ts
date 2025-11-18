@@ -65,4 +65,13 @@ export const QuestionAPI = {
     const res = await axiosClient.post(`/questions/${id}/retry`);
     return res.data;
   },
+
+  // updateQuestions: async (id: string, questions: any[]) => {
+  //   const res = await axiosClient.put(`/questions/${id}/update-questions`, {
+  //     questions,
+  //   });
+  //   return res.data;
+  // },
 };
+
+
