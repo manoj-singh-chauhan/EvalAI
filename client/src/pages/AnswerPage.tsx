@@ -1,27 +1,27 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import axiosClient from "../api/axiosClient";
 import { AnswerAPI } from "../api/answer.api";
-import { QuestionAPI } from "../api/question.api";
 import { FiUpload } from "react-icons/fi";
 
-type QuestionItem = {
+interface QuestionItem {
   text: string;
   marks: number | null;
-  flagged: boolean;
-};
+  flagged?: boolean;
+}
 
-type QuestionPaper = {
-  id: number;
+interface QuestionPaperData {
   questions: QuestionItem[];
-  totalMarks: number;
-};
+}
 
-type MessageState = {
-  type: "info" | "success" | "error" | null;
+type MessageType = "success" | "error" | "info" | null;
+
+interface MessageState {
+  type: MessageType;
   text: string;
-};
+}
 
-const AnswerPage = () => {
+export default function AnswerPage() {
   const { paperId } = useParams();
   const navigate = useNavigate();
 
@@ -33,19 +33,22 @@ const AnswerPage = () => {
     text: "",
   });
 
-  const [questionData, setQuestionData] = useState<QuestionPaper | null>(null);
+  const [questionData, setQuestionData] = useState<QuestionPaperData | null>(
+    null
+  );
 
-  const showMessage = (type: MessageState["type"], text: string) => {
+  const showMessage = (type: MessageType, text: string) => {
     setMessage({ type, text });
   };
+
 
   useEffect(() => {
     const loadQuestionPaper = async () => {
       if (!paperId) return;
 
       try {
-        const res = await QuestionAPI.getStatus(paperId);
-        setQuestionData(res.data as QuestionPaper);
+        const res = await axiosClient.get(`/questions/${paperId}`);
+        setQuestionData(res.data.data as QuestionPaperData);
       } catch {
         console.log("Failed to load question details");
       }
@@ -55,7 +58,7 @@ const AnswerPage = () => {
   }, [paperId]);
 
   const flaggedCount =
-    questionData?.questions?.filter((q) => q.flagged).length || 0;
+    questionData?.questions.filter((q) => q.flagged === true).length || 0;
 
   const handleSubmit = async () => {
     if (!paperId) {
@@ -64,7 +67,7 @@ const AnswerPage = () => {
     }
 
     if (flaggedCount > 0) {
-      showMessage("error", "Please fix missing marks before uploading answers.");
+      showMessage("error", "Fix missing marks before uploading answers.");
       return;
     }
 
@@ -89,54 +92,41 @@ const AnswerPage = () => {
       }
 
       navigate(`/results/${paperId}`);
-    } catch (error) {
+    } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      showMessage(
-        "error",
-        err.response?.data?.message || "Something went wrong."
-      );
+      showMessage("error", err.response?.data?.message || "Something went wrong");
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="p-10 bg-white rounded-2xl shadow-lg max-w-3xl mx-auto">
+    <div className="p-10 bg-white rounded-md shadow-md max-w-3xl mx-auto">
       <h2 className="text-3xl font-bold mb-6">Upload Answer Sheets</h2>
 
-      {/* {questionData && flaggedCount > 0 && (
-        <div className="p-4 mb-4 bg-yellow-100 border-l-4 border-yellow-600 rounded">
-          <p className="text-yellow-800 font-semibold">
-            ⚠ {flaggedCount} question(s) are missing marks.
-          </p>
+    
+      {questionData && (
+        <div className="p-4 mb-4 bg-grey-600 border-l-4 border-blue-300 rounded">
+          {flaggedCount > 0 ? (
+            <p className="text-yellow-800 font-semibold">
+              ⚠ {flaggedCount} questions missing marks.
+            </p>
+          ) : (
+            <p className="text-green-700 font-semibold">
+              {/* ✓ All questions have marks. */}
+            </p>
+          )}
 
           <button
             onClick={() => navigate(`/review-questions/${paperId}`)}
-            className="mt-3 px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            Fix Missing Marks
+            Review Questions
           </button>
         </div>
-      )} */}
+      )}
 
-      {questionData && (
-      <div className="mb-4">
-        {flaggedCount > 0 && (
-          <p className="p-3 mb-3 bg-yellow-100 text-yellow-800 border-l-4 border-yellow-600 rounded">
-            ⚠ {flaggedCount} questions are missing marks.
-          </p>
-        )}
-
-        <button
-          onClick={() => navigate(`/review-questions/${paperId}`)}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Review Questions
-        </button>
-      </div>
-    )}
-
-
+     
       <label
         htmlFor="answerUpload"
         className="block border-2 border-dashed p-8 rounded-xl cursor-pointer bg-blue-50 text-center"
@@ -164,6 +154,7 @@ const AnswerPage = () => {
         </ul>
       )}
 
+   
       {message.type && (
         <div
           className={`mt-6 p-4 rounded-lg border text-sm ${
@@ -178,19 +169,16 @@ const AnswerPage = () => {
         </div>
       )}
 
-      
-      {/* <div className="mt-6"> */}
+     
       <div className="mt-6 flex justify-end">
         <button
           onClick={handleSubmit}
           disabled={loading}
           className="px-6 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
         >
-          {loading ? "Processing…" : "Submit Answer Sheets"}
+          {loading ? "Processing…" : "Evaluate"}
         </button>
       </div>
     </div>
   );
-};
-
-export default AnswerPage;
+}

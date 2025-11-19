@@ -4,6 +4,13 @@ import axiosClient from "./axiosClient";
 interface TypedQuestionPayload {
   text: string;
 }
+export interface QuestionUpdateItem {
+  text: string;
+  marks: number | null;
+  flagged?: boolean;
+  number?: number;
+}
+
 
 export const QuestionAPI = {
   submitTyped: async (data: TypedQuestionPayload) => {
@@ -61,17 +68,28 @@ export const QuestionAPI = {
     return res.data;
   },
 
+  getQuestions: async (id: string | number) => {
+    const res = await axiosClient.get(`/questions/${id}`);
+    return res.data;
+  },
+
   retryJob: async (id: string | number) => {
     const res = await axiosClient.post(`/questions/${id}/retry`);
     return res.data;
   },
 
-  // updateQuestions: async (id: string, questions: any[]) => {
+  //   updateQuestions: async (id: string, questions: any[]) => {
   //   const res = await axiosClient.put(`/questions/${id}/update-questions`, {
   //     questions,
   //   });
   //   return res.data;
   // },
+  updateQuestions: async (id: string, questions: QuestionUpdateItem[]) => {
+    const res = await axiosClient.put(`/questions/${id}/update-questions`, {
+      questions,
+    });
+    return res.data;
+  },
 };
 
 

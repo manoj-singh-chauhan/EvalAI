@@ -18,52 +18,25 @@ export default function QuestionPage() {
     "idle" | "processing" | "failed" | "completed"
   >("idle");
 
-  const [message, setMessage] = useState<{ type: "success" | "error" | "info" | null; text: string }>({
+  const [message, setMessage] = useState<{
+    type: "success" | "error" | "info" | null;
+    text: string;
+  }>({
     type: null,
     text: "",
   });
 
   const navigate = useNavigate();
 
-  const showMessage = (type: "success" | "error" | "info", text: string) => {
+  const showMessage = (
+    type: "success" | "error" | "info",
+    text: string
+  ) => {
     setMessage({ type, text });
   };
 
-  // useEffect(() => {
-  //   if (!currentJobId) return;
 
-  //   const channel = `job-status-${currentJobId}`;
-
-  //   socket.off(channel);
-  //   socket.on(channel, async (data) => {
-  //     const msg = data.message;
-  //     setMessage({ type: "info", text: msg });
-
-  //     if (
-  //       msg.toLowerCase().includes("completed successfully") ||
-  //       msg.toLowerCase().includes("question pepar extracted successfully")
-  //     ) {
-  //       setMessage({ type: "success", text: msg });
-  //       setLoading(false);
-  //       setJobStatus("completed");
-
-  //       const status = await QuestionAPI.getStatus(currentJobId);
-  //       if (status.data.status === "completed") {
-  //         setTimeout(() => navigate(`/answers/${currentJobId}`), 2000);
-  //       }
-  //     }
-
-  //     if (msg.toLowerCase().startsWith("failed")) {
-  //       setMessage({ type: "error", text: msg });
-  //       setLoading(false);
-  //       setJobStatus("failed");
-  //     }
-  //   });
-
-  //   return () => socket.off(channel);
-  // }, [currentJobId, navigate]);
-
-    useEffect(() => {
+  useEffect(() => {
     if (!currentJobId) return;
 
     const channel = `job-status-${currentJobId}`;
@@ -71,6 +44,7 @@ export default function QuestionPage() {
     socket.off(channel);
     socket.on(channel, async (data) => {
       const msg = data.message;
+
       setMessage({ type: "info", text: msg });
 
       if (
@@ -79,16 +53,18 @@ export default function QuestionPage() {
       ) {
         setMessage({ type: "success", text: msg });
         setLoading(false);
+        setJobStatus("completed");
 
         const status = await QuestionAPI.getStatus(currentJobId);
         if (status.data.status === "completed") {
-          setTimeout(() => navigate(`/answers/${currentJobId}`), 2000);
+          navigate(`/answers/${currentJobId}`);
         }
       }
 
       if (msg.toLowerCase().startsWith("failed")) {
         setMessage({ type: "error", text: msg });
         setLoading(false);
+        setJobStatus("failed");
       }
     });
 
@@ -97,16 +73,6 @@ export default function QuestionPage() {
     };
   }, [currentJobId, navigate]);
 
-
-  useEffect(() => {
-    if (!message.type || message.type === "error") return;
-
-    const timeout = setTimeout(() => {
-      setMessage({ type: null, text: "" });
-    }, 3000);
-
-    return () => clearTimeout(timeout);
-  }, [message]);
 
   const handleSubmit = async () => {
     if (mode === "typed" && !text.trim()) {
@@ -141,7 +107,7 @@ export default function QuestionPage() {
 
       setCurrentJobId(response.id);
       setJobStatus("processing");
-      showMessage("info", "Job queued. Waiting for updates...");
+      showMessage("info", "Checking / extracting your question paper…");
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       showMessage("error", err.response?.data?.message || "Something went wrong.");
@@ -149,6 +115,7 @@ export default function QuestionPage() {
       setJobStatus("failed");
     }
   };
+
 
   const handleRetry = async () => {
     if (!currentJobId) return;
@@ -167,23 +134,29 @@ export default function QuestionPage() {
         return;
       }
 
-      showMessage("info", "Retry successful. Waiting for updates...");
-    } catch (error: unknown) {
+      showMessage("info", "Retry started. Waiting for updates…");
+    } 
+    // catch (error: any) {
+    //   showMessage("error", error.response?.data?.message || "Retry failed.");
+    //   setLoading(false);
+    //   setJobStatus("failed");
+    //   return;
+    catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       showMessage("error", err.response?.data?.message || "Retry failed.");
       setLoading(false);
       setJobStatus("failed");
       return;
     }
-
     setLoading(false);
   };
 
   const showSubmitButton = currentJobId === null;
-  const showRetryButton = jobStatus === "failed" && currentJobId !== null;
+  const showRetryButton =
+    jobStatus === "failed" && currentJobId !== null;
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-10 w-full max-w-3xl mx-auto">
+    <div className="bg-white rounded-md shadow-md border border-gray-200 p-10 w-full max-w-3xl mx-auto">
       <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">
         Create Question Paper
       </h2>
@@ -195,7 +168,9 @@ export default function QuestionPage() {
             onClick={() => setMode(m as "typed" | "upload")}
             disabled={loading}
             className={`px-6 py-2 rounded-md text-sm font-medium border transition-all ${
-              mode === m ? "bg-blue-600 text-white" : "bg-white border-gray-300"
+              mode === m
+                ? "bg-blue-600 text-white"
+                : "bg-white border-gray-300"
             }`}
           >
             {m === "typed" ? "Typed" : "Upload"}
@@ -205,12 +180,9 @@ export default function QuestionPage() {
 
       {mode === "typed" && (
         <textarea
-          className="w-full border border-gray-300 p-4 rounded-lg min-h-[200px]"
+          className="w-full border border-gray-300 p-4 rounded-md min-h-[250px]"
           placeholder={
-            "Paste or type the exam questions here.\n" +
-            "Example:\n" +
-            "1. Define networking. (5 Marks)\n" +
-            "2. Explain the OSI model. (10 Marks)"
+            "Paste or type the exam questions here.\nExample:\n1. Define networking. (5 Marks)\n2. Explain the OSI model. (10 Marks)"
           }
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -226,11 +198,15 @@ export default function QuestionPage() {
           }`}
         >
           {file ? (
-            <span className="text-green-700 font-medium">{file.name}</span>
+            <span className="text-green-700 font-medium">
+              {file.name}
+            </span>
           ) : (
             <>
               <FiUpload className="text-blue-500 text-5xl mb-3" />
-              <span className="text-gray-700">Click to upload a question paper</span>
+              <span className="text-gray-700">
+                Click to upload a question paper
+              </span>
             </>
           )}
 
@@ -254,12 +230,11 @@ export default function QuestionPage() {
               ? "bg-red-50 border-red-400 text-red-700"
               : "bg-blue-50 border-blue-400 text-blue-700"
           }`}
-          style={{ maxHeight: "150px", overflowY: "auto", whiteSpace: "pre-wrap" }}
+          style={{ maxHeight: "180px", overflowY: "auto", whiteSpace: "pre-wrap" }}
         >
           {message.text}
         </div>
       )}
-
       <div className="mt-8 flex justify-end">
         {showRetryButton ? (
           <button

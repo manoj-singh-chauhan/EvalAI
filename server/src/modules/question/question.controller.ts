@@ -194,45 +194,57 @@ export class QuestionController {
   }
 
  static async updateQuestions(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      const { questions } = req.body;
+  try {
+    const { id } = req.params;
+    const { questions } = req.body;
 
-      if (!Array.isArray(questions)) {
-        return res.status(400).json({
-          success: false,
-          message: "Questions must be an array.",
-        });
-      }
-
-      const record = await QuestionPaper.findByPk(id);
-
-      if (!record) {
-        return res.status(404).json({
-          success: false,
-          message: "Question paper not found.",
-        });
-      }
-      const cleaned = questions.map((q: any) => ({
-        ...q,
-        flagged: false,
-      }));
-
-      await record.update({
-        questions: cleaned,
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: "Questions updated successfully.",
-        questions: cleaned,
-      });
-
-    } catch (err: any) {
-      return res.status(500).json({
+    if (!Array.isArray(questions)) {
+      return res.status(400).json({
         success: false,
-        message: err.message || "Failed to update questions.",
+        message: "Questions must be an array.",
       });
     }
+
+    const record = await QuestionPaper.findByPk(id);
+    if (!record) {
+      return res.status(404).json({
+        success: false,
+        message: "Question paper not found.",
+      });
+    }
+
+    // Clean and normalize marks
+    const cleaned = questions.map((q) => ({
+      ...q,
+      marks: q.marks ? Number(q.marks) : null,
+      flagged: q.marks ? false : true,
+    }));
+
+    // ⬅⬅⬅ NEW PART — Recalculate total marks
+    const totalMarks = cleaned.reduce(
+      (sum, q) => sum + (q.marks ? Number(q.marks) : 0),
+      0
+    );
+
+    // Update DB row
+    await record.update({
+      questions: cleaned,
+      totalMarks // ⬅⬅⬅ Store updated value
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Questions updated successfully.",
+      questions: cleaned,
+      totalMarks, // return for UI if needed
+    });
+
+  } catch (err: any) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to update questions.",
+    });
   }
+}
+
 }

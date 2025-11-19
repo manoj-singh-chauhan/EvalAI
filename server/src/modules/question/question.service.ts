@@ -31,17 +31,31 @@ export class QuestionService {
     logger.info(`Job added: ${job.type}, recordId ${job.recordId}`);
   }
 
+  // static normalizeQuestions(questions: any[]) {
+  //   return questions.map((q) => {
+  //     const marks = typeof q.marks === "number" ? q.marks : null;
+
+  //     if (marks === null) {
+  //       return { ...q, marks: null, flagged: true };
+  //     }
+
+  //     return { ...q, marks };
+  //   });
+  // }
+
   static normalizeQuestions(questions: any[]) {
-    return questions.map((q) => {
+    return questions.map((q, index) => {
       const marks = typeof q.marks === "number" ? q.marks : null;
 
-      if (marks === null) {
-        return { ...q, marks: null, flagged: true };
-      }
-
-      return { ...q, marks };
+      return {
+        number: q.number || index + 1,
+        text: q.text || q.question || "",  
+        marks,
+        flagged: marks === null,
+      };
     });
   }
+
 
   static async processQuestionJob(
     type: "file" | "text",
@@ -108,7 +122,13 @@ export class QuestionService {
           ],
         });
 
-        parsedData = JSON.parse(aiRes.response.text());
+        // parsedData = JSON.parse(aiRes.response.text());
+        const jsonText = aiRes.response.text().trim();
+
+      
+        const cleanJson = jsonText.replace(/```json/gi, "").replace(/```/g, "");
+
+        parsedData = JSON.parse(cleanJson);
       } else {
         const text = data as string;
 
@@ -147,7 +167,7 @@ export class QuestionService {
         errorMessage: err.message,
       });
 
-      this.emitStatus(recordId, "Failed: " + err.message);
+      this.emitStatus(recordId, "failed: " + err.message);
     }
   }
 }

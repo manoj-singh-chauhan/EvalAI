@@ -45,3 +45,12 @@ id: {
   defaultValue: DataTypes.UUIDV4,
   primaryKey: true,
 },
+
+
+
+disadvantage of session 
+memory 
+scaling - diifficult to manage central session 
+jwt - client 
+hash
+urlencoded

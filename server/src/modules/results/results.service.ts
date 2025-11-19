@@ -63,6 +63,7 @@ static async getQuestionPaper(paperId: number) {
       answerSheetFiles: answer.answerSheetFiles,
       answers: answer.answers,
       totalScore: answer.totalScore,
+      feedback:answer.feedback,
       status: answer.status,
       errorMessage: answer.errorMessage,
     };

@@ -27,7 +27,7 @@ const StepperLayout: React.FC<StepperLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-6">
       <div className="w-full max-w-4xl mx-auto">
-        <div className="mb-10 p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
+        <div className="mb-10 p-6 bg-white rounded-md shadow-lg border border-gray-200">
           <div className="flex items-center justify-between">
             {steps.map((step, index) => (
               <React.Fragment key={step.number}>

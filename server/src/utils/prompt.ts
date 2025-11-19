@@ -1,88 +1,76 @@
-// export const QUESTION_EXTRACTION_PROMPT = `
-// Extract all questions and marks from the question paper.
-
-// RULES:
-// 1. If a question contains an OR (example: "Q4: (a) ... OR (b) ..."), treat it as ONE question.
-// 2. Structure OR questions like:
-//    {
-//      "question": {
-//        "optionA": "...",
-//        "optionB": "..."
-//      },
-//      "marks": number
-//    }
-// 3. Normal questions should be:
-//    { "question": "...", "marks": number }
-
-// 4. For OR questions, use a SINGLE marks value (not separate for A and B).
-
-// 5. If images or diagrams appear, describe them in text inside the question.
-
-// 6. If marks are missing or unclear, set "marks": null.
-
-// 7. Return ONLY pure JSON with this structure:
-// {
-//   "questions": [...],
-//   "totalMarks": number
-// }
-
-// IMPORTANT:
-// - Do NOT include explanations.
-// - Do NOT add any text outside of JSON.
-// - Output must be valid JSON parseable by JSON.parse().
-
-// Now extract questions from the input below:
-
-// `;
-
-
 export const QUESTION_EXTRACTION_PROMPT = `
-You are an OCR + question extraction engine.
+You are an advanced OCR + exam question extraction system.
 
-Your job:
-1. Read the provided text OR image content.
-2. Extract questions exactly as they appear.
-3. Detect marks (e.g., "5 Marks", "(10 marks)", "[15M]", etc.).
-4. Never invent questions or modify meaning.
+Your task is to extract questions from the provided text or OCR content with absolute accuracy. 
+Your output MUST follow a strict JSON format and must NEVER include text outside JSON.
 
-STRICT RULES:
+────────────────────────────────────────
+ JSON OUTPUT FORMAT (MANDATORY)
+────────────────────────────────────────
 
-1. If the input is an image, perform OCR and extract the text exactly.
-2. Use ONLY the text that appears in the input. DO NOT guess or generate new questions.
-3. Clean small OCR noise, but keep the question meaning identical.
-
-4. OR-type questions (A/B) must be structured like:
 {
-  "question": {
-    "optionA": "...",
-    "optionB": "..."
-  },
-  "marks": number | null
+  "questions": [
+    {
+      "number": 1,
+      "text": "Full cleaned question text (without marks)",
+      "marks": 5
+    }
+  ],
+  "totalMarks": 0
 }
 
-5. Normal questions must be structured like:
-{
-  "question": "...",
-  "marks": number | null
-}
+────────────────────────────────────────
+ EXTRACTION RULES
+────────────────────────────────────────
 
-6. Important marks rules:
-   - If a question ends with "(5 Marks)" or "5 Marks", extract 5.
-   - If marks are missing → set marks: null.
-   - If multiple marks found → pick the most relevant one.
+1. Extract questions EXACTLY as they appear in the input.
+   - Preserve wording
+   - Preserve OR blocks
+   - Preserve sub-points (A, B, C)
 
-7. Output format (STRICT):
-{
-  "questions": [...],
-  "totalMarks": number
-}
+2. Remove only the marks portion from text. Example:
+   "Define hardware. (10 Marks)" 
+   → text = "Define hardware."
+   → marks = 10
 
-8. DO NOT add explanations.
-DO NOT add comments.
-DO NOT add text outside JSON.
-DO NOT hallucinate missing questions.
+3. Extract marks from ALL formats:
+   (20 Marks), (10 marks), [5 Marks], {15}, (5M), 20 Marks, 20M, 20.
+   If multiple marks appear, use the LAST one.
 
-Now process the following input:
+4. OR questions:
+   If a question has OR parts (A/B/C), combine them into ONE question.
+   The combined text must keep the ORs, like:
+   "(A) Define RAM.\nOR\n(B) Define ROM."
+
+5. Numbering rules:
+   Accept ANY form of numbering:
+   - Q1, Q1., Q1)
+   - 1., 1)
+   - (1), [1]
+   - No Q# → assign a number automatically in correct sequence
+   - If duplicated numbers appear, still maintain unique sequence
+
+6. Multi-line questions:
+   Merge them into one clean paragraph, preserving meaning.
+
+7. DO NOT:
+   - Invent questions
+   - Guess marks
+   - Add explanations
+   - Modify meaning
+   - Change order
+
+8. If a question doesn't contain marks, set:
+   "marks": null
+
+9. totalMarks:
+   Sum of all question marks ignoring null.
+   Example:
+   [20, null, 10, 15] → totalMarks = 45
+
+10. Output MUST be valid JSON with no markdown, no comments 
+
+ NOW EXTRACT QUESTIONS FROM THIS INPUT:
 `;
 
 

@@ -126,7 +126,7 @@ export default function ResultsPage() {
     <div className="p-10 space-y-6 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-gray-800">Evaluation Results</h1>
 
-      <div className="bg-white border shadow p-6 rounded-xl">
+      <div className="bg-white border shadow p-6 rounded-md">
         <h2 className="font-semibold text-lg">Question Paper</h2>
 
         <p className="text-gray-500 text-sm mt-1">
@@ -151,16 +151,16 @@ export default function ResultsPage() {
                 href={qpDetails.fileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-blue-600 underline"
+                className="text-blue-600"
               >
-                Open Uploaded PDF
+                View question pepar
               </a>
             )}
           </div>
         )}
       </div>
 
-      <div className="bg-white border shadow p-6 rounded-xl">
+      <div className="bg-white border shadow p-6 rounded-md">
         <h2 className="font-semibold text-lg mb-4">Answer Sheets</h2>
 
         <div className="space-y-4">
@@ -172,7 +172,7 @@ export default function ResultsPage() {
               <div>
                 <p className="font-medium text-gray-800">
                   {/* Answer Sheet #{ans.id} */}
-                  Answer Sheet #{index + 1}
+                  Answer Sheet {index + 1}
                 </p>
 
                 <p className="text-sm mt-1">

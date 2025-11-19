@@ -76,7 +76,7 @@ export default function AnswerSheetPage() {
         Answer Sheet #{sheet.id}
       </h1> */}
       <h1 className="text-3xl font-bold text-gray-800">
-        Answer Sheet #{displayIndex}
+        Answer Sheet {displayIndex}
       </h1>
 
       <div className="bg-white border shadow p-6 rounded-xl">
@@ -96,7 +96,7 @@ export default function AnswerSheetPage() {
       </div>
 
       <div className="bg-white border shadow p-6 rounded-xl">
-        <h2 className="font-semibold text-lg">Uploaded Pages</h2>
+        <h2 className="font-semibold text-lg">Uploaded answer</h2>
 
         <ul className="mt-3 space-y-2">
           {sheet.answerSheetFiles.map((file, index) => (
@@ -105,9 +105,9 @@ export default function AnswerSheetPage() {
                 href={file.fileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-blue-600 underline text-sm"
+                className="text-blue-600 text-sm"
               >
-                View Page {index + 1}
+                View answer sheet{index + 1}
               </a>
             </li>
           ))}
