@@ -7,7 +7,7 @@ import { SOCKET_URL } from "../config/env";
 const socket = io(SOCKET_URL, { autoConnect: true });
 
 type QPaper = {
-  id: number;
+  id: string;
   totalMarks: number;
   mode: string;
   status: string;
@@ -15,7 +15,7 @@ type QPaper = {
 };
 
 type AnswerRecord = {
-  id: number;
+  id: string;
   status: "pending" | "processing" | "completed" | "failed";
   totalScore: number | null;
   errorMessage?: string | null;
@@ -46,7 +46,7 @@ export default function ResultsPage() {
 
   const refreshResults = useCallback(async () => {
     try {
-      const updated = await ResultAPI.getResults(Number(paperId));
+      const updated = await ResultAPI.getResults(String(paperId));
       setResultData(updated);
     } catch {
       setError("Failed to refresh results.");
@@ -72,7 +72,8 @@ export default function ResultsPage() {
 
     const load = async () => {
       try {
-        const res = await ResultAPI.getResults(Number(paperId));
+        // const res = await ResultAPI.getResults(paperId);
+        const res = await ResultAPI.getResults(String(paperId));
         setResultData(res);
         setupSocketListeners(res.answers);
       } catch {
@@ -90,16 +91,16 @@ export default function ResultsPage() {
 
   const loadQuestionPaper = async () => {
     try {
-      const res = await ResultAPI.getQuestionPaper(Number(paperId));
+      const res = await ResultAPI.getQuestionPaper(String(paperId));
       setQpDetails(res);
     } catch {
       setError("Could not load question paper.");
     }
   };
 
-  const retrySheet = async (id: number) => {
+  const retrySheet = async (id:string) => {
     try {
-      await ResultAPI.retryAnswer(id);
+      await ResultAPI.retryAnswer(String(id));
       await refreshResults();
     } catch {
       setError("Retry failed. Try again later.");
@@ -216,7 +217,7 @@ export default function ResultsPage() {
 
                 {ans.status === "failed" && (
                   <button
-                    onClick={() => retrySheet(ans.id)}
+                    onClick={() => retrySheet(String(ans.id))}
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
                     Retry

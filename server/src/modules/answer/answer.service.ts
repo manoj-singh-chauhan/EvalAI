@@ -11,13 +11,13 @@ const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
 
 export class AnswerService {
-  static emitStatus(recordId: number, message: string) {
+  static emitStatus(recordId: string, message: string) {
     io.emit(`answer-status-${recordId}`, { message });
   }
 
   static async scheduleAnswerJob(job: {
-    recordId: number;
-    questionPaperId: number;
+    recordId: string;
+    questionPaperId: string;
     answerSheetFiles: { fileUrl: string; mimeType: string }[];
   }) {
     await answerQueue.add(`evaluate-answer`, job);
@@ -25,8 +25,8 @@ export class AnswerService {
   }
 
   static async processAnswerJob(
-    recordId: number,
-    questionPaperId: number,
+    recordId: string,
+    questionPaperId: string,
     answerSheetFiles: { fileUrl: string; mimeType: string }[]
   ) {
     const record = await AnswerSheet.findByPk(recordId);

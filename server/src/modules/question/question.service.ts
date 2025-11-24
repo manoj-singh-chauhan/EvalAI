@@ -18,13 +18,13 @@ interface FileJobData {
 type JobData = FileJobData | string;
 
 export class QuestionService {
-  static emitStatus(recordId: number, message: string) {
+  static emitStatus(recordId: string, message: string) {
     io.emit(`job-status-${recordId}`, { message });
   }
 
   static async scheduleQuestionJob(job: {
     type: string;
-    recordId: number;
+    recordId: string;
     data: JobData;
   }) {
     await questionQueue.add(`create-question-${job.type}`, job);
@@ -59,7 +59,7 @@ export class QuestionService {
 
   static async processQuestionJob(
     type: "file" | "text",
-    recordId: number,
+    recordId: string,
     data: JobData
   ) {
     const record = await QuestionPaper.findByPk(recordId);

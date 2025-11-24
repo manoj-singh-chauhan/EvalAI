@@ -2,7 +2,7 @@ import QuestionPaper from "../question/question.model";
 import AnswerSheet from "../answer/answer.model";
 
 export class ResultsService {
-  static async getResults(paperId: number) {
+  static async getResults(paperId: string) {
     const questionPaper = await QuestionPaper.findByPk(paperId, {
       attributes: ["id", "mode", "fileUrl", "totalMarks", "status", "errorMessage"],
     });
@@ -32,7 +32,7 @@ export class ResultsService {
 //     };
 //   }
 
-static async getQuestionPaper(paperId: number) {
+static async getQuestionPaper(paperId: string) {
   const paper = await QuestionPaper.findByPk(paperId);
 
   if (!paper) throw new Error("Question paper not found");
@@ -52,7 +52,7 @@ static async getQuestionPaper(paperId: number) {
 }
 
 
-  static async getAnswerSheet(answerId: number) {
+  static async getAnswerSheet(answerId: string) {
     const answer = await AnswerSheet.findByPk(answerId);
 
     if (!answer) throw new Error("Answer sheet not found");

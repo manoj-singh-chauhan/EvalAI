@@ -6,25 +6,27 @@ import { io } from "../server";
 
 const QUEUE_NAME = "question-creation";
 
+interface QuestionJobPayload {
+  type: "file" | "text"; 
+  recordId: string;
+  data: any;
+}
+
 export const questionWorker = new Worker(
   QUEUE_NAME,
-  async (job: Job) => {
+  async (job: Job<QuestionJobPayload>) => {
     const { type, recordId, data } = job.data;
 
-    io.emit(`job-status-${recordId}`, { message: "Processing started..." });
+    const safeType = type as "file" | "text";
+
+    io.emit(`job-status-${recordId}`, {
+      message: "Processing started...",
+    });
 
     try {
-      const result = await QuestionService.processQuestionJob(
-        type,
-        recordId,
-        data
-      );
+      await QuestionService.processQuestionJob(safeType, recordId, data);
 
-      // io.emit(`job-status-${recordId}`, {
-      //   message: "question pepar extracted successfully",
-      // });
-
-      return result;
+      return { status: "done" };
     } catch (error: any) {
       io.emit(`job-status-${recordId}`, {
         message: "Worker failed: " + error.message,
@@ -39,10 +41,10 @@ export const questionWorker = new Worker(
   }
 );
 
-questionWorker.on("completed", (job) => {
-  logger.info(`job finished.`);
+questionWorker.on("completed", () => {
+  logger.info(`Question job completed.`);
 });
 
-questionWorker.on("failed", (job, err) => {
-  logger.error(`Job FAILED: ${err.message}`);
+questionWorker.on("failed", (_job, err) => {
+  logger.error(`Question job FAILED: ${err.message}`);
 });

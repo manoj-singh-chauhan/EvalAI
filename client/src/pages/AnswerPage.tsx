@@ -81,7 +81,7 @@ export default function AnswerPage() {
 
     try {
       const res = await AnswerAPI.submit({
-        questionPaperId: Number(paperId),
+        questionPaperId: paperId,
         files,
       });
 

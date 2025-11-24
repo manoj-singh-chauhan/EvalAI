@@ -43,7 +43,7 @@ export default function AnswerSheetPage() {
 
     const fetchSheet = async () => {
       try {
-        const res = await ResultAPI.getAnswerSheet(Number(answerId));
+        const res = await ResultAPI.getAnswerSheet(answerId);
         setSheet(res);
       } catch {
         setError("Failed to load answer sheet.");
@@ -79,7 +79,7 @@ export default function AnswerSheetPage() {
         Answer Sheet {displayIndex}
       </h1>
 
-      <div className="bg-white border shadow p-6 rounded-xl">
+      <div className="bg-white border shadow p-6 rounded-md">
         <h2 className="text-lg font-semibold">Score Summary</h2>
 
         <p className="text-gray-700 mt-2 text-sm">
@@ -95,7 +95,7 @@ export default function AnswerSheetPage() {
         )}
       </div>
 
-      <div className="bg-white border shadow p-6 rounded-xl">
+      <div className="bg-white border shadow p-6 rounded-md">
         <h2 className="font-semibold text-lg">Uploaded answer</h2>
 
         <ul className="mt-3 space-y-2">
@@ -114,7 +114,7 @@ export default function AnswerSheetPage() {
         </ul>
       </div>
 
-      <div className="bg-white border shadow p-6 rounded-xl">
+      <div className="bg-white border shadow p-6 rounded-md">
         <h2 className="font-semibold text-lg mb-4">Evaluated Answers</h2>
 
         <div className="space-y-6">

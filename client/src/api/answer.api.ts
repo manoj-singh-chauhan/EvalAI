@@ -2,13 +2,13 @@ import axios from "axios";
 import axiosClient from "./axiosClient";
 
 export interface SubmitAnswerArgs {
-  questionPaperId: number;
+  questionPaperId: string;
   files: File[];
 }
 
 export interface SubmitAnswerResponse {
   success: boolean;
-  ids: number[];
+  ids: string[];
   message?: string;
 }
 
@@ -54,12 +54,12 @@ export const AnswerAPI = {
     return res.data;
   },
 
-  getStatus: async (id: number): Promise<ApiBaseResponse> => {
+  getStatus: async (id: string): Promise<ApiBaseResponse> => {
     const res = await axiosClient.get(`/answers/${id}`);
     return res.data;
   },
 
-  retryJob: async (id: number): Promise<ApiBaseResponse> => {
+  retryJob: async (id: string): Promise<ApiBaseResponse> => {
     const res = await axiosClient.post(`/answers/${id}/retry`);
     return res.data;
   },

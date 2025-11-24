@@ -13,7 +13,7 @@ export default function QuestionPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const [currentJobId, setCurrentJobId] = useState<number | null>(null);
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState<
     "idle" | "processing" | "failed" | "completed"
   >("idle");

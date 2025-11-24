@@ -2,8 +2,11 @@ import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../../config/db";
 
 interface AnswerSheetAttributes {
-  id: number;
-  questionPaperId: number;
+  // id: number;
+  id: string;
+
+  // questionPaperId: number;
+  questionPaperId: string;
   answerSheetFiles: any | null;
   answers: any | null;
   /*
@@ -42,8 +45,10 @@ export class AnswerSheet
   extends Model<AnswerSheetAttributes, AnswerSheetCreation>
   implements AnswerSheetAttributes
 {
-  public id!: number;
-  public questionPaperId!: number;
+  // public id!: number;
+  public id!: string;
+  // public questionPaperId!: number;
+  public questionPaperId!: string;
 
   public answerSheetFiles!: any | null;
   public answers!: any | null;
@@ -57,14 +62,25 @@ export class AnswerSheet
 
 AnswerSheet.init(
   {
+    // id: {
+    //   type: DataTypes.INTEGER.UNSIGNED,
+    //   autoIncrement: true,
+    //   primaryKey: true,
+    // },
+
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
 
+    // questionPaperId: {
+    //   type: DataTypes.INTEGER.UNSIGNED,
+    //   allowNull: false,
+    // },
+
     questionPaperId: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.UUID,
       allowNull: false,
     },
 

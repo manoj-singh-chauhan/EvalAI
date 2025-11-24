@@ -34,72 +34,42 @@ export class AnswerController {
     }
   }
 
-  static async submitAnswerSheet(req: Request, res: Response) {
-    try {
-      const parsed = submitAnswerSchema.safeParse(req.body);
-      // console.log(req.body);
+ static async submitAnswerSheet(req: Request, res: Response) {
+  const parsed = submitAnswerSchema.safeParse(req.body);
 
-      if (!parsed.success) {
-        return res.status(400).json({
-          success: false,
-          message: parsed.error.issues[0].message,
-        });
-      }
-
-      const { questionPaperId, answerSheetFiles } = parsed.data;
-      console.log(parsed.data);
-
-      // const record = await AnswerSheet.create({
-      //   questionPaperId,
-      //   answerSheetFiles,
-      //   status: "pending",
-      // });
-
-      // await AnswerService.scheduleAnswerJob({
-      //   recordId: record.id,
-      //   questionPaperId,
-      //   answerSheetFiles,
-      // });
-
-      // return res.status(202).json({
-      //   success: true,
-      //   id: record.id,
-      //   message: "Answer sheet received. We're evaluating it…",
-      // });
-
-      // answerSheetFiles = [file1, file2, file3...]
-
-      const createdRecords = [];
-
-      for (const singleFile of answerSheetFiles) {
-        const record = await AnswerSheet.create({
-          questionPaperId,
-          answerSheetFiles: [singleFile],
-          status: "pending",
-        });
-
-        await AnswerService.scheduleAnswerJob({
-          recordId: record.id,
-          questionPaperId,
-          answerSheetFiles: [singleFile],
-        });
-
-        createdRecords.push(record.id);
-      }
-
-      return res.status(202).json({
-        success: true,
-        ids: createdRecords,
-        message: "Answer sheets received. Evaluating...",
-      });
-    } catch (error: any) {
-      logger.error(`AnswerController Submit Error: ${error.message}`);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to submit answer sheet.",
-      });
-    }
+  if (!parsed.success) {
+    return res.status(400).json({
+      success: false,
+      message: parsed.error.issues[0].message,
+    });
   }
+
+  const { questionPaperId, answerSheetFiles } = parsed.data;
+
+  const createdIds: string[] = [];
+
+  for (const file of answerSheetFiles) {
+    const record = await AnswerSheet.create({
+      questionPaperId,
+      answerSheetFiles: [file],
+      status: "pending",
+    });
+
+    await AnswerService.scheduleAnswerJob({
+      recordId: record.id,
+      questionPaperId,
+      answerSheetFiles: [file],
+    });
+
+    createdIds.push(record.id);
+  }
+
+  return res.status(202).json({
+    success: true,
+    ids: createdIds,
+    message: "Answer sheets received. Evaluating...",
+  });
+}
 
   static async getStatus(req: Request, res: Response) {
     try {

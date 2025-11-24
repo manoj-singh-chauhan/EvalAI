@@ -4,7 +4,8 @@ import { ResultsService } from "./results.service";
 export class ResultsController {
   static async getResults(req: Request, res: Response) {
     try {
-      const paperId = Number(req.params.paperId);
+      // const paperId = Number(req.params.paperId);
+      const paperId = req.params.paperId;
       const data = await ResultsService.getResults(paperId);
 
       return res.status(200).json({
@@ -21,7 +22,7 @@ export class ResultsController {
 
   static async getQuestionPaper(req: Request, res: Response) {
     try {
-      const paperId = Number(req.params.paperId);
+      const paperId = req.params.paperId;
       const file = await ResultsService.getQuestionPaper(paperId);
 
       return res.status(200).json({
@@ -38,7 +39,7 @@ export class ResultsController {
 
   static async getAnswerSheet(req: Request, res: Response) {
     try {
-      const answerId = Number(req.params.answerId);
+      const answerId = req.params.answerId;
       const result = await ResultsService.getAnswerSheet(answerId);
 
       return res.status(200).json({

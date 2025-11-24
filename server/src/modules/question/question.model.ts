@@ -2,7 +2,8 @@ import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../../config/db";
 
 interface QuestionPaperAttributes {
-  id: number;
+  // id: number;
+  id: string;
   mode: "typed" | "upload";
   fileUrl?: string | null;
   fileMimeType?: string | null;
@@ -32,7 +33,8 @@ export class QuestionPaper
   extends Model<QuestionPaperAttributes, QuestionPaperCreation>
   implements QuestionPaperAttributes
 {
-  public id!: number;
+  // public id!: number;
+  public id!: string;
   public mode!: "typed" | "upload";
   public fileUrl?: string | null;
   public fileMimeType?: string | null;
@@ -47,9 +49,15 @@ export class QuestionPaper
 
 QuestionPaper.init(
   {
+    // id: {
+    //   type: DataTypes.INTEGER.UNSIGNED,
+    //   autoIncrement: true,
+    //   primaryKey: true,
+    // },
+
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
 

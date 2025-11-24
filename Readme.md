@@ -54,3 +54,13 @@ scaling - diifficult to manage central session
 jwt - client 
 hash
 urlencoded
+
+
+uuid
+Universally Unique IDentifier
+
+
+excution context 
+why hoisting in js why need var ->reson to know compiler 
+memory assignment 
+execution context and gloabl context

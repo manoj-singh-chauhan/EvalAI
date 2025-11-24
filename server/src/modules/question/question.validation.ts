@@ -7,12 +7,8 @@ export const typedQuestionSchema = z.object({
     .min(10, "Question text must be at least 10 characters."),
 });
 
-
 export const fileJobSchema = z.object({
-  fileUrl: z
-    .string()
-    .min(1, "File URL is required.")
-    .url("Invalid file URL."),
+  fileUrl: z.string().min(1, "File URL is required.").url("Invalid file URL."),
 
   mimeType: z
     .string()
@@ -20,10 +16,13 @@ export const fileJobSchema = z.object({
     .min(3, "Invalid mimeType."),
 });
 
+// export const retrySchema = z.object({
+//   id: z
+//     .string()
+//     .min(1, "ID is required.")
+//     .refine((val) => !isNaN(Number(val)), "Invalid ID format."),
+// });
 
 export const retrySchema = z.object({
-  id: z
-    .string()
-    .min(1, "ID is required.")
-    .refine((val) => !isNaN(Number(val)), "Invalid ID format."),
+  id: z.string().uuid("Invalid ID format."),
 });
