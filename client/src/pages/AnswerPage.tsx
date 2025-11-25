@@ -33,6 +33,9 @@ export default function AnswerPage() {
     text: "",
   });
 
+  const [isDragging, setIsDragging] = useState(false);
+
+
   const [questionData, setQuestionData] = useState<QuestionPaperData | null>(
     null
   );
@@ -66,10 +69,10 @@ export default function AnswerPage() {
       return;
     }
 
-    if (flaggedCount > 0) {
-      showMessage("error", "Fix missing marks before uploading answers.");
-      return;
-    }
+    // if (flaggedCount > 0) {
+    //   showMessage("error", "Fix missing marks before uploading answers.");
+    //   return;
+    // }
 
     if (files.length === 0) {
       showMessage("error", "Please upload answer sheets.");
@@ -126,7 +129,7 @@ export default function AnswerPage() {
         </div>
       )}
 
-     
+{/*      
       <label
         htmlFor="answerUpload"
         className="block border-2 border-dashed p-8 rounded-xl cursor-pointer bg-blue-50 text-center"
@@ -144,7 +147,51 @@ export default function AnswerPage() {
           className="hidden"
           onChange={(e) => setFiles(Array.from(e.target.files || []))}
         />
-      </label>
+      </label> */}
+
+      <label
+  htmlFor="answerUpload"
+  onDragOver={(e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }}
+  onDragLeave={(e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }}
+  onDrop={(e) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const droppedFiles = Array.from(e.dataTransfer.files || []);
+    if (droppedFiles.length > 0) {
+      setFiles((prev) => [...prev, ...droppedFiles]); // add multiple files
+    }
+  }}
+  className={`block border-2 border-dashed p-8 rounded-xl cursor-pointer transition-all text-center
+    ${isDragging ? "border-blue-600 bg-blue-100" : "border-blue-300 bg-blue-50"}
+  `}
+>
+  <FiUpload className="text-blue-500 text-5xl mx-auto mb-3" />
+
+  <span className="text-gray-700 font-medium">
+    {isDragging ? "Drop files here…" : "Click or drag to upload answer sheets"}
+  </span>
+
+  <input
+    id="answerUpload"
+    type="file"
+    multiple
+    accept=".pdf,.jpg,.jpeg,.png"
+    className="hidden"
+    onChange={(e) => {
+      if (!e.target.files) return;
+      const selected = Array.from(e.target.files);
+      setFiles((prev) => [...prev, ...selected]);
+    }}
+  />
+</label>
+
 
       {files.length > 0 && (
         <ul className="mt-4 text-gray-700 text-left">

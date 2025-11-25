@@ -78,7 +78,7 @@ export default function ReviewQuestionsPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow p-5 border">
+        <div className="bg-white rounded-md shadow p-5 border">
           <p className="text-gray-600 text-sm font-medium">Total Marks</p>
           <p className="text-3xl font-bold text-green-600 mt-1">{totalMarks}</p>
         </div>
@@ -88,7 +88,7 @@ export default function ReviewQuestionsPage() {
           {questions.map((q, i) => (
             <div
               key={i}
-              className={`rounded-xl shadow-sm border p-6 transition-all ${
+              className={`rounded-md shadow-sm border p-6 transition-all ${
                 q.flagged
                   ? "bg-yellow-50 border-yellow-400"
                   : "bg-white border-gray-200"
@@ -103,7 +103,7 @@ export default function ReviewQuestionsPage() {
 
              
               <label className="text-sm font-semibold text-gray-700">
-                Question
+                Question 
               </label>
               <textarea
                 value={q.text}
@@ -112,7 +112,7 @@ export default function ReviewQuestionsPage() {
                   updated[i].text = e.target.value;
                   setQuestions(updated);
                 }}
-                className="w-full mt-2 p-3 rounded-lg border resize-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+                className="w-full mt-2 p-3 rounded-md border resize-none  transition"
                 rows={3}
               />
 
@@ -137,11 +137,11 @@ export default function ReviewQuestionsPage() {
           ))}
         </div>
 
-        {/* SAVE BUTTON */}
+        
         <div className="pt-4">
           <button
             onClick={handleUpdate}
-            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition text-lg"
+            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-md shadow hover:bg-blue-700 transition text-lg"
           >
             Save & Continue
           </button>

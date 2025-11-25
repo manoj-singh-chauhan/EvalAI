@@ -154,7 +154,7 @@ export default function ResultsPage() {
                 rel="noreferrer"
                 className="text-blue-600"
               >
-                View question pepar
+               open
               </a>
             )}
           </div>

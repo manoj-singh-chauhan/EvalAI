@@ -32,7 +32,7 @@ Option B: Write a short note on Cyber Security. (15 Marks)
 
 1. (a) Explain mitosis. OR (b) Explain meiosis. (5 marks)
 2. (a) What is a conductor? OR (b) What is an insulator? (3 marks)
-3. Describe the water cycle. (5 marks)
+3. Describe the water cycle. (2 marks)
 
 
 1. What is climate change?
@@ -64,3 +64,10 @@ excution context
 why hoisting in js why need var ->reson to know compiler 
 memory assignment 
 execution context and gloabl context
+
+
+
+validation on image upload 
+image and pdf
+health check 
+print registrered path table 
