@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { ResultAPI } from "../api/result.api";
-import { useLocation } from "react-router-dom";
 
 type UploadedFile = {
   fileUrl: string;
@@ -18,8 +17,8 @@ type EvaluatedAnswer = {
 };
 
 type AnswerSheetRecord = {
-  id: number;
-  questionPaperId: number;
+  id: string;
+  questionPaperId: string;
   answerSheetFiles: UploadedFile[];
   answers: EvaluatedAnswer[];
   totalScore: number;
@@ -30,13 +29,13 @@ type AnswerSheetRecord = {
 
 export default function AnswerSheetPage() {
   const { answerId } = useParams();
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  const displayIndex = params.get("index");
 
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<AnswerSheetRecord | null>(null);
   const [error, setError] = useState("");
-  const { search } = useLocation();
-  const params = new URLSearchParams(search);
-  const displayIndex = params.get("index");
 
   useEffect(() => {
     if (!answerId) return;
@@ -68,13 +67,11 @@ export default function AnswerSheetPage() {
 
   if (!sheet) return null;
 
-  const { answers } = sheet;
+
+  const evaluatedAnswers = sheet.answers || [];
 
   return (
     <div className="p-10 space-y-8 max-w-4xl mx-auto">
-      {/* <h1 className="text-3xl font-bold text-gray-800">
-        Answer Sheet #{sheet.id}
-      </h1> */}
       <h1 className="text-3xl font-bold text-gray-800">
         Answer Sheet {displayIndex}
       </h1>
@@ -107,7 +104,7 @@ export default function AnswerSheetPage() {
                 rel="noreferrer"
                 className="text-blue-600 text-sm"
               >
-                View answer sheet{index + 1}
+                View answer sheet {index + 1}
               </a>
             </li>
           ))}
@@ -118,7 +115,7 @@ export default function AnswerSheetPage() {
         <h2 className="font-semibold text-lg mb-4">Evaluated Answers</h2>
 
         <div className="space-y-6">
-          {answers.map((ans) => (
+          {evaluatedAnswers.map((ans) => (
             <div
               key={ans.questionNumber}
               className="p-4 border rounded-lg bg-gray-50"

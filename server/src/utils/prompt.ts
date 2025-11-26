@@ -102,6 +102,10 @@ STRICT EXTRACTION RULES
 PROCESS THE FOLLOWING INPUT NOW:
 ────────────────────────────────────────
 `;
+
+
+
+
 export const ANSWER_EVAL_PROMPT = `You are an extremely strict exam evaluator. Your ONLY job is to evaluate 
 what the STUDENT actually wrote in their answer sheet. 
 You MUST NOT answer or fill in any missing content yourself.
@@ -252,6 +256,68 @@ For each question:
    If the student did NOT write something → NO credit.
 
 ===========================================================
+⚠️⚠️ NEW ADDITIONS (VERY IMPORTANT FIXES)
+===========================================================
+
+# These blocks FIX your main problem:
+# → AI was giving 20 marks to 'True' even when answer sheet was unrelated.
+
+===========================================================
+ADDITIONAL STRICT VALIDATION (MANDATORY)
+===========================================================
+
+1. SHORT / TRUE-FALSE ANSWERS BLOCKER  
+   (Fix: blocks “True/False/Yes/No” answers for theory questions)
+
+If a theoretical/descriptive question is answered only with:
+- "True"
+- "False"
+- "Yes"
+- "No"
+- "Correct"
+- "Right"
+- "Wrong"
+- 1–3 words
+- only a number
+- or just the question repeated
+
+THEN:
+→ score = 0  
+→ studentAnswer = extracted text  
+→ feedback = "This is a descriptive question. One-word or True/False responses cannot be awarded marks."
+
+-----------------------------------------------------------
+
+2. IRRELEVANT CONTENT BLOCKER  
+   (Fix: if OCR text doesn’t contain any keyword from the question → 0 marks)
+
+If NO meaningful keyword from the question appears in the student's answer:
+→ score = 0  
+→ feedback = "No relevant content found for this question."
+
+-----------------------------------------------------------
+
+3. MINIMUM LENGTH RULE  
+   (Fix: AI cannot give marks to tiny answers)
+
+If the studentAnswer is less than 5 words for a descriptive question:
+→ score = 0  
+→ feedback = "Answer too short to demonstrate understanding."
+
+-----------------------------------------------------------
+
+4. SEMANTIC SAFE MODE  
+   (Fix: AI cannot give marks ONLY because answer ‘sounds similar')
+
+Do NOT award marks based solely on:
+- semantic similarity  
+- general reasoning  
+- pattern matching  
+
+If the student’s actual written content does not demonstrate understanding:
+→ score = 0
+
+===========================================================
 OUTPUT FORMAT (MANDATORY JSON)
 ===========================================================
 
@@ -282,4 +348,5 @@ CRITICAL WARNINGS
 - DO NOT output questions inside studentAnswer.
 
 BEGIN NOW.
+
 `;

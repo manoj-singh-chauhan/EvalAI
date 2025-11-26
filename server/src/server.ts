@@ -21,6 +21,6 @@ io.on("connection", (socket) => {
   // logger.info("Client connected to socket");
 });
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, async () => {
   logger.info(`Server running at ${PORT}`);
 });

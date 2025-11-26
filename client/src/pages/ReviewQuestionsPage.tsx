@@ -28,6 +28,8 @@ export default function ReviewQuestionsPage() {
         const res = await QuestionAPI.getQuestions(paperId!);
         const data = res.data as QuestionPaperResponse;
         setQuestions(data.questions);
+        //         const data = res.data.data;
+        // setQuestions(data.questions || []);
       } catch {
         setMessage("Failed to load questions.");
       }
@@ -61,7 +63,6 @@ export default function ReviewQuestionsPage() {
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-4">
       <div className="max-w-4xl mx-auto space-y-8">
-      
         <div>
           <h1 className="text-4xl font-bold text-gray-800 tracking-tight">
             Review Questions
@@ -71,7 +72,6 @@ export default function ReviewQuestionsPage() {
           </p>
         </div>
 
-   
         {message && (
           <div className="p-4 bg-blue-100 text-blue-800 rounded-lg border border-blue-300 shadow-sm">
             {message}
@@ -83,7 +83,6 @@ export default function ReviewQuestionsPage() {
           <p className="text-3xl font-bold text-green-600 mt-1">{totalMarks}</p>
         </div>
 
-     
         <div className="space-y-6">
           {questions.map((q, i) => (
             <div
@@ -94,16 +93,14 @@ export default function ReviewQuestionsPage() {
                   : "bg-white border-gray-200"
               }`}
             >
-              
               {q.flagged && (
                 <div className="mb-3 text-sm text-yellow-800 font-semibold flex items-center gap-2">
                   ⚠ Missing marks — please enter marks
                 </div>
               )}
 
-             
               <label className="text-sm font-semibold text-gray-700">
-                Question 
+                Question
               </label>
               <textarea
                 value={q.text}
@@ -116,7 +113,6 @@ export default function ReviewQuestionsPage() {
                 rows={3}
               />
 
-            
               <div className="mt-4">
                 <label className="text-sm font-semibold text-gray-700">
                   Marks
@@ -137,7 +133,6 @@ export default function ReviewQuestionsPage() {
           ))}
         </div>
 
-        
         <div className="pt-4">
           <button
             onClick={handleUpdate}

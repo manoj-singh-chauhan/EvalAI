@@ -1,5 +1,7 @@
 import AnswerSheet from "./answer.model";
 import QuestionPaper from "../question/question.model";
+import Question from "../question/questionDetail.model";
+import EvaluatedAnswer from "./evaluatedAnswer.model";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { downloadFile } from "../../utils/fileDownloader";
 import { answerQueue } from "../../jobs/answer.queue";
@@ -21,7 +23,6 @@ export class AnswerService {
     answerSheetFiles: { fileUrl: string; mimeType: string }[];
   }) {
     await answerQueue.add(`evaluate-answer`, job);
-    // logger.info(`Answer job added for record ${job.recordId}`);
   }
 
   static async processAnswerJob(
@@ -36,27 +37,34 @@ export class AnswerService {
     this.emitStatus(recordId, "Processing answer sheet…");
 
     try {
-      const qp = await QuestionPaper.findByPk(questionPaperId);
-      if (!qp) throw new Error("Question paper not found.");
+      const qp = await QuestionPaper.findByPk(questionPaperId, {
+        include: [{ model: Question, as: "questions" }],
+        order: [[{ model: Question, as: "questions" }, "number", "ASC"]],
+      });
 
-      const questions = qp.questions;
-      if (!questions?.length) throw new Error("No questions found.");
+      if (!qp) throw new Error("Question paper not found.");
+      if (!qp.questions || qp.questions.length === 0)
+        throw new Error("No questions found for this paper.");
+
+      const questions = qp.questions.map((q: any) => ({
+        id: q.id,
+        number: q.number,
+        text: q.text,
+        marks: q.marks ?? 0,
+      }));
 
       this.emitStatus(recordId, "Reading answer sheet pages…");
 
-      const pagesBase64 = [];
-
+      const pagesBase64: string[] = [];
       for (const file of answerSheetFiles) {
         const buffer = await downloadFile(file.fileUrl);
         pagesBase64.push(buffer.toString("base64"));
       }
 
-      this.emitStatus(recordId, "Answersheet and question pepar going to ai for evaluation ");
+      this.emitStatus(recordId, "Sending to AI for evaluation…");
 
       const aiRes = await model.generateContent({
-        generationConfig: {
-          responseMimeType: "application/json",
-        },
+        generationConfig: { responseMimeType: "application/json" },
         contents: [
           {
             role: "user",
@@ -68,19 +76,56 @@ export class AnswerService {
         ],
       });
 
-      this.emitStatus(recordId, "AI evaluation completed.");
+      const raw = aiRes.response.text().trim();
+      const clean = raw.replace(/```json|```/g, "");
+      const parsed = JSON.parse(clean);
 
-      const parsed = JSON.parse(aiRes.response.text());
+      if (!parsed.answers || !Array.isArray(parsed.answers))
+        throw new Error("AI did not return valid answers.");
 
-      const { answers, totalScore, feedback } = parsed;
-      console.log(parsed);
+      const normalizedAnswers = parsed.answers.map((ans: any) => {
+        const match = questions.find(
+          (q: any) => q.number === ans.questionNumber
+        );
 
-      this.emitStatus(recordId, "Saving evaluation results…");
+        return {
+          questionId: match?.id || null,
+          questionNumber: ans.questionNumber,
+          questionText: match?.text || ans.questionText || "",
+          studentAnswer: ans.studentAnswer || "",
+          score: ans.score ?? 0,
+          maxScore: match?.marks ?? 0,
+          feedback: ans.feedback || "",
+        };
+      });
+
+      const totalScore = normalizedAnswers.reduce(
+        (sum: number, a: any) => sum + (a.score || 0),
+        0
+      );
+
+      this.emitStatus(recordId, "Saving normalized results…");
+
+      await EvaluatedAnswer.destroy({
+        where: { answerSheetId: recordId },
+      });
+
+      for (const ans of normalizedAnswers) {
+        await EvaluatedAnswer.create({
+          answerSheetId: recordId,
+          questionId: ans.questionId,
+          questionNumber: ans.questionNumber,
+          questionText: ans.questionText,
+          studentAnswer: ans.studentAnswer,
+          score: ans.score,
+          maxScore: ans.maxScore,
+          feedback: ans.feedback,
+        });
+      }
 
       await record.update({
-        answers,
         totalScore,
-        feedback,
+        feedback: parsed.feedback || "",
         status: "completed",
       });
 

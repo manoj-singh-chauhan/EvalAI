@@ -2,14 +2,12 @@ import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../../config/db";
 
 interface QuestionPaperAttributes {
-  // id: number;
   id: string;
   mode: "typed" | "upload";
   fileUrl?: string | null;
   fileMimeType?: string | null;
   rawText?: string | null;
 
-  questions: any | null;
   totalMarks?: number | null;
 
   status: "pending" | "processing" | "completed" | "failed";
@@ -19,42 +17,26 @@ interface QuestionPaperAttributes {
 interface QuestionPaperCreation
   extends Optional<
     QuestionPaperAttributes,
-    | "id"
-    | "fileUrl"
-    | "fileMimeType"
-    | "rawText"
-    | "questions"
-    | "totalMarks"
-    | "status"
-    | "errorMessage"
+    "id" | "fileUrl" | "fileMimeType" | "rawText" | "totalMarks" | "status" | "errorMessage"
   > {}
 
 export class QuestionPaper
   extends Model<QuestionPaperAttributes, QuestionPaperCreation>
   implements QuestionPaperAttributes
 {
-  // public id!: number;
   public id!: string;
   public mode!: "typed" | "upload";
   public fileUrl?: string | null;
   public fileMimeType?: string | null;
   public rawText?: string | null;
-
-  public questions!: any | null;
   public totalMarks?: number | null;
-
   public status!: "pending" | "processing" | "completed" | "failed";
   public errorMessage?: string | null;
+  questions: any;
 }
 
 QuestionPaper.init(
   {
-    // id: {
-    //   type: DataTypes.INTEGER.UNSIGNED,
-    //   autoIncrement: true,
-    //   primaryKey: true,
-    // },
-
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
@@ -81,12 +63,6 @@ QuestionPaper.init(
       allowNull: true,
     },
 
-    questions: {
-      type: DataTypes.JSON,
-      allowNull: true,
-      defaultValue: [],
-    },
-
     totalMarks: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
@@ -104,14 +80,9 @@ QuestionPaper.init(
   },
   {
     sequelize,
-    modelName: "QuestionPaper",
     tableName: "question_papers",
     timestamps: true,
-    indexes: [
-      { fields: ["status"] },
-    ],
   }
-
 );
 
 export default QuestionPaper;

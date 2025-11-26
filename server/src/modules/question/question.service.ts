@@ -4,6 +4,7 @@ import { downloadFile } from "../../utils/fileDownloader";
 import { questionQueue } from "../../jobs/question.queue";
 import logger from "../../config/logger";
 import { io } from "../../server";
+import Question from "./questionDetail.model";
 import { QUESTION_EXTRACTION_PROMPT } from "../../utils/prompt";
 
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
@@ -57,117 +58,108 @@ export class QuestionService {
   }
 
 
-  static async processQuestionJob(
-    type: "file" | "text",
-    recordId: string,
-    data: JobData
-  ) {
-    const record = await QuestionPaper.findByPk(recordId);
-    if (!record) return;
+static async processQuestionJob(
+  type: "file" | "text",
+  recordId: string,
+  data: JobData
+) {
+  const record = await QuestionPaper.findByPk(recordId);
+  if (!record) return;
 
-    await record.update({ status: "processing", errorMessage: null });
-    this.emitStatus(recordId, "checking or extracting your question pepar by ai ");
+  await record.update({ status: "processing", errorMessage: null });
+  this.emitStatus(recordId, "checking or extracting your question pepar by ai ");
 
-    try {
-      let parsedData: { questions: any[]; totalMarks: number };
+  try {
+    let parsedData: { questions: any[]; totalMarks: number };
 
-      const jsonConfig = {
-        generationConfig: {
-          responseMimeType: "application/json",
-        },
-      };
+    const jsonConfig = {
+      generationConfig: {
+        responseMimeType: "application/json",
+      },
+    };
 
-      // if (type === "file") {
-      //   const { fileUrl } = data as FileJobData;
+    if (type === "file") {
+      const { fileUrl, mimeType } = data as FileJobData;
 
-      //   const buffer = await downloadFile(fileUrl);
-      //   const base64 = buffer.toString("base64");
+      const buffer = await downloadFile(fileUrl);
+      const base64 = buffer.toString("base64");
 
-      //   const aiRes = await model.generateContent({
-      //     ...jsonConfig,
-      //     contents: [
-      //       {
-      //         role: "user",
-      //         parts: [
-      //           { text: QUESTION_EXTRACTION_PROMPT },
-      //           { text: JSON.stringify({ pagesBase64: [base64] }) },
-      //         ],
-      //       },
-      //     ],
-      //   });
-
-      //   parsedData = JSON.parse(aiRes.response.text());
-      // }
-      if (type === "file") {
-        const { fileUrl, mimeType } = data as FileJobData;
-
-        const buffer = await downloadFile(fileUrl);
-        const base64 = buffer.toString("base64");
-
-        const aiRes = await model.generateContent({
-          ...jsonConfig,
-          contents: [
-            {
-              role: "user",
-              parts: [
-                { text: QUESTION_EXTRACTION_PROMPT },
-                {
-                  inlineData: {
-                    mimeType,
-                    data: base64,
-                  },
+      const aiRes = await model.generateContent({
+        ...jsonConfig,
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: QUESTION_EXTRACTION_PROMPT },
+              {
+                inlineData: {
+                  mimeType,
+                  data: base64,
                 },
-              ],
-            },
-          ],
-        });
-
-        // parsedData = JSON.parse(aiRes.response.text());
-        const jsonText = aiRes.response.text().trim();
-
-      
-        const cleanJson = jsonText.replace(/```json/gi, "").replace(/```/g, "");
-
-        parsedData = JSON.parse(cleanJson);
-      } else {
-        const text = data as string;
-
-        const aiRes = await model.generateContent({
-          ...jsonConfig,
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: QUESTION_EXTRACTION_PROMPT + "\n\n" + text }],
-            },
-          ],
-        });
-
-        parsedData = JSON.parse(aiRes.response.text());
-      }
-
-      if (!parsedData.questions || parsedData.questions.length === 0) {
-        throw new Error("AI returned zero questions.");
-      }
-
-      const cleanedQuestions = this.normalizeQuestions(parsedData.questions);
-      console.log(cleanedQuestions);
-
-      await record.update({
-        questions: cleanedQuestions,
-        totalMarks: parsedData.totalMarks,
-        status: "completed",
+              },
+            ],
+          },
+        ],
       });
 
-      this.emitStatus(recordId, "Completed successfully!");
-    } catch (err: any) {
-      logger.error(`Job failed: ${err.message}`);
+      const jsonText = aiRes.response.text().trim();
+      const cleanJson = jsonText.replace(/```json/gi, "").replace(/```/g, "");
 
-      await record.update({
-        status: "failed",
-        errorMessage: err.message,
+      parsedData = JSON.parse(cleanJson);
+    } else {
+      const text = data as string;
+
+      const aiRes = await model.generateContent({
+        ...jsonConfig,
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: QUESTION_EXTRACTION_PROMPT + "\n\n" + text }],
+          },
+        ],
       });
 
-      this.emitStatus(recordId, "failed: " + err.message);
+      parsedData = JSON.parse(aiRes.response.text());
     }
+
+    if (!parsedData.questions || parsedData.questions.length === 0) {
+      throw new Error("AI returned zero questions.");
+    }
+
+    const cleanedQuestions = this.normalizeQuestions(parsedData.questions);
+    console.log(cleanedQuestions);
+
+    await Question.destroy({
+      where: { questionPaperId: recordId },
+    });
+
+    for (const q of cleanedQuestions) {
+      await Question.create({
+        questionPaperId: recordId,
+        number: q.number,
+        text: q.text,
+        marks: q.marks,
+        flagged: q.flagged,
+      });
+    }
+
+
+    await record.update({
+      totalMarks: parsedData.totalMarks,
+      status: "completed",
+    });
+
+    this.emitStatus(recordId, "Completed successfully!");
+  } catch (err: any) {
+    logger.error(`Job failed: ${err.message}`);
+
+    await record.update({
+      status: "failed",
+      errorMessage: err.message,
+    });
+
+    this.emitStatus(recordId, "failed: " + err.message);
   }
+}
+
 }

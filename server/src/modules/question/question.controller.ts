@@ -3,6 +3,7 @@ import { QuestionService } from "./question.service";
 import logger from "../../config/logger";
 import { v2 as cloudinary } from "cloudinary";
 import QuestionPaper from "./question.model";
+import Question from "./questionDetail.model"; 
 import {
   typedQuestionSchema,
   fileJobSchema,
@@ -116,29 +117,40 @@ export class QuestionController {
   }
 
   static async getStatus(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      const record = await QuestionPaper.findByPk(id);
+  try {
+    const { id } = req.params;
 
-      if (!record) {
-        return res.status(404).json({
-          success: false,
-          message: "Record not found.",
-        });
-      }
+    const record = await QuestionPaper.findByPk(id, {
+      include: [
+        {
+          model: Question,
+          as: "questions",
+        },
+      ],
+      order: [[{ model: Question, as: "questions" }, "number", "ASC"]],
+    });
 
-      res.status(200).json({
-        success: true,
-        data: record,
-      });
-    } catch (error: any) {
-      logger.error(`Status Error: ${error.message}`);
-      res.status(500).json({
+    if (!record) {
+      return res.status(404).json({
         success: false,
-        message: "Failed to fetch status.",
+        message: "Record not found.",
       });
     }
+
+    return res.status(200).json({
+      success: true,
+      data: record,
+    });
+
+  } catch (error: any) {
+    logger.error(`Status Error: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch status.",
+    });
   }
+}
+
 
   static async retryJob(req: Request, res: Response) {
     try {
@@ -197,53 +209,70 @@ export class QuestionController {
     }
   }
 
+
   static async updateQuestions(req: Request, res: Response) {
-    try {
-      const { id } = req.params;
-      const { questions } = req.body;
+  try {
+    const { id } = req.params;
+    const { questions } = req.body;
 
-      if (!Array.isArray(questions)) {
-        return res.status(400).json({
-          success: false,
-          message: "Questions must be an array.",
-        });
-      }
-
-      const record = await QuestionPaper.findByPk(id);
-      if (!record) {
-        return res.status(404).json({
-          success: false,
-          message: "Question paper not found.",
-        });
-      }
-
-      const cleaned = questions.map((q) => ({
-        ...q,
-        marks: q.marks ? Number(q.marks) : null,
-        flagged: q.marks ? false : true,
-      }));
-
-      const totalMarks = cleaned.reduce(
-        (sum, q) => sum + (q.marks ? Number(q.marks) : 0),
-        0
-      );
-
-      await record.update({
-        questions: cleaned,
-        totalMarks,
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: "Questions updated successfully.",
-        questions: cleaned,
-        totalMarks,
-      });
-    } catch (err: any) {
-      return res.status(500).json({
+    if (!Array.isArray(questions)) {
+      return res.status(400).json({
         success: false,
-        message: err.message || "Failed to update questions.",
+        message: "Questions must be an array.",
       });
     }
+
+    const record = await QuestionPaper.findByPk(id);
+    if (!record) {
+      return res.status(404).json({
+        success: false,
+        message: "Question paper not found.",
+      });
+    }
+
+    const cleaned = questions.map((q, i) => ({
+      number: q.number || i + 1,
+      text: q.text,
+      marks: q.marks ? Number(q.marks) : null,
+      flagged: q.marks ? false : true,
+    }));
+
+    const totalMarks = cleaned.reduce(
+      (sum, q) => sum + (q.marks || 0),
+      0
+    );
+
+   
+    await Question.destroy({
+      where: { questionPaperId: id },
+    });
+
+    
+    for (const q of cleaned) {
+      await Question.create({
+        questionPaperId: id,
+        number: q.number,
+        text: q.text,
+        marks: q.marks,
+        flagged: q.flagged,
+      });
+    }
+
+
+    await record.update({ totalMarks });
+
+    return res.status(200).json({
+      success: true,
+      message: "Questions updated successfully.",
+      totalMarks,
+      questionsInserted: cleaned.length,
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to update questions.",
+    });
   }
+}
+
 }

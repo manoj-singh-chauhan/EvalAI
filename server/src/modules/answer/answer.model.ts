@@ -8,7 +8,7 @@ interface AnswerSheetAttributes {
   // questionPaperId: number;
   questionPaperId: string;
   answerSheetFiles: any | null;
-  answers: any | null;
+  // answers: any | null;
   /*
     [
       {
@@ -33,7 +33,7 @@ interface AnswerSheetCreation
   extends Optional<
     AnswerSheetAttributes,
     | "id"
-    | "answers"
+    // | "answers"
     | "answerSheetFiles"
     | "totalScore"
     | "feedback"
@@ -51,13 +51,14 @@ export class AnswerSheet
   public questionPaperId!: string;
 
   public answerSheetFiles!: any | null;
-  public answers!: any | null;
+  // public answers!: any | null;
 
   public totalScore!: number | null;
   public feedback!: string | null;
 
   public status!: "pending" | "processing" | "completed" | "failed";
   public errorMessage!: string | null;
+  evaluatedAnswers: any;
 }
 
 AnswerSheet.init(
@@ -90,11 +91,11 @@ AnswerSheet.init(
       defaultValue: [],
     },
 
-    answers: {
-      type: DataTypes.JSON,
-      allowNull: true,
-      defaultValue: [],
-    },
+    // answers: {
+    //   type: DataTypes.JSON,
+    //   allowNull: true,
+    //   defaultValue: [],
+    // },
 
     totalScore: {
       type: DataTypes.INTEGER,

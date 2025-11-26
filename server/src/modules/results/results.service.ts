@@ -1,5 +1,6 @@
 import QuestionPaper from "../question/question.model";
 import AnswerSheet from "../answer/answer.model";
+import EvaluatedAnswer from "../answer/evaluatedAnswer.model";
 
 export class ResultsService {
   static async getResults(paperId: string) {
@@ -53,19 +54,27 @@ static async getQuestionPaper(paperId: string) {
 
 
   static async getAnswerSheet(answerId: string) {
-    const answer = await AnswerSheet.findByPk(answerId);
+  const answer = await AnswerSheet.findByPk(answerId, {
+    include: [
+      {
+        model: EvaluatedAnswer,
+        as: "evaluatedAnswers",
+      },
+    ],
+  });
 
-    if (!answer) throw new Error("Answer sheet not found");
+  if (!answer) throw new Error("Answer sheet not found");
 
-    return {
-      id: answer.id,
-      questionPaperId: answer.questionPaperId,
-      answerSheetFiles: answer.answerSheetFiles,
-      answers: answer.answers,
-      totalScore: answer.totalScore,
-      feedback:answer.feedback,
-      status: answer.status,
-      errorMessage: answer.errorMessage,
-    };
-  }
+  return {
+    id: answer.id,
+    questionPaperId: answer.questionPaperId,
+    answerSheetFiles: answer.answerSheetFiles,
+    answers: answer.evaluatedAnswers,
+    totalScore: answer.totalScore,
+    feedback: answer.feedback,
+    status: answer.status,
+    errorMessage: answer.errorMessage,
+  };
+}
+
 }

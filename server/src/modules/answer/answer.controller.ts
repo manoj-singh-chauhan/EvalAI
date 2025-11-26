@@ -4,6 +4,7 @@ import AnswerSheet from "./answer.model";
 import { v2 as cloudinary } from "cloudinary";
 import { AnswerService } from "./answer.service";
 import logger from "../../config/logger";
+import EvaluatedAnswer from "./evaluatedAnswer.model";
 
 export class AnswerController {
   static async getUploadSignature(req: Request, res: Response) {
@@ -34,47 +35,79 @@ export class AnswerController {
     }
   }
 
- static async submitAnswerSheet(req: Request, res: Response) {
-  const parsed = submitAnswerSchema.safeParse(req.body);
+  static async submitAnswerSheet(req: Request, res: Response) {
+    const parsed = submitAnswerSchema.safeParse(req.body);
 
-  if (!parsed.success) {
-    return res.status(400).json({
-      success: false,
-      message: parsed.error.issues[0].message,
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        message: parsed.error.issues[0].message,
+      });
+    }
+
+    const { questionPaperId, answerSheetFiles } = parsed.data;
+
+    const createdIds: string[] = [];
+
+    for (const file of answerSheetFiles) {
+      const record = await AnswerSheet.create({
+        questionPaperId,
+        answerSheetFiles: [file],
+        status: "pending",
+      });
+
+      await AnswerService.scheduleAnswerJob({
+        recordId: record.id,
+        questionPaperId,
+        answerSheetFiles: [file],
+      });
+
+      createdIds.push(record.id);
+    }
+
+    return res.status(202).json({
+      success: true,
+      ids: createdIds,
+      message: "Answer sheets received. Evaluating...",
     });
   }
 
-  const { questionPaperId, answerSheetFiles } = parsed.data;
+  // static async getStatus(req: Request, res: Response) {
+  //   try {
+  //     const { id } = req.params;
+  //     const record = await AnswerSheet.findByPk(id);
 
-  const createdIds: string[] = [];
+  //     if (!record) {
+  //       return res.status(404).json({
+  //         success: false,
+  //         message: "AnswerSheet record not found.",
+  //       });
+  //     }
 
-  for (const file of answerSheetFiles) {
-    const record = await AnswerSheet.create({
-      questionPaperId,
-      answerSheetFiles: [file],
-      status: "pending",
-    });
-
-    await AnswerService.scheduleAnswerJob({
-      recordId: record.id,
-      questionPaperId,
-      answerSheetFiles: [file],
-    });
-
-    createdIds.push(record.id);
-  }
-
-  return res.status(202).json({
-    success: true,
-    ids: createdIds,
-    message: "Answer sheets received. Evaluating...",
-  });
-}
-
+  //     return res.status(200).json({
+  //       success: true,
+  //       data: record,
+  //     });
+  //   } catch (error: any) {
+  //     logger.error(`AnswerController Status Error: ${error.message}`);
+  //     return res.status(500).json({
+  //       success: false,
+  //       message: "Failed to retrieve status.",
+  //     });
+  //   }
+  // }
   static async getStatus(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const record = await AnswerSheet.findByPk(id);
+
+      const record = await AnswerSheet.findByPk(id, {
+        include: [
+          {
+            model: EvaluatedAnswer,
+            as: "evaluatedAnswers",
+          },
+        ],
+      });
 
       if (!record) {
         return res.status(404).json({
