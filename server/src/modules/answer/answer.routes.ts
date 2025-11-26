@@ -3,10 +3,15 @@ import { AnswerController } from "./answer.controller";
 
 const router = express.Router();
 
+// router.get(
+//   "/get-upload-signature",
+//   AnswerController.getUploadSignature
+// )
 router.get(
-  "/get-upload-signature",
+  "/get-upload-signature/:questionPaperId",
   AnswerController.getUploadSignature
-)
+);
+
 
 router.post(
   "/submit",

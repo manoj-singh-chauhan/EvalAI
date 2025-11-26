@@ -7,33 +7,70 @@ import logger from "../../config/logger";
 import EvaluatedAnswer from "./evaluatedAnswer.model";
 
 export class AnswerController {
+  // static async getUploadSignature(req: Request, res: Response) {
+  //   try {
+  //     const timestamp = Math.round(Date.now() / 1000);
+  //     const folder = "answer-sheets";
+
+  //     const signature = cloudinary.utils.api_sign_request(
+  //       { timestamp, folder },
+  //       process.env.CLOUDINARY_API_SECRET!
+  //     );
+
+  //     res.status(200).json({
+  //       success: true,
+  //       timestamp,
+  //       signature,
+  //       folder,
+  //       apiKey: process.env.CLOUDINARY_API_KEY!,
+  //       cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+  //     });
+  //   } catch (error: any) {
+  //     logger.error(`Signature Error (Question): ${error.message}`);
+  //     res.status(500).json({
+  //       success: false,
+
+  //       message: "Could not get upload signature.",
+  //     });
+  //   }
+  // }
   static async getUploadSignature(req: Request, res: Response) {
-    try {
-      const timestamp = Math.round(Date.now() / 1000);
-      const folder = "answer-sheets";
+  try {
+    const { questionPaperId } = req.params;
 
-      const signature = cloudinary.utils.api_sign_request(
-        { timestamp, folder },
-        process.env.CLOUDINARY_API_SECRET!
-      );
-
-      res.status(200).json({
-        success: true,
-        timestamp,
-        signature,
-        folder,
-        apiKey: process.env.CLOUDINARY_API_KEY!,
-        cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
-      });
-    } catch (error: any) {
-      logger.error(`Signature Error (Question): ${error.message}`);
-      res.status(500).json({
+    if (!questionPaperId) {
+      return res.status(400).json({
         success: false,
-
-        message: "Could not get upload signature.",
+        message: "questionPaperId is required.",
       });
     }
+
+    const folder = `ai-eval/job_${questionPaperId}/answers`;
+
+    const timestamp = Math.round(Date.now() / 1000);
+
+    const signature = cloudinary.utils.api_sign_request(
+      { timestamp, folder },
+      process.env.CLOUDINARY_API_SECRET!
+    );
+
+    res.status(200).json({
+      success: true,
+      timestamp,
+      signature,
+      folder,
+      apiKey: process.env.CLOUDINARY_API_KEY!,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+    });
+  } catch (error: any) {
+    logger.error(`Signature Error (Answer): ${error.message}`);
+    res.status(500).json({
+      success: false,
+      message: "Could not get upload signature.",
+    });
   }
+}
+
 
   static async submitAnswerSheet(req: Request, res: Response) {
     const parsed = submitAnswerSchema.safeParse(req.body);
