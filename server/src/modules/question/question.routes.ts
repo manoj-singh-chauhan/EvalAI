@@ -3,10 +3,13 @@ import { QuestionController } from "./question.controller";
 
 const router = express.Router();
 
-router.get(
-  "/get-upload-signature",
-  QuestionController.getUploadSignature
-);
+// router.get(
+//   "/get-upload-signature",
+//   QuestionController.getUploadSignature
+// );
+
+router.post("/get-upload-signature", QuestionController.getUploadSignature);
+
 
 router.post(
   "/submit-file-job",

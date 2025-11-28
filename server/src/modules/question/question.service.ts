@@ -50,116 +50,116 @@ export class QuestionService {
 
       return {
         number: q.number || index + 1,
-        text: q.text || q.question || "",  
+        text: q.text || q.question || "",
         marks,
         flagged: marks === null,
       };
     });
   }
 
+  static async processQuestionJob(
+    type: "file" | "text",
+    recordId: string,
+    data: JobData
+  ) {
+    const record = await QuestionPaper.findByPk(recordId);
+    if (!record) return;
 
-static async processQuestionJob(
-  type: "file" | "text",
-  recordId: string,
-  data: JobData
-) {
-  const record = await QuestionPaper.findByPk(recordId);
-  if (!record) return;
+    await record.update({ status: "processing", errorMessage: null });
+    this.emitStatus(
+      recordId,
+      "checking or extracting your question pepar by ai "
+    );
 
-  await record.update({ status: "processing", errorMessage: null });
-  this.emitStatus(recordId, "checking or extracting your question pepar by ai ");
+    try {
+      let parsedData: { questions: any[]; totalMarks: number };
 
-  try {
-    let parsedData: { questions: any[]; totalMarks: number };
+      const jsonConfig = {
+        generationConfig: {
+          responseMimeType: "application/json",
+        },
+      };
 
-    const jsonConfig = {
-      generationConfig: {
-        responseMimeType: "application/json",
-      },
-    };
+      if (type === "file") {
+        const { fileUrl, mimeType } = data as FileJobData;
 
-    if (type === "file") {
-      const { fileUrl, mimeType } = data as FileJobData;
+        const buffer = await downloadFile(fileUrl);
+        const base64 = buffer.toString("base64");
 
-      const buffer = await downloadFile(fileUrl);
-      const base64 = buffer.toString("base64");
-
-      const aiRes = await model.generateContent({
-        ...jsonConfig,
-        contents: [
-          {
-            role: "user",
-            parts: [
-              { text: QUESTION_EXTRACTION_PROMPT },
-              {
-                inlineData: {
-                  mimeType,
-                  data: base64,
+        const aiRes = await model.generateContent({
+          ...jsonConfig,
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { text: QUESTION_EXTRACTION_PROMPT },
+                {
+                  inlineData: {
+                    mimeType,
+                    data: base64,
+                  },
                 },
-              },
-            ],
-          },
-        ],
+              ],
+            },
+          ],
+        });
+
+        const jsonText = aiRes.response.text().trim();
+        const cleanJson = jsonText.replace(/```json/gi, "").replace(/```/g, "");
+
+        parsedData = JSON.parse(cleanJson);
+      } else {
+        const text = data as string;
+
+        const aiRes = await model.generateContent({
+          ...jsonConfig,
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: QUESTION_EXTRACTION_PROMPT + "\n\n" + text }],
+            },
+          ],
+        });
+
+        parsedData = JSON.parse(aiRes.response.text());
+      }
+
+      if (!parsedData.questions || parsedData.questions.length === 0) {
+        throw new Error("AI returned zero questions.");
+      }
+
+      const cleanedQuestions = this.normalizeQuestions(parsedData.questions);
+      console.log(cleanedQuestions);
+
+      await Question.destroy({
+        where: { questionPaperId: recordId },
       });
 
-      const jsonText = aiRes.response.text().trim();
-      const cleanJson = jsonText.replace(/```json/gi, "").replace(/```/g, "");
+      for (const q of cleanedQuestions) {
+        await Question.create({
+          questionPaperId: recordId,
+          number: q.number,
+          text: q.text,
+          marks: q.marks,
+          flagged: q.flagged,
+        });
+      }
 
-      parsedData = JSON.parse(cleanJson);
-    } else {
-      const text = data as string;
-
-      const aiRes = await model.generateContent({
-        ...jsonConfig,
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: QUESTION_EXTRACTION_PROMPT + "\n\n" + text }],
-          },
-        ],
+      await record.update({
+        totalMarks: parsedData.totalMarks,
+        status: "completed",
       });
 
-      parsedData = JSON.parse(aiRes.response.text());
-    }
+      this.emitStatus(recordId, "Completed successfully!");
+    } catch (err: any) {
+      logger.error(`Job failed: ${err.message}`);
 
-    if (!parsedData.questions || parsedData.questions.length === 0) {
-      throw new Error("AI returned zero questions.");
-    }
-
-    const cleanedQuestions = this.normalizeQuestions(parsedData.questions);
-    console.log(cleanedQuestions);
-
-    await Question.destroy({
-      where: { questionPaperId: recordId },
-    });
-
-    for (const q of cleanedQuestions) {
-      await Question.create({
-        questionPaperId: recordId,
-        number: q.number,
-        text: q.text,
-        marks: q.marks,
-        flagged: q.flagged,
+      await record.update({
+        status: "failed",
+        errorMessage: err.message,
       });
+
+      this.emitStatus(recordId, "failed: " + err.message);
     }
-
-
-    await record.update({
-      totalMarks: parsedData.totalMarks,
-      status: "completed",
-    });
-
-    this.emitStatus(recordId, "Completed successfully!");
-  } catch (err: any) {
-    logger.error(`Job failed: ${err.message}`);
-
-    await record.update({
-      status: "failed",
-      errorMessage: err.message,
-    });
-
-    this.emitStatus(recordId, "failed: " + err.message);
   }
-}
-
 }

@@ -10,7 +10,7 @@ import { printRoutes } from "./utils/printRoutes";
 import { sequelize } from "./config/db";
 import { redisConnection } from "./config/redis";
 
-import "./utils/cloudinaryUpload";
+import "./config/cloudinaryUpload";
 import "./jobs/answer.worker";
 import "./jobs/question.worker";
 

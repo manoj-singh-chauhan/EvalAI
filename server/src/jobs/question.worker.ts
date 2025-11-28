@@ -7,7 +7,7 @@ import { io } from "../server";
 const QUEUE_NAME = "question-creation";
 
 interface QuestionJobPayload {
-  type: "file" | "text"; 
+  type: "file" | "text";
   recordId: string;
   data: any;
 }

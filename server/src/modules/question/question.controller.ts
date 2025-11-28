@@ -13,42 +13,82 @@ import {
 export class QuestionController {
   // static async getUploadSignature(req: Request, res: Response) {
   //   try {
+  //     const record = await QuestionPaper.create({
+  //       mode: "upload",
+  //       status: "pending",
+  //     });
+
+  //     const jobId = record.id;
+
+  //     const folder = `ai-eval/job_${jobId}`;
+
   //     const timestamp = Math.round(Date.now() / 1000);
-  //     const folder = "question-papers";
 
   //     const signature = cloudinary.utils.api_sign_request(
   //       { timestamp, folder },
   //       process.env.CLOUDINARY_API_SECRET!
   //     );
 
-  //     res.status(200).json({
+  //     return res.status(200).json({
   //       success: true,
-  //       timestamp,
-  //       signature,
+  //       jobId,
   //       folder,
+  //       signature,
+  //       timestamp,
   //       apiKey: process.env.CLOUDINARY_API_KEY!,
   //       cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
   //     });
   //   } catch (error: any) {
-  //     logger.error(`Signature Error (Question): ${error.message}`);
-  //     res.status(500).json({
+  //     return res.status(500).json({
   //       success: false,
-  //       message: "Could not get upload signature.",
+  //       message: "Could not generate upload signature.",
   //     });
   //   }
   // }
 
   static async getUploadSignature(req: Request, res: Response) {
     try {
+      const { fileName, fileSize, mimeType } = req.body;
+
+      if (!fileName || !fileSize || !mimeType) {
+        return res.status(400).json({
+          success: false,
+          message: "fileName, fileSize and mimeType are required.",
+        });
+      }
+
+      const MAX_SIZE = 5*1024*1024;
+      if (fileSize > MAX_SIZE) {
+        return res.status(400).json({
+          success: false,
+          message: "File too large. Maximum allowed size is 5 MB.",
+        });
+      }
+
+      const allowed = ["application/pdf", "image/jpeg", "image/png"];
+      if (!allowed.includes(mimeType)) {
+        return res.status(400).json({
+          success: false,
+          message: "Only PDF or image files are allowed.",
+        });
+      }
+
+      const ext = fileName.split(".").pop()?.toLowerCase();
+      const allowedExt = ["pdf", "jpg", "jpeg", "png"];
+      if (!ext || !allowedExt.includes(ext)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid file extension.",
+        });
+      }
+
       const record = await QuestionPaper.create({
         mode: "upload",
         status: "pending",
       });
 
       const jobId = record.id;
-
       const folder = `ai-eval/job_${jobId}`;
-
       const timestamp = Math.round(Date.now() / 1000);
 
       const signature = cloudinary.utils.api_sign_request(

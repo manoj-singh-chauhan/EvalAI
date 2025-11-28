@@ -69,6 +69,11 @@ export default function AnswerSheetPage() {
 
 
   const evaluatedAnswers = sheet.answers || [];
+//   const evaluatedAnswers = (sheet.answers || []).sort(
+//   (a, b) => a.questionNumber - b.questionNumber
+// );
+
+  // console.log(evaluatedAnswers);
 
   return (
     <div className="p-10 space-y-8 max-w-4xl mx-auto">
@@ -120,8 +125,14 @@ export default function AnswerSheetPage() {
               key={ans.questionNumber}
               className="p-4 border rounded-lg bg-gray-50"
             >
-              <p className="font-medium text-gray-800">
+              {/* <p className="font-medium text-gray-800">
                 Q{ans.questionNumber}: {ans.questionText}
+              </p> */}
+
+              <p className="font-medium text-gray-800 whitespace-pre-line">
+                <strong>Q{ans.questionNumber}:</strong>
+                <br />
+                {ans.questionText}
               </p>
 
               <p className="mt-2 text-sm text-gray-800 whitespace-pre-wrap">

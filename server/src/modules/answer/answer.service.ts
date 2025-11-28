@@ -1,7 +1,9 @@
 import AnswerSheet from "./answer.model";
+import AnswerSheetFile from "./answerFile.model";
 import QuestionPaper from "../question/question.model";
 import Question from "../question/questionDetail.model";
 import EvaluatedAnswer from "./evaluatedAnswer.model";
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { downloadFile } from "../../utils/fileDownloader";
 import { answerQueue } from "../../jobs/answer.queue";
@@ -28,10 +30,18 @@ export class AnswerService {
   static async processAnswerJob(
     recordId: string,
     questionPaperId: string,
-    answerSheetFiles: { fileUrl: string; mimeType: string }[]
+    _incomingFiles: { fileUrl: string; mimeType: string }[]
   ) {
-    const record = await AnswerSheet.findByPk(recordId);
+    const record = await AnswerSheet.findByPk(recordId, {
+      include: [{ model: AnswerSheetFile, as: "files" }],
+    });
+
     if (!record) return;
+
+    const answerSheetFiles = record.files.map((f: any) => ({
+      fileUrl: f.fileUrl,
+      mimeType: f.fileType,
+    }));
 
     await record.update({ status: "processing", errorMessage: null });
     this.emitStatus(recordId, "Processing answer sheet…");
@@ -56,8 +66,8 @@ export class AnswerService {
       this.emitStatus(recordId, "Reading answer sheet pages…");
 
       const pagesBase64: string[] = [];
-      for (const file of answerSheetFiles) {
-        const buffer = await downloadFile(file.fileUrl);
+      for (const f of answerSheetFiles) {
+        const buffer = await downloadFile(f.fileUrl);
         pagesBase64.push(buffer.toString("base64"));
       }
 

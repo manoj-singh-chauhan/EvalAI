@@ -2,25 +2,22 @@ import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../../config/db";
 
 interface AnswerSheetAttributes {
-  // id: number;
   id: string;
-
-  // questionPaperId: number;
   questionPaperId: string;
-  answerSheetFiles: any | null;
-  // answers: any | null;
-  /*
-    [
-      {
-        questionNumber: 1,
-        questionText: "...",
-        studentAnswer: "... long text ...",
-        score: 4,
-        maxScore: 5,
-        feedback: "Good explanation, missing diagram."
-      }
-    ]
-  */
+//   // answerSheetFiles: any | null;
+//   // answers: any | null;
+//   /*
+//     [
+//       {
+//         questionNumber: 1,
+//         questionText: "...",
+//         studentAnswer: "... long text ...",
+//         score: 4,
+//         maxScore: 5,
+//         feedback: "Good explanation, missing diagram."
+//       }
+//     ]
+//   */
 
   totalScore?: number | null;
   feedback?: string | null;
@@ -32,70 +29,37 @@ interface AnswerSheetAttributes {
 interface AnswerSheetCreation
   extends Optional<
     AnswerSheetAttributes,
-    | "id"
-    // | "answers"
-    | "answerSheetFiles"
-    | "totalScore"
-    | "feedback"
-    | "status"
-    | "errorMessage"
+    "id" | "totalScore" | "feedback" | "status" | "errorMessage"
   > {}
 
 export class AnswerSheet
   extends Model<AnswerSheetAttributes, AnswerSheetCreation>
   implements AnswerSheetAttributes
 {
-  // public id!: number;
   public id!: string;
-  // public questionPaperId!: number;
   public questionPaperId!: string;
-
-  public answerSheetFiles!: any | null;
-  // public answers!: any | null;
 
   public totalScore!: number | null;
   public feedback!: string | null;
 
   public status!: "pending" | "processing" | "completed" | "failed";
   public errorMessage!: string | null;
+  files: any;
   evaluatedAnswers: any;
 }
 
 AnswerSheet.init(
   {
-    // id: {
-    //   type: DataTypes.INTEGER.UNSIGNED,
-    //   autoIncrement: true,
-    //   primaryKey: true,
-    // },
-
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
 
-    // questionPaperId: {
-    //   type: DataTypes.INTEGER.UNSIGNED,
-    //   allowNull: false,
-    // },
-
     questionPaperId: {
       type: DataTypes.UUID,
       allowNull: false,
     },
-
-    answerSheetFiles: {
-      type: DataTypes.JSON,
-      allowNull: true,
-      defaultValue: [],
-    },
-
-    // answers: {
-    //   type: DataTypes.JSON,
-    //   allowNull: true,
-    //   defaultValue: [],
-    // },
 
     totalScore: {
       type: DataTypes.INTEGER,
@@ -119,13 +83,8 @@ AnswerSheet.init(
   },
   {
     sequelize,
-    modelName: "AnswerSheet",
     tableName: "answer_sheets",
     timestamps: true,
-    indexes: [
-      { fields: ["questionPaperId"] },
-      { fields: ["status"] },
-    ],
   }
 );
 

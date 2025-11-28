@@ -25,10 +25,11 @@ AnswerSheetFile.init(
     fileType: {
       type: DataTypes.STRING,
       allowNull: true,
-    }
+    },
   },
   {
     sequelize,
+    modelName: "AnswerSheetFile",
     tableName: "answer_sheet_files",
     timestamps: true,
   }

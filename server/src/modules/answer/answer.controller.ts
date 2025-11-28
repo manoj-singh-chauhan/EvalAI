@@ -1,75 +1,49 @@
 import { Request, Response } from "express";
 import { submitAnswerSchema, retryAnswerSchema } from "./answer.validation";
 import AnswerSheet from "./answer.model";
+import AnswerSheetFile from "./answerFile.model";
 import { v2 as cloudinary } from "cloudinary";
 import { AnswerService } from "./answer.service";
 import logger from "../../config/logger";
 import EvaluatedAnswer from "./evaluatedAnswer.model";
 
 export class AnswerController {
-  // static async getUploadSignature(req: Request, res: Response) {
-  //   try {
-  //     const timestamp = Math.round(Date.now() / 1000);
-  //     const folder = "answer-sheets";
 
-  //     const signature = cloudinary.utils.api_sign_request(
-  //       { timestamp, folder },
-  //       process.env.CLOUDINARY_API_SECRET!
-  //     );
-
-  //     res.status(200).json({
-  //       success: true,
-  //       timestamp,
-  //       signature,
-  //       folder,
-  //       apiKey: process.env.CLOUDINARY_API_KEY!,
-  //       cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
-  //     });
-  //   } catch (error: any) {
-  //     logger.error(`Signature Error (Question): ${error.message}`);
-  //     res.status(500).json({
-  //       success: false,
-
-  //       message: "Could not get upload signature.",
-  //     });
-  //   }
-  // }
   static async getUploadSignature(req: Request, res: Response) {
-  try {
-    const { questionPaperId } = req.params;
+    try {
+      const { questionPaperId } = req.params;
 
-    if (!questionPaperId) {
-      return res.status(400).json({
+      if (!questionPaperId) {
+        return res.status(400).json({
+          success: false,
+          message: "questionPaperId is required.",
+        });
+      }
+
+      const folder = `ai-eval/job_${questionPaperId}/answers`;
+      const timestamp = Math.round(Date.now() / 1000);
+
+      const signature = cloudinary.utils.api_sign_request(
+        { timestamp, folder },
+        process.env.CLOUDINARY_API_SECRET!
+      );
+
+      res.status(200).json({
+        success: true,
+        timestamp,
+        signature,
+        folder,
+        apiKey: process.env.CLOUDINARY_API_KEY!,
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+      });
+    } catch (error: any) {
+      logger.error(`Signature Error (Answer): ${error.message}`);
+      res.status(500).json({
         success: false,
-        message: "questionPaperId is required.",
+        message: "Could not get upload signature.",
       });
     }
-
-    const folder = `ai-eval/job_${questionPaperId}/answers`;
-
-    const timestamp = Math.round(Date.now() / 1000);
-
-    const signature = cloudinary.utils.api_sign_request(
-      { timestamp, folder },
-      process.env.CLOUDINARY_API_SECRET!
-    );
-
-    res.status(200).json({
-      success: true,
-      timestamp,
-      signature,
-      folder,
-      apiKey: process.env.CLOUDINARY_API_KEY!,
-      cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
-    });
-  } catch (error: any) {
-    logger.error(`Signature Error (Answer): ${error.message}`);
-    res.status(500).json({
-      success: false,
-      message: "Could not get upload signature.",
-    });
   }
-}
 
 
   static async submitAnswerSheet(req: Request, res: Response) {
@@ -86,67 +60,51 @@ export class AnswerController {
 
     const createdIds: string[] = [];
 
-    for (const file of answerSheetFiles) {
-      const record = await AnswerSheet.create({
+    for (const f of answerSheetFiles) {
+      const sheet = await AnswerSheet.create({
         questionPaperId,
-        answerSheetFiles: [file],
         status: "pending",
       });
 
-      await AnswerService.scheduleAnswerJob({
-        recordId: record.id,
-        questionPaperId,
-        answerSheetFiles: [file],
+
+      await AnswerSheetFile.create({
+        answerSheetId: sheet.id,
+        fileUrl: f.fileUrl,
+        fileType: f.mimeType,
       });
 
-      createdIds.push(record.id);
+
+      await AnswerService.scheduleAnswerJob({
+        recordId: sheet.id,
+        questionPaperId,
+        answerSheetFiles: [
+          { fileUrl: f.fileUrl, mimeType: f.mimeType }
+        ],
+      });
+
+      createdIds.push(sheet.id);
     }
 
-    return res.status(202).json({
+    res.status(202).json({
       success: true,
       ids: createdIds,
       message: "Answer sheets received. Evaluating...",
     });
   }
 
-  // static async getStatus(req: Request, res: Response) {
-  //   try {
-  //     const { id } = req.params;
-  //     const record = await AnswerSheet.findByPk(id);
 
-  //     if (!record) {
-  //       return res.status(404).json({
-  //         success: false,
-  //         message: "AnswerSheet record not found.",
-  //       });
-  //     }
-
-  //     return res.status(200).json({
-  //       success: true,
-  //       data: record,
-  //     });
-  //   } catch (error: any) {
-  //     logger.error(`AnswerController Status Error: ${error.message}`);
-  //     return res.status(500).json({
-  //       success: false,
-  //       message: "Failed to retrieve status.",
-  //     });
-  //   }
-  // }
   static async getStatus(req: Request, res: Response) {
     try {
       const { id } = req.params;
 
-      const record = await AnswerSheet.findByPk(id, {
+      const sheet = await AnswerSheet.findByPk(id, {
         include: [
-          {
-            model: EvaluatedAnswer,
-            as: "evaluatedAnswers",
-          },
+          { model: EvaluatedAnswer, as: "evaluatedAnswers" },
+          { model: AnswerSheetFile, as: "files" }
         ],
       });
 
-      if (!record) {
+      if (!sheet) {
         return res.status(404).json({
           success: false,
           message: "AnswerSheet record not found.",
@@ -155,7 +113,7 @@ export class AnswerController {
 
       return res.status(200).json({
         success: true,
-        data: record,
+        data: sheet,
       });
     } catch (error: any) {
       logger.error(`AnswerController Status Error: ${error.message}`);
@@ -165,6 +123,7 @@ export class AnswerController {
       });
     }
   }
+
 
   static async retryJob(req: Request, res: Response) {
     try {
@@ -179,31 +138,38 @@ export class AnswerController {
 
       const { id } = parsed.data;
 
-      const record = await AnswerSheet.findByPk(id);
+      const sheet = await AnswerSheet.findByPk(id, {
+        include: [{ model: AnswerSheetFile, as: "files" }],
+      });
 
-      if (!record) {
+      if (!sheet) {
         return res.status(404).json({
           success: false,
           message: "AnswerSheet not found.",
         });
       }
 
-      if (record.status !== "failed") {
+      if (sheet.status !== "failed") {
         return res.status(400).json({
           success: false,
           message: "Only failed jobs can be retried.",
         });
       }
 
-      await record.update({
+      await sheet.update({
         status: "pending",
         errorMessage: null,
       });
 
+      const files = sheet.files.map((f: any) => ({
+        fileUrl: f.fileUrl,
+        mimeType: f.fileType,
+      }));
+
       await AnswerService.scheduleAnswerJob({
-        recordId: record.id,
-        questionPaperId: record.questionPaperId,
-        answerSheetFiles: record.answerSheetFiles,
+        recordId: sheet.id,
+        questionPaperId: sheet.questionPaperId,
+        answerSheetFiles: files,
       });
 
       return res.status(200).json({

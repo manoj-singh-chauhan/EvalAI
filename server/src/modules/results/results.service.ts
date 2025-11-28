@@ -1,18 +1,33 @@
 import QuestionPaper from "../question/question.model";
 import AnswerSheet from "../answer/answer.model";
 import EvaluatedAnswer from "../answer/evaluatedAnswer.model";
+import AnswerSheetFile from "../answer/answerFile.model";
 
 export class ResultsService {
   static async getResults(paperId: string) {
     const questionPaper = await QuestionPaper.findByPk(paperId, {
-      attributes: ["id", "mode", "fileUrl", "totalMarks", "status", "errorMessage"],
+      attributes: [
+        "id",
+        "mode",
+        "fileUrl",
+        "totalMarks",
+        "status",
+        "errorMessage",
+      ],
     });
 
     if (!questionPaper) throw new Error("Question paper not found");
 
     const answers = await AnswerSheet.findAll({
       where: { questionPaperId: paperId },
-      attributes: ["id", "status", "totalScore", "errorMessage", "createdAt", "updatedAt"],
+      attributes: [
+        "id",
+        "status",
+        "totalScore",
+        "errorMessage",
+        "createdAt",
+        "updatedAt",
+      ],
       order: [["id", "ASC"]],
     });
 
@@ -22,45 +37,66 @@ export class ResultsService {
     };
   }
 
-//   static async getQuestionPaper(paperId: number) {
-//     const paper = await QuestionPaper.findByPk(paperId);
+  //   static async getQuestionPaper(paperId: number) {
+  //     const paper = await QuestionPaper.findByPk(paperId);
 
-//     if (!paper) throw new Error("Question paper not found");
+  //     if (!paper) throw new Error("Question paper not found");
 
-//     return {
-//       fileUrl: paper.fileUrl,
-//       mimeType: "application/pdf",
-//     };
-//   }
+  //     return {
+  //       fileUrl: paper.fileUrl,
+  //       mimeType: "application/pdf",
+  //     };
+  //   }
 
-static async getQuestionPaper(paperId: string) {
-  const paper = await QuestionPaper.findByPk(paperId);
+  static async getQuestionPaper(paperId: string) {
+    const paper = await QuestionPaper.findByPk(paperId);
 
-  if (!paper) throw new Error("Question paper not found");
+    if (!paper) throw new Error("Question paper not found");
 
-  if (paper.mode === "typed") {
+    if (paper.mode === "typed") {
+      return {
+        type: "text",
+        rawText: paper.rawText,
+      };
+    }
+
     return {
-      type: "text",
-      rawText: paper.rawText,
+      type: "file",
+      fileUrl: paper.fileUrl,
+      mimeType: paper.fileMimeType || "application/pdf",
     };
   }
 
-  return {
-    type: "file",
-    fileUrl: paper.fileUrl,
-    mimeType: paper.fileMimeType || "application/pdf",
-  };
-}
+  // static async getAnswerSheet(answerId: string) {
+  //   const answer = await AnswerSheet.findByPk(answerId, {
+  //     include: [
+  //       { model: EvaluatedAnswer, as: "evaluatedAnswers" },
+  //       { model: AnswerSheetFile, as: "files" },
+  //     ],
+  //   });
 
+  //   if (!answer) throw new Error("Answer sheet not found");
 
+  //   return {
+  //     id: answer.id,
+  //     questionPaperId: answer.questionPaperId,
+  //     answerSheetFiles: answer.files,
+  //     answers: answer.evaluatedAnswers,
+  //     totalScore: answer.totalScore,
+  //     feedback: answer.feedback,
+  //     status: answer.status,
+  //     errorMessage: answer.errorMessage,
+  //   };
+  // }
   static async getAnswerSheet(answerId: string) {
   const answer = await AnswerSheet.findByPk(answerId, {
     include: [
-      {
-        model: EvaluatedAnswer,
-        as: "evaluatedAnswers",
-      },
+      { model: EvaluatedAnswer, as: "evaluatedAnswers" },
+      { model: AnswerSheetFile, as: "files" }
     ],
+    order: [
+      [{ model: EvaluatedAnswer, as: "evaluatedAnswers" }, "questionNumber", "ASC"]
+    ]
   });
 
   if (!answer) throw new Error("Answer sheet not found");
@@ -68,7 +104,7 @@ static async getQuestionPaper(paperId: string) {
   return {
     id: answer.id,
     questionPaperId: answer.questionPaperId,
-    answerSheetFiles: answer.answerSheetFiles,
+    answerSheetFiles: answer.files,
     answers: answer.evaluatedAnswers,
     totalScore: answer.totalScore,
     feedback: answer.feedback,
