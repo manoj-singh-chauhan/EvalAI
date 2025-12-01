@@ -9,6 +9,7 @@ import cors from "cors";
 import { printRoutes } from "./utils/printRoutes";
 import { sequelize } from "./config/db";
 import { redisConnection } from "./config/redis";
+import submissionRoutes from "./modules/submissions/submissions.routes";
 
 import "./config/cloudinaryUpload";
 import "./jobs/answer.worker";
@@ -58,9 +59,10 @@ app.use("/api/health",async (_req, res) => {
 app.use("/api/questions", questionRoutes);
 app.use("/api/answers", answerRoutes);
 app.use("/api/results", resultRoutes);
+app.use("/api/submissions", submissionRoutes);
+
 
 
 printRoutes(app);
-
 
 export default app;

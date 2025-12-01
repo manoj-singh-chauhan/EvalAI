@@ -98,7 +98,9 @@ export default function AnswerSheetPage() {
       </div>
 
       <div className="bg-white border shadow p-6 rounded-md">
-        <h2 className="font-semibold text-lg">Uploaded answer</h2>
+        <h2 
+        className="font-semibold text-lg"
+        >Uploaded answer</h2>
 
         <ul className="mt-3 space-y-2">
           {sheet.answerSheetFiles.map((file, index) => (
@@ -107,9 +109,9 @@ export default function AnswerSheetPage() {
                 href={file.fileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-blue-600 text-sm"
+                className="px-2 py-1 mt-2 bg-blue-600 text-white rounded hover:bg-blue-700 gap-2"
               >
-                View answer sheet {index + 1}
+                View answer sheet
               </a>
             </li>
           ))}

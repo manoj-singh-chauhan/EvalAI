@@ -3,6 +3,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ResultAPI } from "../api/result.api";
 import { io } from "socket.io-client";
 import { SOCKET_URL } from "../config/env";
+import {
+  FiCheckCircle,
+  FiClock,
+  FiAlertTriangle,
+  // FiFileText,
+  //   FiRefreshCw,
+} from "react-icons/fi";
 
 const socket = io(SOCKET_URL, { autoConnect: true });
 
@@ -98,7 +105,7 @@ export default function ResultsPage() {
     }
   };
 
-  const retrySheet = async (id:string) => {
+  const retrySheet = async (id: string) => {
     try {
       await ResultAPI.retryAnswer(String(id));
       await refreshResults();
@@ -154,7 +161,7 @@ export default function ResultsPage() {
                 rel="noreferrer"
                 className="text-blue-600"
               >
-               open
+                open
               </a>
             )}
           </div>
@@ -165,7 +172,7 @@ export default function ResultsPage() {
         <h2 className="font-semibold text-lg mb-4">Answer Sheets</h2>
 
         <div className="space-y-4">
-          {answers.map((ans,index) => (
+          {answers.map((ans, index) => (
             <div
               key={ans.id}
               className="p-4 border rounded-lg bg-gray-50 flex justify-between items-center"
@@ -179,12 +186,12 @@ export default function ResultsPage() {
                 <p className="text-sm mt-1">
                   Status:{" "}
                   {ans.status === "completed" ? (
-                    <span className="text-green-700 font-semibold">
-                      Completed
+                    <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold flex items-center gap-1">
+                      <FiCheckCircle /> Completed
                     </span>
                   ) : ans.status === "processing" ? (
-                    <span className="text-yellow-600 font-semibold">
-                      Processing…
+                    <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm font-semibold flex items-center gap-1">
+                      <FiClock /> Processing…
                     </span>
                   ) : ans.status === "failed" ? (
                     <span className="text-red-600 font-semibold">Failed</span>
@@ -201,6 +208,9 @@ export default function ResultsPage() {
 
                 {ans.status === "failed" && ans.errorMessage && (
                   <p className="text-sm text-red-700 mt-1">
+                    <span className="px-3 py-1 rounded-full  text-red-700 text-sm font-semibold flex items-center gap-1">
+                      <FiAlertTriangle />
+                    </span>
                     Error: {trimError(ans.errorMessage)}
                   </p>
                 )}
@@ -209,7 +219,9 @@ export default function ResultsPage() {
               <div className="flex gap-2">
                 <button
                   // onClick={() => navigate(`/results/sheet/${ans.id}`)}
-                  onClick={() => navigate(`/results/sheet/${ans.id}?index=${index + 1}`)}
+                  onClick={() =>
+                    navigate(`/results/sheet/${ans.id}?index=${index + 1}`)
+                  }
                   className="px-4 py-2 bg-gray-900 text-white rounded hover:bg-black"
                 >
                   View

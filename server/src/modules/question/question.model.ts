@@ -33,6 +33,7 @@ export class QuestionPaper
   public status!: "pending" | "processing" | "completed" | "failed";
   public errorMessage?: string | null;
   questions: any;
+  createdAt: any;
 }
 
 QuestionPaper.init(

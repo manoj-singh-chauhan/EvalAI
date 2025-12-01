@@ -234,3 +234,7 @@ Snapshot testing
 🟦 12. Deployment (React-only)
 Build process (npm run build)
 Static deployment (Vercel, Netlify)
+
+
+
+event loop 

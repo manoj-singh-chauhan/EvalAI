@@ -73,6 +73,8 @@ export class AnswerService {
 
       this.emitStatus(recordId, "Sending to AI for evaluation…");
 
+      // throw new Error("TEST FAILURE – retry button working or not");
+
       const aiRes = await model.generateContent({
         generationConfig: { responseMimeType: "application/json" },
         contents: [
