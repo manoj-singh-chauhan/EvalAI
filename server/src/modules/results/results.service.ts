@@ -89,28 +89,31 @@ export class ResultsService {
   //   };
   // }
   static async getAnswerSheet(answerId: string) {
-  const answer = await AnswerSheet.findByPk(answerId, {
-    include: [
-      { model: EvaluatedAnswer, as: "evaluatedAnswers" },
-      { model: AnswerSheetFile, as: "files" }
-    ],
-    order: [
-      [{ model: EvaluatedAnswer, as: "evaluatedAnswers" }, "questionNumber", "ASC"]
-    ]
-  });
+    const answer = await AnswerSheet.findByPk(answerId, {
+      include: [
+        { model: EvaluatedAnswer, as: "evaluatedAnswers" },
+        { model: AnswerSheetFile, as: "files" },
+      ],
+      order: [
+        [
+          { model: EvaluatedAnswer, as: "evaluatedAnswers" },
+          "questionNumber",
+          "ASC",
+        ],
+      ],
+    });
 
-  if (!answer) throw new Error("Answer sheet not found");
+    if (!answer) throw new Error("Answer sheet not found");
 
-  return {
-    id: answer.id,
-    questionPaperId: answer.questionPaperId,
-    answerSheetFiles: answer.files,
-    answers: answer.evaluatedAnswers,
-    totalScore: answer.totalScore,
-    feedback: answer.feedback,
-    status: answer.status,
-    errorMessage: answer.errorMessage,
-  };
-}
-
+    return {
+      id: answer.id,
+      questionPaperId: answer.questionPaperId,
+      answerSheetFiles: answer.files,
+      answers: answer.evaluatedAnswers,
+      totalScore: answer.totalScore,
+      feedback: answer.feedback,
+      status: answer.status,
+      errorMessage: answer.errorMessage,
+    };
+  }
 }

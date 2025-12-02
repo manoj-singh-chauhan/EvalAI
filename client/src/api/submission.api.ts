@@ -37,12 +37,12 @@ export interface SubmissionDetail {
 
 export const SubmissionAPI = {
   getAll: async (): Promise<SubmissionRecord[]> => {
-    const res = await axiosClient.get("/submissions");
+    const res = await axiosClient.get("/api/submissions");
     return Array.isArray(res.data.submissions) ? res.data.submissions : [];
   },
 
   getOne: async (id: string): Promise<SubmissionDetail> => {
-    const res = await axiosClient.get(`/submissions/${id}`);
+    const res = await axiosClient.get(`/api/submissions/${id}`);
     return res.data;
   },
 };

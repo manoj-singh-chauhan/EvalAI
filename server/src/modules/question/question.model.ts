@@ -4,6 +4,7 @@ import { sequelize } from "../../config/db";
 interface QuestionPaperAttributes {
   id: string;
   mode: "typed" | "upload";
+  createdBy:string
   fileUrl?: string | null;
   fileMimeType?: string | null;
   rawText?: string | null;
@@ -26,6 +27,7 @@ export class QuestionPaper
 {
   public id!: string;
   public mode!: "typed" | "upload";
+  public createdBy!: string;
   public fileUrl?: string | null;
   public fileMimeType?: string | null;
   public rawText?: string | null;
@@ -46,6 +48,11 @@ QuestionPaper.init(
 
     mode: {
       type: DataTypes.ENUM("typed", "upload"),
+      allowNull: false,
+    },
+
+    createdBy: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
 

@@ -9,30 +9,81 @@ import SubmissionDetailPage from "../pages/SubmissionDetailPage";
 import StepperLayout from "../components/StepperLayout";
 import AiExtractedQuestion from "../pages/AiExtrctedQuestion";
 
-const StepperWrapper = () => {
-  return (
-    <StepperLayout>
-      <Outlet />
-    </StepperLayout>
-  );
-};
+import SignInPage from "../pages/SignInPage";
+import SignUpPage from "../pages/SignUpPage";
+
+import ProtectedRoute from "../components/ProtectedRoute";
+
+const StepperWrapper = () => (
+  <StepperLayout>
+    <Outlet />
+  </StepperLayout>
+);
 
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route element={<StepperWrapper />}>
+      <Route path="/sign-in" element={<SignInPage />} />
+      <Route path="/sign-up" element={<SignUpPage />} />
+
+      <Route
+        element={
+          <ProtectedRoute>
+            <StepperWrapper />
+          </ProtectedRoute>
+        }
+      >
         <Route path="/" element={<QuestionPage />} />
         <Route path="/answers/:paperId" element={<AnswerPage />} />
         <Route path="/results/:paperId" element={<ResultPage />} />
       </Route>
 
-      <Route path="/results/sheet/:answerId" element={<AnswerSheetPage />} />
-      <Route path="/review-questions/:paperId" element={<ReviewQuestionsPage />} />
-      
+      <Route
+        path="/results/sheet/:answerId"
+        element={
+          <ProtectedRoute>
+            <AnswerSheetPage />
+          </ProtectedRoute>
+        }
+      />
 
-      <Route path="/submissions" element={<SubmissionHistoryPage />} />
-      <Route path="/submissions/:id" element={<SubmissionDetailPage />} />
-      <Route path="/submissions/:id/questions" element={<AiExtractedQuestion />} />
+      <Route
+        path="/review-questions/:paperId"
+        element={
+          <ProtectedRoute>
+            <ReviewQuestionsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/submissions"
+        element={
+          <ProtectedRoute>
+            <SubmissionHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/submissions/:id"
+        element={
+          <ProtectedRoute>
+            <SubmissionDetailPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/submissions/:id/questions"
+        element={
+          <ProtectedRoute>
+            <AiExtractedQuestion />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route path="*" element={<SignInPage />} />
     </Routes>
   );
 };

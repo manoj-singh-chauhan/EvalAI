@@ -10,6 +10,8 @@ import { printRoutes } from "./utils/printRoutes";
 import { sequelize } from "./config/db";
 import { redisConnection } from "./config/redis";
 import submissionRoutes from "./modules/submissions/submissions.routes";
+import { requireAuth } from "./middleware/auth.middleware";
+
 
 import "./config/cloudinaryUpload";
 import "./jobs/answer.worker";
@@ -56,10 +58,16 @@ app.use("/api/health",async (_req, res) => {
   res.status(statusCode).json(health);
 });
 
-app.use("/api/questions", questionRoutes);
-app.use("/api/answers", answerRoutes);
-app.use("/api/results", resultRoutes);
-app.use("/api/submissions", submissionRoutes);
+// app.use("/api/questions", questionRoutes);
+// app.use("/api/answers", answerRoutes);
+// app.use("/api/results", resultRoutes);
+// app.use("/api/submissions", submissionRoutes);
+
+app.use("/api/questions", requireAuth, questionRoutes);
+app.use("/api/answers", requireAuth, answerRoutes);
+app.use("/api/results", requireAuth, resultRoutes);
+app.use("/api/submissions", requireAuth, submissionRoutes);
+
 
 
 

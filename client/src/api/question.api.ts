@@ -13,7 +13,7 @@ export interface QuestionUpdateItem {
 
 export const QuestionAPI = {
   submitTyped: async (data: TypedQuestionPayload) => {
-    const res = await axiosClient.post("/questions/submit-typed-job", data);
+    const res = await axiosClient.post("/api/questions/submit-typed-job", data);
     return res.data;
   },
   uploadPaper: async (file: File) => {
@@ -23,7 +23,7 @@ export const QuestionAPI = {
       // );
 
       const sigResponse = await axiosClient.post(
-        "/questions/get-upload-signature",
+        "/api/questions/get-upload-signature",
         {
           fileName: file.name,
           fileSize: file.size,
@@ -52,7 +52,7 @@ export const QuestionAPI = {
         mimeType = "application/pdf";
       }
 
-      const jobResponse = await axiosClient.post("/questions/submit-file-job", {
+      const jobResponse = await axiosClient.post("/api/questions/submit-file-job", {
         jobId,
         fileUrl: secure_url,
         mimeType,
@@ -68,17 +68,17 @@ export const QuestionAPI = {
   },
 
   getStatus: async (id: string | number) => {
-    const res = await axiosClient.get(`/questions/${id}`);
+    const res = await axiosClient.get(`/api/questions/${id}`);
     return res.data;
   },
 
   getQuestions: async (id: string | number) => {
-    const res = await axiosClient.get(`/questions/${id}`);
+    const res = await axiosClient.get(`/api/questions/${id}`);
     return res.data;
   },
 
   retryJob: async (id: string | number) => {
-    const res = await axiosClient.post(`/questions/${id}/retry`);
+    const res = await axiosClient.post(`/api/questions/${id}/retry`);
     return res.data;
   },
 
@@ -89,7 +89,7 @@ export const QuestionAPI = {
   //   return res.data;
   // },
   updateQuestions: async (id: string, questions: QuestionUpdateItem[]) => {
-    const res = await axiosClient.put(`/questions/${id}/update-questions`, {
+    const res = await axiosClient.put(`/api/questions/${id}/update-questions`, {
       questions,
     });
     return res.data;

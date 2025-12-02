@@ -2,14 +2,21 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { BrowserRouter } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
 import "./index.css";
+
+import { ClerkProvider } from "@clerk/clerk-react";
+import { CLERK_PUBLISHABLE_KEY } from "./config/env";
+
+if (!CLERK_PUBLISHABLE_KEY) {
+  throw new Error("Missing Clerk Publishable Key in .env");
+}
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-      <Toaster position="top-center" />
-    </BrowserRouter>
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </ClerkProvider>
   </React.StrictMode>
 );

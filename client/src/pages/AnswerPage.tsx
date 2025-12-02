@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axiosClient from "../api/axiosClient";
+// import axiosClient from "../api/axiosClient";
 import { AnswerAPI } from "../api/answer.api";
 import { FiUpload } from "react-icons/fi";
+  import { QuestionAPI } from "../api/question.api";
 
 interface QuestionItem {
   text: string;
@@ -45,20 +46,38 @@ export default function AnswerPage() {
   };
 
 
-  useEffect(() => {
-    const loadQuestionPaper = async () => {
-      if (!paperId) return;
+  // useEffect(() => {
+  //   const loadQuestionPaper = async () => {
+  //     if (!paperId) return;
 
-      try {
-        const res = await axiosClient.get(`/questions/${paperId}`);
-        setQuestionData(res.data.data as QuestionPaperData);
-      } catch {
-        console.log("Failed to load question details");
-      }
-    };
+  //     try {
+  //       const res = await axiosClient.get(`/api/questions/${paperId}`);
+  //       setQuestionData(res.data.data as QuestionPaperData);
+  //     } catch {
+  //       console.log("Failed to load question details");
+  //     }
+  //   };
 
-    loadQuestionPaper();
-  }, [paperId]);
+  //   loadQuestionPaper();
+  // }, [paperId]);
+
+
+
+useEffect(() => {
+  const loadQuestionPaper = async () => {
+    if (!paperId) return;
+
+    try {
+      const res = await QuestionAPI.getQuestions(paperId);
+      setQuestionData(res.data as QuestionPaperData); 
+    } catch {
+      console.log("Failed to load question details");
+    }
+  };
+
+  loadQuestionPaper();
+}, [paperId]);
+
 
   const flaggedCount =
     questionData?.questions.filter((q) => q.flagged === true).length || 0;

@@ -11,44 +11,11 @@ import {
 } from "./question.validation";
 
 export class QuestionController {
-  // static async getUploadSignature(req: Request, res: Response) {
-  //   try {
-  //     const record = await QuestionPaper.create({
-  //       mode: "upload",
-  //       status: "pending",
-  //     });
-
-  //     const jobId = record.id;
-
-  //     const folder = `ai-eval/job_${jobId}`;
-
-  //     const timestamp = Math.round(Date.now() / 1000);
-
-  //     const signature = cloudinary.utils.api_sign_request(
-  //       { timestamp, folder },
-  //       process.env.CLOUDINARY_API_SECRET!
-  //     );
-
-  //     return res.status(200).json({
-  //       success: true,
-  //       jobId,
-  //       folder,
-  //       signature,
-  //       timestamp,
-  //       apiKey: process.env.CLOUDINARY_API_KEY!,
-  //       cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
-  //     });
-  //   } catch (error: any) {
-  //     return res.status(500).json({
-  //       success: false,
-  //       message: "Could not generate upload signature.",
-  //     });
-  //   }
-  // }
-
   static async getUploadSignature(req: Request, res: Response) {
     try {
+      //  console.log(req);
       const { fileName, fileSize, mimeType } = req.body;
+     
 
       if (!fileName || !fileSize || !mimeType) {
         return res.status(400).json({
@@ -57,7 +24,7 @@ export class QuestionController {
         });
       }
 
-      const MAX_SIZE = 5*1024*1024;
+      const MAX_SIZE = 5 * 1024 * 1024;
       if (fileSize > MAX_SIZE) {
         return res.status(400).json({
           success: false,
@@ -82,9 +49,24 @@ export class QuestionController {
         });
       }
 
+      // const record = await QuestionPaper.create({
+      //   mode: "upload",
+      //   status: "pending",
+      // });
+
+      // const userId = req.auth?.userId;
+      const userId = req.auth?.sub;
+
+      if (!userId) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
+      }
+
       const record = await QuestionPaper.create({
         mode: "upload",
         status: "pending",
+        createdBy: userId,
       });
 
       const jobId = record.id;
@@ -112,47 +94,6 @@ export class QuestionController {
       });
     }
   }
-
-  // static async submitFileJob(req: Request, res: Response) {
-  //   try {
-  //     const parsed = fileJobSchema.safeParse(req.body);
-  //     if (!parsed.success) {
-  //       return res.status(400).json({
-  //         success: false,
-  //         message: parsed.error.issues[0].message,
-  //       });
-  //     }
-
-  //     const { fileUrl, mimeType } = parsed.data;
-
-  //     const record = await QuestionPaper.create({
-  //       mode: "upload",
-  //       fileUrl,
-  //       fileMimeType: mimeType,
-  //       status: "pending",
-  //     });
-
-  //     await QuestionService.scheduleQuestionJob({
-  //       type: "file",
-  //       recordId: record.id,
-  //       data: { fileUrl, mimeType },
-  //     });
-
-  //     return res.status(202).json({
-  //       success: true,
-  //       id: record.id,
-  //       message:
-  //         "Your file has been uploaded successfully. We're analyzing it.",
-  //     });
-  //   } catch (error: any) {
-  //     logger.error(`Controller Error: ${error.message}`);
-  //     res.status(500).json({
-  //       success: false,
-  //       message: "File job submission failed.",
-  //     });
-  //   }
-  // }
-
   static async submitFileJob(req: Request, res: Response) {
     try {
       const { jobId, fileUrl, mimeType } = req.body;
@@ -209,10 +150,25 @@ export class QuestionController {
 
       const { text } = parsed.data;
 
+      // const record = await QuestionPaper.create({
+      //   mode: "typed",
+      //   rawText: text,
+      //   status: "pending",
+      // });
+
+      // const userId = req.auth?.userId;
+      const userId = req.auth?.sub;
+      if (!userId) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
+      }
+
       const record = await QuestionPaper.create({
         mode: "typed",
         rawText: text,
         status: "pending",
+        createdBy: userId,
       });
 
       await QuestionService.scheduleQuestionJob({

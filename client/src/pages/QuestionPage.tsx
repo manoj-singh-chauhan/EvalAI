@@ -6,6 +6,8 @@ import { io as socketIO } from "socket.io-client";
 import { SOCKET_URL } from "../config/env";
 import { FiList } from "react-icons/fi";
 const socket = socketIO(SOCKET_URL);
+import { SignOutButton } from "@clerk/clerk-react";
+// import AuthDebug from "../components/AuthDebug";
 
 export default function QuestionPage() {
   const [mode, setMode] = useState<"typed" | "upload">("typed");
@@ -153,15 +155,22 @@ export default function QuestionPage() {
 
   return (
     <div className="bg-white rounded-md shadow-md border border-gray-200 p-10 w-full max-w-3xl mx-auto">
-      <div className="flex justify-end mb-6">
+      <div className="flex justify-end mb-6 gap-4">
+        {/* <AuthDebug /> */}
         <button
           onClick={() => navigate("/submissions")}
           className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-md 
-               hover:bg-gray-100 hover:border-gray-400 transition font-medium"
+         hover:bg-gray-100 hover:border-gray-400 transition font-medium"
         >
           <FiList className="text-gray-700" />
           View Activities
         </button>
+
+        <SignOutButton>
+          <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition">
+            Logout
+          </button>
+        </SignOutButton>
       </div>
 
       <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">

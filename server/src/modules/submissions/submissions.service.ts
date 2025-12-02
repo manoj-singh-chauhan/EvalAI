@@ -5,28 +5,30 @@ import AnswerSheetFile from "../answer/answerFile.model";
 import EvaluatedAnswer from "../answer/evaluatedAnswer.model";
 
 export class SubmissionService {
-  static async getAllSubmissions() {
-    const papers = await QuestionPaper.findAll({
-      order: [["createdAt", "DESC"]],
-      attributes: [
-        "id",
-        "mode",
-        "totalMarks",
-        "status",
-        "errorMessage",
-        "createdAt",
-      ],
-    });
+  static async getAllSubmissions(userId: string) {
+  const papers = await QuestionPaper.findAll({
+    where: { createdBy: userId },   
+    order: [["createdAt", "DESC"]],
+    attributes: [
+      "id",
+      "mode",
+      "totalMarks",
+      "status",
+      "errorMessage",
+      "createdAt",
+    ],
+  });
 
-    return papers.map((p) => ({
-      id: p.id,
-      mode: p.mode,
-      status: p.status,
-      marks: p.totalMarks,
-      questions: undefined,
-      createdAt: p.createdAt,
-    }));
-  }
+  return papers.map((p) => ({
+    id: p.id,
+    mode: p.mode,
+    status: p.status,
+    marks: p.totalMarks,
+    questions: undefined,
+    createdAt: p.createdAt,
+  }));
+}
+
 
   static async getSubmissionDetails(id: string) {
   const paper = await QuestionPaper.findByPk(id, {
