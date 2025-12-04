@@ -5,7 +5,7 @@ import { Navigate } from "react-router-dom";
 export default function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { isLoaded, isSignedIn } = useUser();
 
-  if (!isLoaded) return null;
+  if (!isLoaded) return null; //if data is not comming from clerk 
 
 
   if (!isSignedIn) {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { SubmissionAPI, type ExtractedQuestion } from "../api/submission.api";
+import Loader from "../components/Loader";
 
 export default function AiExtractedQuestion() {
   const { id } = useParams();
@@ -24,9 +25,9 @@ export default function AiExtractedQuestion() {
     load();
   }, [id]);
 
-  if (loading) {
-    return <p className="p-10 text-gray-500">Loading extracted questions…</p>;
-  }
+    if (loading) {
+  return <Loader text="Loading " />;
+}
 
   if (error) {
     return (

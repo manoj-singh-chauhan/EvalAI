@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Routes, Route, Outlet } from "react-router-dom";
 import QuestionPage from "../pages/QuestionPage";
 import AnswerPage from "../pages/AnswerPage";
@@ -8,11 +9,16 @@ import SubmissionHistoryPage from "../pages/SubmissionHistoryPage";
 import SubmissionDetailPage from "../pages/SubmissionDetailPage";
 import StepperLayout from "../components/StepperLayout";
 import AiExtractedQuestion from "../pages/AiExtrctedQuestion";
-
 import SignInPage from "../pages/SignInPage";
 import SignUpPage from "../pages/SignUpPage";
-
 import ProtectedRoute from "../components/ProtectedRoute";
+
+const WithTitle = ({ title, children }: { title: string; children: React.ReactNode }) => {
+  useEffect(() => {
+    document.title = title;
+  }, [title]);
+  return <>{children}</>;
+};
 
 const StepperWrapper = () => (
   <StepperLayout>
@@ -23,8 +29,24 @@ const StepperWrapper = () => (
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/sign-in" element={<SignInPage />} />
-      <Route path="/sign-up" element={<SignUpPage />} />
+
+      <Route
+        path="/sign-in"
+        element={
+          <WithTitle title="Login | AI Eval">
+            <SignInPage />
+          </WithTitle>
+        }
+      />
+
+      <Route
+        path="/sign-up"
+        element={
+          <WithTitle title="Join | AI Eval">
+            <SignUpPage />
+          </WithTitle>
+        }
+      />
 
       <Route
         element={
@@ -33,16 +55,41 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       >
-        <Route path="/" element={<QuestionPage />} />
-        <Route path="/answers/:paperId" element={<AnswerPage />} />
-        <Route path="/results/:paperId" element={<ResultPage />} />
+        <Route
+          path="/"
+          element={
+            <WithTitle title="AI Eval">
+              <QuestionPage />
+           </WithTitle>
+          }
+        />
+
+        <Route
+          path="/answers/:paperId"
+          element={
+            <WithTitle title="Answers | AI Eval">
+              <AnswerPage />
+            </WithTitle>
+          }
+        />
+
+        <Route
+          path="/results/:paperId"
+          element={
+            <WithTitle title="Results | AI Eval">
+              <ResultPage />
+            </WithTitle>
+          }
+        />
       </Route>
 
       <Route
         path="/results/sheet/:answerId"
         element={
           <ProtectedRoute>
-            <AnswerSheetPage />
+            <WithTitle title="Sheet | AI Eval">
+              <AnswerSheetPage />
+            </WithTitle>
           </ProtectedRoute>
         }
       />
@@ -51,7 +98,9 @@ const AppRoutes = () => {
         path="/review-questions/:paperId"
         element={
           <ProtectedRoute>
-            <ReviewQuestionsPage />
+            <WithTitle title="Review Qs | AI Eval">
+              <ReviewQuestionsPage />
+            </WithTitle>
           </ProtectedRoute>
         }
       />
@@ -60,7 +109,9 @@ const AppRoutes = () => {
         path="/submissions"
         element={
           <ProtectedRoute>
-            <SubmissionHistoryPage />
+            <WithTitle title="History | AI Eval">
+              <SubmissionHistoryPage />
+            </WithTitle>
           </ProtectedRoute>
         }
       />
@@ -69,7 +120,9 @@ const AppRoutes = () => {
         path="/submissions/:id"
         element={
           <ProtectedRoute>
-            <SubmissionDetailPage />
+            <WithTitle title="Report | AI Eval">
+              <SubmissionDetailPage />
+            </WithTitle>
           </ProtectedRoute>
         }
       />
@@ -78,12 +131,22 @@ const AppRoutes = () => {
         path="/submissions/:id/questions"
         element={
           <ProtectedRoute>
-            <AiExtractedQuestion />
+            <WithTitle title="AI Extract | AI Eval">
+              <AiExtractedQuestion />
+            </WithTitle>
           </ProtectedRoute>
         }
       />
 
-      <Route path="*" element={<SignInPage />} />
+      <Route
+        path="*"
+        element={
+          <WithTitle title="404 | AI Eval">
+            <SignInPage />
+          </WithTitle>
+        }
+      />
+
     </Routes>
   );
 };

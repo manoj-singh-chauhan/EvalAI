@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { ResultAPI } from "../api/result.api";
+import Loader from "../components/Loader";
 
 type UploadedFile = {
   fileUrl: string;
@@ -53,9 +54,12 @@ export default function AnswerSheetPage() {
     fetchSheet();
   }, [answerId]);
 
-  if (loading) {
-    return <p className="p-10 text-gray-600">Loading answer sheet...</p>;
-  }
+  // if (loading) {
+  //   return <p className="p-10 text-gray-600">Loading answer sheet...</p>;
+  // }
+    if (loading) {
+  return <Loader text="Loading..." />;
+}
 
   if (error) {
     return (

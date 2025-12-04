@@ -1,13 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuestionAPI } from "../api/question.api";
-import { FiUpload } from "react-icons/fi";
 import { io as socketIO } from "socket.io-client";
 import { SOCKET_URL } from "../config/env";
-import { FiList } from "react-icons/fi";
+import { useClerk } from "@clerk/clerk-react";
+import { 
+  FiUpload, 
+  FiType, 
+  FiMoreVertical, 
+  FiActivity, 
+  FiLogOut,
+  // FiMenu
+} from "react-icons/fi";
+
 const socket = socketIO(SOCKET_URL);
-import { SignOutButton } from "@clerk/clerk-react";
-// import AuthDebug from "../components/AuthDebug";
 
 export default function QuestionPage() {
   const [mode, setMode] = useState<"typed" | "upload">("typed");
@@ -15,6 +21,11 @@ export default function QuestionPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  
+  
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const { signOut } = useClerk();
 
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState<
@@ -35,15 +46,26 @@ export default function QuestionPage() {
     setMessage({ type, text });
   };
 
+  
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     if (!currentJobId) return;
 
     const channel = `job-status-${currentJobId}`;
-
     socket.off(channel);
     socket.on(channel, async (data) => {
       const msg = data.message;
-
       setMessage({ type: "info", text: msg });
 
       if (
@@ -133,14 +155,8 @@ export default function QuestionPage() {
         setJobStatus("failed");
         return;
       }
-
       showMessage("info", "Retry started. Waiting for updates…");
     } catch (error: unknown) {
-      // catch (error: any) {
-      //   showMessage("error", error.response?.data?.message || "Retry failed.");
-      //   setLoading(false);
-      //   setJobStatus("failed");
-      //   return;
       const err = error as { response?: { data?: { message?: string } } };
       showMessage("error", err.response?.data?.message || "Retry failed.");
       setLoading(false);
@@ -154,52 +170,95 @@ export default function QuestionPage() {
   const showRetryButton = jobStatus === "failed" && currentJobId !== null;
 
   return (
-    <div className="bg-white rounded-md shadow-md border border-gray-200 p-10 w-full max-w-3xl mx-auto">
-      <div className="flex justify-end mb-6 gap-4">
-        {/* <AuthDebug /> */}
-        <button
-          onClick={() => navigate("/submissions")}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-md 
-         hover:bg-gray-100 hover:border-gray-400 transition font-medium"
-        >
-          <FiList className="text-gray-700" />
-          View Activities
-        </button>
+    <div className="bg-white rounded-md shadow-lg border border-gray-100 p-8 w-full max-w-4xl mx-auto">
+      
+      
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-gray-100 relative">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">
+            Create Question Paper
+          </h2>
+          <p className="text-gray-500 text-sm mt-1">
+            Choose a method to extract questions
+          </p>
+        </div>
 
-        <SignOutButton>
-          <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition">
-            Logout
+        
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="p-1 rounded-full hover:bg-gray-100 text-gray-600 transition-colors0"
+            title="Menu"
+          >
+            <FiMoreVertical className="text-2xl" />
           </button>
-        </SignOutButton>
+
+          
+          {isMenuOpen && (
+            <div className="absolute right-0 top-12 w-48 bg-white border border-gray-200 rounded-md shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    navigate("/submissions");
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                >
+                  <FiActivity className="text-blue-500" />
+                  View Activities
+                </button>
+                
+                <div className="border-t border-gray-200 my-1"></div>
+                
+                <button
+                  onClick={() => signOut()}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
+                >
+                  <FiLogOut />
+                  Logout
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        
+
       </div>
 
-      <h2 className="text-3xl font-bold mb-8 text-center text-gray-800">
-        Create Question Paper
-      </h2>
-
-      <div className="flex justify-center gap-6 mb-8">
-        {["typed", "upload"].map((m) => (
-          <button
-            key={m}
-            onClick={() => setMode(m as "typed" | "upload")}
-            disabled={loading}
-            className={`px-6 py-2 rounded-md text-sm font-medium border transition-all ${
-              mode === m ? "bg-blue-600 text-white" : "bg-white border-gray-300"
-            }`}
-          >
-            {m === "typed" ? "Typed" : "Upload"}
-          </button>
-        ))}
+      <div className="flex justify-center mb-8">
+        <div className="bg-gray-100 p-1 rounded-lg inline-flex">
+          {[
+            { id: "typed", label: "Type Manually", icon: FiType },
+            { id: "upload", label: "Upload File", icon: FiUpload },
+          ].map((m) => {
+            const Icon = m.icon;
+            const isActive = mode === m.id;
+            return (
+              <button
+                key={m.id}
+                onClick={() => setMode(m.id as "typed" | "upload")}
+                disabled={loading}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                }`}
+              >
+                <Icon />
+                {m.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {mode === "typed" && (
         <textarea
-          className="w-full border border-gray-300 p-4 rounded-md min-h-[250px]"
+          className="w-full border border-gray-300 p-4 rounded-md min-h-[250px] outline-none"
           placeholder={
-            "Paste or type the exam questions here.\nExample:\n1. Define networking. (5 Marks)\n2. Explain the OSI model. (10 Marks)"
+            "Paste or type the exam questions here.\n\nExample:\n1. Define networking. (5 Marks)\n2. Explain the OSI model. (10 Marks)"
           }
           value={text}
-          // onChange={(e) => setText(e.target.value)}
           onChange={(e) => {
             setText(e.target.value);
             if (message.type === "error") setMessage({ type: null, text: "" });
@@ -207,37 +266,6 @@ export default function QuestionPage() {
           disabled={loading}
         />
       )}
-
-      {/* {mode === "upload" && (
-        <label
-          htmlFor="fileUpload"
-          className={`flex flex-col items-center justify-center w-full p-8 border-2 border-dashed rounded-xl cursor-pointer ${
-            file ? "border-green-400 bg-green-50" : "border-blue-300 bg-blue-50"
-          }`}
-        >
-          {file ? (
-            <span className="text-green-700 font-medium">
-              {file.name}
-            </span>
-          ) : (
-            <>
-              <FiUpload className="text-blue-500 text-5xl mb-3" />
-              <span className="text-gray-700">
-                Click to upload a question paper
-              </span>
-            </>
-          )}
-
-          <input
-            id="fileUpload"
-            type="file"
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            disabled={loading}
-            className="hidden"
-          />
-        </label>
-      )} */}
 
       {mode === "upload" && (
         <label
@@ -253,46 +281,55 @@ export default function QuestionPage() {
           onDrop={(e) => {
             e.preventDefault();
             setIsDragging(false);
-
             const droppedFile = e.dataTransfer.files?.[0];
-            if (droppedFile) {
-              setFile(droppedFile);
-            }
+            if (droppedFile) setFile(droppedFile);
           }}
           className={`
-      flex flex-col items-center justify-center 
-      w-full p-8 border-2 border-dashed rounded-xl cursor-pointer transition-all
-
-      ${
-        file
-          ? "border-green-400 bg-green-50"
-          : isDragging
-          ? "border-blue-600 bg-blue-100"
-          : "border-blue-300 bg-blue-50"
-      }
-    `}
+            flex flex-col items-center justify-center 
+            w-full h-64 border-2 border-dashed rounded-md cursor-pointer transition-all duration-200
+            ${
+              file
+                ? "border-green-400 bg-green-50"
+                : isDragging
+                ? "border-blue-500 bg-blue-50 scale-[0.99]"
+                : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400"
+            }
+          `}
         >
           {file ? (
-            <span className="text-green-700 font-medium">{file.name}</span>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FiUpload className="text-xl" />
+              </div>
+              <span className="text-green-700 font-medium block">
+                {file.name}
+              </span>
+              <span className="text-green-600 text-xs mt-1">
+                Click to change file
+              </span>
+            </div>
           ) : (
             <>
-              <FiUpload className="text-blue-500 text-5xl mb-3" />
-              <span className="text-gray-700">
+              <div
+                className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-colors ${
+                  isDragging
+                    ? "bg-blue-100 text-blue-600"
+                    : "bg-gray-200 text-gray-500"
+                }`}
+              >
+                <FiUpload className="text-2xl" />
+              </div>
+              <span className="text-gray-700 font-medium">
                 {isDragging
                   ? "Drop the file here..."
-                  : "Click or drag to upload a question paper"}
+                  : "Click or drag to upload"}
+              </span>
+              <span className="text-gray-400 text-sm mt-2">
+                Supports PDF, JPG, PNG
               </span>
             </>
           )}
 
-          {/* <input
-      id="fileUpload"
-      type="file"
-      accept=".pdf,.jpg,.jpeg,.png"
-      onChange={(e) => setFile(e.target.files?.[0] || null)}
-      disabled={loading}
-      className="hidden"
-    /> */}
           <input
             id="fileUpload"
             type="file"
@@ -307,56 +344,44 @@ export default function QuestionPage() {
         </label>
       )}
 
-      {/* {message.type && (
-        <div
-          className={`mt-6 p-4 rounded-xl shadow-md  text-sm font-medium ${
-            message.type === "success"
-              ? "bg-green-50 border-green-400 text-green-700"
-              : message.type === "error"
-              ? "bg-red-50 border-red-400 text-red-700"
-              : "bg-blue-50 border-blue-400 text-blue-700"
-          }`}
-          style={{
-            maxHeight: "180px",
-            overflowY: "auto",
-            whiteSpace: "pre-wrap",
-          }}
-        >
-          {message.text}
-        </div>
-      )} */}
-
       {message.type && (
         <div
-          className={`mt-4 px-4 py-3 rounded-md text-sm transition-all duration-200 flex items-start justify-between gap-3
-    ${
-      message.type === "success"
-        ? "bg-green-100 text-green-700 border-l-4 border-green-500"
-        : message.type === "error"
-        ? "bg-red-100 text-red-700 border-l-4 border-red-500"
-        : "bg-blue-100 text-blue-700 border-l-4 border-blue-500"
-    }
-  `}
+          className={`mt-6 px-4 py-3 rounded-lg text-sm border flex items-start justify-between gap-3 animate-in fade-in slide-in-from-top-2
+          ${
+            message.type === "success"
+              ? "bg-green-50 text-green-700 border-green-200"
+              : message.type === "error"
+              ? "bg-red-50 text-red-700 border-red-200"
+              : "bg-blue-50 text-blue-700 border-blue-200"
+          }
+        `}
         >
-          <span className="flex-1 break-words whitespace-pre-wrap">
-            {message.text}
-          </span>
+          <div className="flex gap-2">
+            <span className="mt-0.5">
+              {message.type === "error"
+                ? "⚠️"
+                : message.type === "success"
+                }
+            </span>
+            <span className="break-words whitespace-pre-wrap">
+              {message.text}
+            </span>
+          </div>
 
           <button
             onClick={() => setMessage({ type: null, text: "" })}
-            className="text-gray-500 hover:text-gray-800 transition-colors shrink-0 pt-0.5"
-            aria-label="Close"
+            className="text-gray-400 hover:text-gray-600 transition-colors"
           >
-            <span className="text-xl leading-none font-bold">&times;</span>
+            ✕
           </button>
         </div>
       )}
 
-      <div className="mt-8 flex justify-end">
+      <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
         {showRetryButton ? (
           <button
             onClick={handleRetry}
-            className="px-6 py-2 rounded-md bg-yellow-500 text-white hover:bg-yellow-600"
+            className="px-8 py-2.5 rounded-md bg-yellow-500 text-white font-medium shadow-sm"
           >
             Retry
           </button>
@@ -364,11 +389,38 @@ export default function QuestionPage() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className={`px-6 py-2 rounded-md text-white ${
-              loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+            className={`px-8 py-2.5 rounded-md text-white font-medium shadow-sm transition-all ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600"
             }`}
           >
-            {loading ? "Processing..." : "Submit"}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg
+                  className="animate-spin h-4 w-4 text-white"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Processing...
+              </span>
+            ) : (
+              "Submit"
+            )}
           </button>
         ) : null}
       </div>
