@@ -118,10 +118,14 @@ You MUST NOT:
 - fix formatting  
 - assume or guess missing lines  
 - invent or hallucinate text  
-- include book text / printed questions  
-- include headers, footers, page numbers, roll numbers  
-- include watermarks, QR codes, or noise  
-- merge lines that are not part of the same answer  
+- include book text / printed QUESTIONS  
+
+IMPORTANT:
+If the student writes answers in PRINTED or TYPED form (not handwritten),
+you MUST still extract them exactly. 
+Do NOT treat printed student answers as book text.
+Only printed QUESTIONS should be ignored, not printed ANSWERS.
+  
 
 ===============================================================
  QUESTION NUMBER DETECTION

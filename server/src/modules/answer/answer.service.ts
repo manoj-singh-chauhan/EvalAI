@@ -122,11 +122,21 @@ export class AnswerService {
           base64
         );
 
+        // if (extracted.answers) {
+        //   for (const ans of extracted.answers) {
+        //     mergedAnswers[ans.questionNumber] = ans.studentAnswer;
+        //   }
+        // }
+
         if (extracted.answers) {
-          for (const ans of extracted.answers) {
-            mergedAnswers[ans.questionNumber] = ans.studentAnswer;
-          }
-        }
+  for (const ans of extracted.answers) {
+    // Only set answer if not already stored
+    if (!mergedAnswers[ans.questionNumber]) {
+      mergedAnswers[ans.questionNumber] = ans.studentAnswer;
+    }
+  }
+}
+
       }
 
       this.emitStatus(recordId, "Evaluating extracted answers…");
