@@ -30,6 +30,3 @@ Option B: Write a short note on Cyber Security. (15 Marks)
 4. Explain Newton's Second Law of Motion. (5 marks)
 5. What is 25 × 14? (2 marks)
 
-
-linkedlist 
-queue

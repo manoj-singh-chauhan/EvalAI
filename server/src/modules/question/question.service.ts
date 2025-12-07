@@ -8,8 +8,8 @@ import Question from "./questionDetail.model";
 import { QUESTION_EXTRACTION_PROMPT } from "../../utils/prompt";
 
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
-// const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+// const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
+const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 interface FileJobData {
   fileUrl: string;
