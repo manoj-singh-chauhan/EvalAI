@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import morgan from "morgan";
+import os from "os";
 import { connectDB } from "./config/db";
 import questionRoutes from "./modules/question/question.routes";
 import answerRoutes from "./modules/answer/answer.routes";
@@ -11,7 +12,6 @@ import { sequelize } from "./config/db";
 import { redisConnection } from "./config/redis";
 import submissionRoutes from "./modules/submissions/submissions.routes";
 import { requireAuth } from "./middleware/auth.middleware";
-
 
 import "./config/cloudinaryUpload";
 import "./jobs/answer.worker";
@@ -29,47 +29,68 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(morgan("dev"));
-app.use("/api/health",async (_req, res) => {
+
+app.get("/api/health", async (_req, res) => {
+  const startTime = Date.now();
+  
   const health = {
-    server: "ok",
-    timestamp: new Date(),
-    database: "unknown",
-    redis: "unknown",
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: `${Math.floor(process.uptime())}s`,
+    
+    memory: {
+      used: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`,
+      total: `${Math.round(process.memoryUsage().heapTotal / 1024 / 1024)}MB`,
+      percentage: `${Math.round((process.memoryUsage().heapUsed / process.memoryUsage().heapTotal) * 100)}%`
+    },
+    
+    cpu: {
+      cores: os.cpus().length,
+      loadAverage: os.loadavg()[0].toFixed(2)
+    },
+    
+    services: {
+      database: { status: "unknown", responseTime: 0 },
+      redis: { status: "unknown", responseTime: 0 }
+    }
   };
 
   try {
+    const dbStart = Date.now();
     await sequelize.authenticate();
-    health.database = "ok";
+    health.services.database = {
+      status: "connected",
+      responseTime: Date.now() - dbStart
+    };
   } catch {
-    health.database = "down";
+    health.services.database.status = "disconnected";
+    health.status = "degraded";
   }
-
 
   try {
+    const redisStart = Date.now();
     const pong = await redisConnection.ping();
-    health.redis = pong === "PONG" ? "ok" : "down";
+    health.services.redis = {
+      status: pong === "PONG" ? "connected" : "disconnected",
+      responseTime: Date.now() - redisStart
+    };
   } catch {
-    health.redis = "down";
+    health.services.redis.status = "disconnected";
+    health.status = "degraded";
   }
 
-  const statusCode =
-    health.database === "ok" && health.redis === "ok" ? 200 : 500;
-
-  res.status(statusCode).json(health);
+  const statusCode = health.status === "healthy" ? 200 : 503;
+  res.status(statusCode).json({
+    ...health,
+    responseTime: `${Date.now() - startTime}ms`
+  });
 });
 
-// app.use("/api/questions", questionRoutes);
-// app.use("/api/answers", answerRoutes);
-// app.use("/api/results", resultRoutes);
-// app.use("/api/submissions", submissionRoutes);
 
 app.use("/api/questions", requireAuth, questionRoutes);
 app.use("/api/answers", requireAuth, answerRoutes);
 app.use("/api/results", requireAuth, resultRoutes);
 app.use("/api/submissions", requireAuth, submissionRoutes);
-
-
-
 
 printRoutes(app);
 
