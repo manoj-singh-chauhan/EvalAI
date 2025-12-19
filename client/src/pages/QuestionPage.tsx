@@ -1,3 +1,4 @@
+// check 
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuestionAPI } from "../api/question.api";
@@ -107,6 +108,7 @@ export default function QuestionPage() {
 
     setLoading(true);
     setCurrentJobId(null);
+    setJobStatus("idle");
     setJobStatus("processing");
     showMessage("info", "Submitting...");
 
