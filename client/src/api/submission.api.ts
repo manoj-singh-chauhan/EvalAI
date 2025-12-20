@@ -45,4 +45,9 @@ export const SubmissionAPI = {
     const res = await axiosClient.get(`/api/submissions/${id}`);
     return res.data;
   },
+
+  delete: async (id: string) => {
+    const res = await axiosClient.delete(`/api/submissions/${id}`);
+    return res.data;
+  },
 };

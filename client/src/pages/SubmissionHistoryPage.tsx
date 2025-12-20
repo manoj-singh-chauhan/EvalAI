@@ -27,6 +27,8 @@ export default function SubmissionsPage() {
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const loadSubmissions = useCallback(async () => {
     const data = await SubmissionAPI.getAll();
@@ -84,13 +86,30 @@ export default function SubmissionsPage() {
     await loadSubmissions();
   };
 
-  const handleDelete = async (submissionId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setOpenMenuId(null);
-    // TODO: Implement delete functionality
-    console.log("Delete submission:", submissionId);
-    // await SubmissionAPI.delete(submissionId);
-    // await loadSubmissions();
+  // const handleDelete = async (submissionId: string, e: React.MouseEvent) => {
+  //   e.stopPropagation();
+  //   setOpenMenuId(null);
+  //   // TODO: Implement delete functionality
+  //   console.log("Delete submission:", submissionId);
+  //   // await SubmissionAPI.delete(submissionId);
+  //   // await loadSubmissions();
+  // };
+
+  // const handleDelete = async (submissionId: string, e: React.MouseEvent) => {
+  //   e.stopPropagation();
+  //   setOpenMenuId(null);
+
+  //   await SubmissionAPI.delete(submissionId);
+  //   await loadSubmissions(); // refresh list
+  // };
+  const handleDelete = async () => {
+    if (!deleteId) return;
+
+    await SubmissionAPI.delete(deleteId);
+    await loadSubmissions();
+
+    setShowConfirm(false);
+    setDeleteId(null);
   };
 
   const toggleMenu = (submissionId: string, e: React.MouseEvent) => {
@@ -405,7 +424,13 @@ export default function SubmissionsPage() {
                                   )}
 
                                   <button
-                                    onClick={(e) => handleDelete(s.id, e)}
+                                    // onClick={(e) => handleDelete(s.id, e)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOpenMenuId(null);
+                                      setDeleteId(s.id);
+                                      setShowConfirm(true);
+                                    }}
                                     className="w-full px-4 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors border-t border-gray-100"
                                   >
                                     <FiTrash2 size={16} />
@@ -484,8 +509,20 @@ export default function SubmissionsPage() {
                                 </button>
                               )}
 
-                              <button
+                              {/* <button
                                 onClick={(e) => handleDelete(s.id, e)}
+                                className="w-full px-4 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50 flex items-center gap-3 border-t border-gray-100"
+                              >
+                                <FiTrash2 size={16} />
+                                Delete Record
+                              </button> */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setOpenMenuId(null);
+                                  setDeleteId(s.id);
+                                  setShowConfirm(true);
+                                }}
                                 className="w-full px-4 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50 flex items-center gap-3 border-t border-gray-100"
                               >
                                 <FiTrash2 size={16} />
@@ -523,6 +560,42 @@ export default function SubmissionsPage() {
           )}
         </div>
       </div>
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-[90%] max-w-md p-6 animate-scaleIn">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 rounded-full bg-red-100 text-red-600">
+                <FiTrash2 size={22} />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">Delete Record</h2>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to delete this record?
+              <span className="font-semibold text-red-600">
+                {" "}
+                This action cannot be undone.
+              </span>
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition shadow"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
