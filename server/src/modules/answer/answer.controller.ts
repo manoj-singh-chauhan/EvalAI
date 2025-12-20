@@ -56,16 +56,22 @@ export class AnswerController {
       });
     }
 
-    const { questionPaperId, answerSheetFiles } = parsed.data;
+    // const { questionPaperId, answerSheetFiles } = parsed.data;
+    const { questionPaperId, answerSheetFiles, strictnessLevel } = parsed.data;
 
     const createdIds: string[] = [];
 
-    for (const f of answerSheetFiles) {
+      for (const f of answerSheetFiles) {
+        // const sheet = await AnswerSheet.create({
+        //   questionPaperId,
+        //   status: "pending",
+        // });
+
       const sheet = await AnswerSheet.create({
         questionPaperId,
+        strictnessLevel: strictnessLevel || "moderate",
         status: "pending",
       });
-
 
       await AnswerSheetFile.create({
         answerSheetId: sheet.id,

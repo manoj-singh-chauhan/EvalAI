@@ -4,6 +4,7 @@ import { sequelize } from "../../config/db";
 interface AnswerSheetAttributes {
   id: string;
   questionPaperId: string;
+  strictnessLevel?: "lenient" | "moderate" | "strict";
 //   // answerSheetFiles: any | null;
 //   // answers: any | null;
 //   /*
@@ -38,6 +39,7 @@ export class AnswerSheet
 {
   public id!: string;
   public questionPaperId!: string;
+  public strictnessLevel!: "lenient" | "moderate" | "strict";
 
   public totalScore!: number | null;
   public feedback!: string | null;
@@ -60,6 +62,12 @@ AnswerSheet.init(
       type: DataTypes.UUID,
       allowNull: false,
     },
+
+    strictnessLevel: {
+    type: DataTypes.ENUM("lenient", "moderate", "strict"),
+    allowNull: false,
+    defaultValue: "moderate",
+  },
 
     totalScore: {
       type: DataTypes.INTEGER,

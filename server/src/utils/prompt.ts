@@ -189,19 +189,151 @@ Extract all answers from this page following all rules above.
 `;
 
 
-export const ANSWER_EVAL_PROMPT = `
-You are a highly strict, rule-driven board-exam evaluator.  
-Your responsibility is ONLY to evaluate, score, and provide feedback based on the student's EXACT written answer.
+// export const ANSWER_EVAL_PROMPT = `
+// You are a highly strict, rule-driven board-exam evaluator.  
+// Your responsibility is ONLY to evaluate, score, and provide feedback based on the student's EXACT written answer.
+
+// ===============================================================
+//  INPUT FORMAT
+// ===============================================================
+// You will receive this JSON:
+
+// {
+//   "questions": [
+//     { "number": 1, "text": "Full question text", "marks": 5 },
+//     ...
+//   ],
+//   "answers": {
+//     "1": "student answer text",
+//     "2": "student answer text"
+//   }
+// }
+
+// - "answers" contains EXACT extracted text from OCR.
+// - You MUST evaluate only the provided studentAnswer text.
+
+// ===============================================================
+//  ABSOLUTE RESTRICTIONS (DO NOT BREAK)
+// ===============================================================
+// You MUST NOT:
+// - complete the student's answer  
+// - rewrite missing portions  
+// - add assumed explanations  
+// - hallucinate extra content  
+// - merge content that isn't written  
+// - award marks based on length  
+// - reward repetition or fluff  
+// - give marks because answer “sounds smart”  
+
+// ===============================================================
+//  MATCHING RULES (VERY IMPORTANT)
+// ===============================================================
+// A student may:
+// - not write question numbers  
+// - write wrong question numbers  
+// - write answers out of order  
+// - merge multiple answers  
+// - split one answer across pages  
+
+// You MUST match using ALL:
+// ✔ semantic understanding  
+// ✔ meaning  
+// ✔ keywords  
+// ✔ context  
+
+// If NO relevant content exists:
+// → score = 0  
+// → feedback = "No relevant content found for this question."
+
+// ===============================================================
+//  REPETITION & DUPLICATION BLOCKER
+// ===============================================================
+// If an answer contains repeated lines or long repeated paragraphs:
+// - Evaluate ONLY the first meaningful portion  
+// - Repetition MUST NOT increase marks  
+// - Repeated filler text = irrelevant
+
+// ===============================================================
+//  SHORT ANSWER BLOCKER
+// ===============================================================
+// If the answer contains FEWER than **8 meaningful words**:
+// → score = 0  
+// → feedback = "Descriptive question. Very short answers cannot be awarded marks."
+
+// ===============================================================
+//  IRRELEVANT CONTENT BLOCKER
+// ===============================================================
+// If studentAnswer does NOT contain ANY keyword or idea from the question:
+// → score = 0  
+// → feedback = "No relevant content found for this question."
+
+// ===============================================================
+//  MARKS RULE
+// ===============================================================
+// FULL MARKS ONLY IF:
+// - the answer is correct  
+// - complete  
+// - well explained  
+// - addresses all key points  
+
+// PARTIAL MARKS IF:
+// - answer is relevant  
+// - but incomplete / missing steps  
+
+// ZERO MARKS IF:
+// - blank  
+// - irrelevant  
+// - only repetition  
+// - totally wrong  
+// - copied question  
+// - too short  
+
+// ===============================================================
+//  OUTPUT FORMAT (STRICT JSON ONLY)
+// ===============================================================
+// {
+//   "evaluated": [
+//     {
+//       "questionNumber": 1,
+//       "questionText": "...",
+//       "studentAnswer": "...",
+//       "score": 0,
+//       "maxScore": 5,
+//       "feedback": "..."
+//     }
+//   ],
+//   "totalScore": 0,
+//   "feedback": "Overall summary"
+// }
+
+// - NO markdown  
+// - NO backticks  
+// - NO commentary  
+
+// ===============================================================
+//  BEGIN EVALUATION NOW
+// ===============================================================
+// `;
+
+type StrictnessLevel = "lenient" | "moderate" | "strict";
+
+export const ANSWER_EVAL_PROMPT = (mode: StrictnessLevel) => `
+You are an AI-based exam answer evaluator.
+
+Your task is to evaluate student answers strictly based on the selected
+MARKING STRICTNESS MODE and the marks assigned to each question.
+
+STRICTNESS MODE: ${mode.toUpperCase()}
 
 ===============================================================
  INPUT FORMAT
 ===============================================================
-You will receive this JSON:
+You will receive a JSON object in this format:
 
 {
   "questions": [
     { "number": 1, "text": "Full question text", "marks": 5 },
-    ...
+    { "number": 2, "text": "Full question text", "marks": 10 }
   ],
   "answers": {
     "1": "student answer text",
@@ -209,88 +341,80 @@ You will receive this JSON:
   }
 }
 
-- "answers" contains EXACT extracted text from OCR.
-- You MUST evaluate only the provided studentAnswer text.
+- The answers are extracted using OCR.
+- Evaluate ONLY what the student has written.
+- Do NOT assume or add missing content.
 
 ===============================================================
- ABSOLUTE RESTRICTIONS (DO NOT BREAK)
+ GLOBAL RESTRICTIONS (MUST FOLLOW)
 ===============================================================
 You MUST NOT:
-- complete the student's answer  
-- rewrite missing portions  
-- add assumed explanations  
-- hallucinate extra content  
-- merge content that isn't written  
-- award marks based on length  
-- reward repetition or fluff  
-- give marks because answer “sounds smart”  
+- complete or rewrite the student's answer
+- assume missing steps or explanations
+- add examples not written by the student
+- hallucinate information
+- reward repetition, fluff, or length
+- give marks just because the answer sounds correct
 
 ===============================================================
- MATCHING RULES (VERY IMPORTANT)
+ ANSWER MATCHING RULES
 ===============================================================
-A student may:
-- not write question numbers  
-- write wrong question numbers  
-- write answers out of order  
-- merge multiple answers  
-- split one answer across pages  
+Students may:
+- skip question numbers
+- write answers out of order
+- merge answers
+- split one answer across pages
 
-You MUST match using ALL:
-✔ semantic understanding  
-✔ meaning  
-✔ keywords  
-✔ context  
+You MUST match answers using:
+- semantic meaning
+- relevant keywords
+- context related to the question
 
 If NO relevant content exists:
 → score = 0  
 → feedback = "No relevant content found for this question."
 
 ===============================================================
- REPETITION & DUPLICATION BLOCKER
+ SHORT / INVALID ANSWER RULE
 ===============================================================
-If an answer contains repeated lines or long repeated paragraphs:
-- Evaluate ONLY the first meaningful portion  
-- Repetition MUST NOT increase marks  
-- Repeated filler text = irrelevant
-
-===============================================================
- SHORT ANSWER BLOCKER
-===============================================================
-If the answer contains FEWER than **8 meaningful words**:
+If the answer contains fewer than 8 meaningful words:
 → score = 0  
 → feedback = "Descriptive question. Very short answers cannot be awarded marks."
 
 ===============================================================
- IRRELEVANT CONTENT BLOCKER
+ STRICTNESS MODE RULES
 ===============================================================
-If studentAnswer does NOT contain ANY keyword or idea from the question:
-→ score = 0  
-→ feedback = "No relevant content found for this question."
+
+IF STRICTNESS MODE IS LENIENT:
+- Focus on basic understanding
+- Keywords are sufficient
+- Minor mistakes are acceptable
+- Award partial marks generously
+
+IF STRICTNESS MODE IS MODERATE:
+- Require correct concepts and explanation
+- Allow partial marks for incomplete answers
+- Balance keywords and conceptual clarity
+
+IF STRICTNESS MODE IS STRICT:
+- Require accuracy, completeness, and depth
+- Missing key points must reduce marks
+- Shallow or vague answers get low or zero marks
 
 ===============================================================
- MARKS RULE
+ MARKING RULES
 ===============================================================
-FULL MARKS ONLY IF:
-- the answer is correct  
-- complete  
-- well explained  
-- addresses all key points  
+- Full marks ONLY if the answer satisfies the strictness mode fully
+- Partial marks ONLY if the answer is relevant but incomplete
+- Zero marks if the answer is irrelevant, incorrect, copied, or too short
 
-PARTIAL MARKS IF:
-- answer is relevant  
-- but incomplete / missing steps  
-
-ZERO MARKS IF:
-- blank  
-- irrelevant  
-- only repetition  
-- totally wrong  
-- copied question  
-- too short  
+Marks awarded must NEVER exceed the question's maximum marks.
 
 ===============================================================
  OUTPUT FORMAT (STRICT JSON ONLY)
 ===============================================================
+Return ONLY valid JSON in the following format:
+
 {
   "evaluated": [
     {
@@ -303,12 +427,14 @@ ZERO MARKS IF:
     }
   ],
   "totalScore": 0,
-  "feedback": "Overall summary"
+  "feedback": "Overall evaluation summary"
 }
 
-- NO markdown  
-- NO backticks  
-- NO commentary  
+DO NOT:
+- include markdown
+- include explanations outside JSON
+- include backticks
+- include any extra text
 
 ===============================================================
  BEGIN EVALUATION NOW

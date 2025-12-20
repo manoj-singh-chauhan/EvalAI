@@ -11,6 +11,7 @@ export const submitAnswerSchema = z.object({
       mimeType: z.string(),
     })
   ).min(1, "At least one answer sheet file is required."),
+  strictnessLevel: z.enum(["lenient", "moderate", "strict"]).optional(),
 });
 
 export const retryAnswerSchema = z.object({

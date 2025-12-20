@@ -9,7 +9,10 @@ import { downloadFile } from "../../utils/fileDownloader";
 import { answerQueue } from "../../jobs/answer.queue";
 import logger from "../../config/logger";
 import { io } from "../../server";
-import { ANSWER_EVAL_PROMPT, ANSWER_EXTRACTION_PROMPT } from "../../utils/prompt";
+import {
+  ANSWER_EVAL_PROMPT,
+  ANSWER_EXTRACTION_PROMPT,
+} from "../../utils/prompt";
 
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 // const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
@@ -28,7 +31,6 @@ export class AnswerService {
     await answerQueue.add("evaluate-answer", job);
   }
 
-  
   static async extractAnswersFromPage(mimeType: string, base64: string) {
     const aiRes = await model.generateContent({
       generationConfig: { responseMimeType: "application/json" },
@@ -53,15 +55,20 @@ export class AnswerService {
     return JSON.parse(clean);
   }
 
-  
-  static async evaluateExtractedAnswers(questions: any[], answers: any) {
+  // static async evaluateExtractedAnswers(questions: any[], answers: any) {
+  static async evaluateExtractedAnswers(
+    questions: any[],
+    answers: any,
+    strictnessLevel: "lenient" | "moderate" | "strict"
+  ) {
     const aiRes = await model.generateContent({
       generationConfig: { responseMimeType: "application/json" },
       contents: [
         {
           role: "user",
           parts: [
-            { text: ANSWER_EVAL_PROMPT },
+            // { text: ANSWER_EVAL_PROMPT },
+            { text: ANSWER_EVAL_PROMPT(strictnessLevel) },
             { text: JSON.stringify({ questions, answers }) },
           ],
         },
@@ -73,17 +80,18 @@ export class AnswerService {
     return JSON.parse(clean);
   }
 
-  
   static async processAnswerJob(
     recordId: string,
     questionPaperId: string,
     _incomingFiles: { fileUrl: string; mimeType: string }[]
   ) {
+    
     const record = await AnswerSheet.findByPk(recordId, {
       include: [{ model: AnswerSheetFile, as: "files" }],
     });
 
     if (!record) return;
+    const strictnessLevel = record.strictnessLevel || "moderate";
 
     const answerSheetFiles = record.files.map((f: any) => ({
       fileUrl: f.fileUrl,
@@ -94,7 +102,6 @@ export class AnswerService {
     this.emitStatus(recordId, "Reading answer sheet pages…");
 
     try {
-      
       const qp = await QuestionPaper.findByPk(questionPaperId, {
         include: [{ model: Question, as: "questions" }],
         order: [[{ model: Question, as: "questions" }, "number", "ASC"]],
@@ -111,17 +118,13 @@ export class AnswerService {
         marks: q.marks ?? 0,
       }));
 
-     
       let mergedAnswers: any = {};
 
       for (const f of answerSheetFiles) {
         const buffer = await downloadFile(f.fileUrl);
         const base64 = buffer.toString("base64");
 
-        const extracted = await this.extractAnswersFromPage(
-          f.mimeType,
-          base64
-        );
+        const extracted = await this.extractAnswersFromPage(f.mimeType, base64);
 
         // if (extracted.answers) {
         //   for (const ans of extracted.answers) {
@@ -130,34 +133,39 @@ export class AnswerService {
         // }
 
         if (extracted.answers) {
-  for (const ans of extracted.answers) {
-    // Only set answer if not already stored
-    if (!mergedAnswers[ans.questionNumber]) {
-      mergedAnswers[ans.questionNumber] = ans.studentAnswer;
-    }
-  }
-}
-
+          for (const ans of extracted.answers) {
+            // Only set answer if not already stored
+            if (!mergedAnswers[ans.questionNumber]) {
+              mergedAnswers[ans.questionNumber] = ans.studentAnswer;
+            }
+          }
+        }
       }
 
       this.emitStatus(recordId, "Evaluating extracted answers…");
+      // const evaluated = await this.evaluateExtractedAnswers(
+      //   questions,
+      //   mergedAnswers
+      // );
       const evaluated = await this.evaluateExtractedAnswers(
-        questions,
-        mergedAnswers
-      );
+  questions,
+  mergedAnswers,
+  strictnessLevel
+);
+
 
       console.log("Evaluation result:", evaluated);
-
 
       if (!evaluated.evaluated) {
         throw new Error("AI did not return evaluation output.");
       }
 
-      
       await EvaluatedAnswer.destroy({ where: { answerSheetId: recordId } });
 
       for (const ans of evaluated.evaluated) {
-        const match = questions.find((q: any) => q.number === ans.questionNumber);
+        const match = questions.find(
+          (q: any) => q.number === ans.questionNumber
+        );
 
         await EvaluatedAnswer.create({
           answerSheetId: recordId,
