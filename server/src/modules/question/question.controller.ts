@@ -15,7 +15,6 @@ export class QuestionController {
     try {
       //  console.log(req);
       const { fileName, fileSize, mimeType } = req.body;
-     
 
       if (!fileName || !fileSize || !mimeType) {
         return res.status(400).json({
