@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { ResultAPI } from "../api/result.api";
 import Loader from "../components/Loader";
+import { FiArrowLeft } from "react-icons/fi";
 
 type UploadedFile = {
   fileUrl: string;
@@ -31,6 +32,7 @@ type AnswerSheetRecord = {
 export default function AnswerSheetPage() {
   const { answerId } = useParams();
   const { search } = useLocation();
+  const navigate = useNavigate();
   const params = new URLSearchParams(search);
   const displayIndex = params.get("index");
 
@@ -57,9 +59,9 @@ export default function AnswerSheetPage() {
   // if (loading) {
   //   return <p className="p-10 text-gray-600">Loading answer sheet...</p>;
   // }
-    if (loading) {
-  return <Loader text="Loading..." />;
-}
+  if (loading) {
+    return <Loader text="Loading..." />;
+  }
 
   if (error) {
     return (
@@ -71,19 +73,41 @@ export default function AnswerSheetPage() {
 
   if (!sheet) return null;
 
-
   const evaluatedAnswers = sheet.answers || [];
-//   const evaluatedAnswers = (sheet.answers || []).sort(
-//   (a, b) => a.questionNumber - b.questionNumber
-// );
+  //   const evaluatedAnswers = (sheet.answers || []).sort(
+  //   (a, b) => a.questionNumber - b.questionNumber
+  // );
 
   // console.log(evaluatedAnswers);
 
   return (
     <div className="p-10 space-y-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-800">
+      {/* <h1 className="text-3xl font-bold text-gray-800">
         Answer Sheet {displayIndex}
-      </h1>
+      </h1> */}
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="
+      flex items-center justify-center
+      h-9 w-9
+      rounded-lg
+      bg-white
+      border border-gray-300
+      text-gray-600
+      hover:bg-indigo-50
+      hover:text-indigo-600
+      hover:border-indigo-300
+      transition
+    "
+        >
+          <FiArrowLeft size={18} />
+        </button>
+
+        <h1 className="text-3xl font-bold text-gray-800">
+          Answer Sheet {displayIndex}
+        </h1>
+      </div>
 
       <div className="bg-white border shadow p-6 rounded-md">
         <h2 className="text-lg font-semibold">Score Summary</h2>
@@ -102,9 +126,7 @@ export default function AnswerSheetPage() {
       </div>
 
       <div className="bg-white border shadow p-6 rounded-md">
-        <h2 
-        className="font-semibold text-lg"
-        >Uploaded answer</h2>
+        <h2 className="font-semibold text-lg">Uploaded answer</h2>
 
         <ul className="mt-3 space-y-2">
           {sheet.answerSheetFiles.map((file, index) => (

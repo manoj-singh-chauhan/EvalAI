@@ -12,6 +12,8 @@ import AiExtractedQuestion from "../pages/AiExtrctedQuestion";
 import SignInPage from "../pages/SignInPage";
 import SignUpPage from "../pages/SignUpPage";
 import ProtectedRoute from "../components/ProtectedRoute";
+// import AdminUsersPage from "../pages/admin/AdminUsersPage";
+// import AdminUserActivityPage from "../pages/admin/AdminUserActivityPage";
 
 const WithTitle = ({ title, children }: { title: string; children: React.ReactNode }) => {
   useEffect(() => {
@@ -146,6 +148,15 @@ const AppRoutes = () => {
           </WithTitle>
         }
       />
+      {/* <Route
+  path="/admin/users"
+  element={<AdminUsersPage />}
+/>
+
+<Route
+  path="/admin/users/:userId"
+  element={<AdminUserActivityPage />}
+/> */}
 
     </Routes>
   );

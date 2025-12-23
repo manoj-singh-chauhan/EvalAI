@@ -5,29 +5,41 @@ import AnswerSheetFile from "../answer/answerFile.model";
 import EvaluatedAnswer from "../answer/evaluatedAnswer.model";
 
 export class SubmissionService {
-  static async getAllSubmissions(userId: string) {
-    const papers = await QuestionPaper.findAll({
-      where: { createdBy: userId },
-      order: [["createdAt", "DESC"]],
-      attributes: [
-        "id",
-        "mode",
-        "totalMarks",
-        "status",
-        "errorMessage",
-        "createdAt",
-      ],
-    });
+  static async getAllSubmissions(
+  userId: string,
+  page: number,
+  limit: number
+) {
+  const offset = (page - 1) * limit;
 
-    return papers.map((p) => ({
+  const result = await QuestionPaper.findAndCountAll({
+    where: { createdBy: userId },
+    order: [["createdAt", "DESC"]],
+    limit,
+    offset,
+    attributes: [
+      "id",
+      "mode",
+      "totalMarks",
+      "status",
+      "errorMessage",
+      "createdAt",
+    ],
+  });
+
+  return {
+    count: result.count,
+    rows: result.rows.map((p) => ({
       id: p.id,
       mode: p.mode,
       status: p.status,
       marks: p.totalMarks,
       questions: undefined,
       createdAt: p.createdAt,
-    }));
-  }
+    })),
+  };
+}
+
 
   static async getSubmissionDetails(id: string) {
     const paper = await QuestionPaper.findByPk(id, {
@@ -75,40 +87,34 @@ export class SubmissionService {
   }
 
   static async deleteSubmission(submissionId: string, userId: string) {
-  const paper = await QuestionPaper.findOne({
-    where: { id: submissionId, createdBy: userId },
-  });
+    const paper = await QuestionPaper.findOne({
+      where: { id: submissionId, createdBy: userId },
+    });
 
-  if (!paper) {
-    throw new Error("Submission not found or unauthorized");
+    if (!paper) {
+      throw new Error("Submission not found or unauthorized");
+    }
+
+    const answerSheets = await AnswerSheet.findAll({
+      where: { questionPaperId: submissionId },
+    });
+
+    const answerSheetIds = answerSheets.map((a) => a.id);
+
+    await EvaluatedAnswer.destroy({
+      where: { answerSheetId: answerSheetIds },
+    });
+
+    await AnswerSheetFile.destroy({
+      where: { answerSheetId: answerSheetIds },
+    });
+
+    await AnswerSheet.destroy({
+      where: { questionPaperId: submissionId },
+    });
+
+    await QuestionPaper.destroy({
+      where: { id: submissionId },
+    });
   }
-
-  // 1. Find all answer sheets
-  const answerSheets = await AnswerSheet.findAll({
-    where: { questionPaperId: submissionId },
-  });
-
-  const answerSheetIds = answerSheets.map((a) => a.id);
-
-  // 2. Delete evaluated answers
-  await EvaluatedAnswer.destroy({
-    where: { answerSheetId: answerSheetIds },
-  });
-
-  // 3. Delete answer sheet files
-  await AnswerSheetFile.destroy({
-    where: { answerSheetId: answerSheetIds },
-  });
-
-  // 4. Delete answer sheets
-  await AnswerSheet.destroy({
-    where: { questionPaperId: submissionId },
-  });
-
-  // 5. Delete the question paper itself
-  await QuestionPaper.destroy({
-    where: { id: submissionId },
-  });
-}
-
 }

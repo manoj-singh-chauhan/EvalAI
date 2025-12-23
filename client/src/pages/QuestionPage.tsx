@@ -39,6 +39,7 @@ export default function QuestionPage() {
   });
 
   const navigate = useNavigate();
+  
 
   const showMessage = (type: "success" | "error" | "info", text: string) => {
     setMessage({ type, text });
@@ -104,12 +105,12 @@ export default function QuestionPage() {
 
     // setLoading(true);
     // setCurrentJobId(null);
-    // setJobStatus("idle");      // <-- Extra line removed
+    // setJobStatus("idle");
     // setJobStatus("processing");
 
     setLoading(true);
     setCurrentJobId(null);
-    setJobStatus("processing"); // Directly set to processing
+    setJobStatus("processing");
     showMessage("info", "Submitting...");
 
     try {
@@ -173,7 +174,6 @@ export default function QuestionPage() {
 
   return (
     <div className="bg-white rounded-md shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8 w-full max-w-4xl mx-auto">
-      {/* Header - Mobile optimized */}
       <div className="flex items-start justify-between gap-3 sm:gap-4 mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-gray-100 relative">
         <div className="flex-1 min-w-0">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
@@ -184,7 +184,6 @@ export default function QuestionPage() {
           </p>
         </div>
 
-        {/* Menu button */}
         <div className="relative flex-shrink-0" ref={menuRef}>
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -194,7 +193,6 @@ export default function QuestionPage() {
             <FiMoreVertical className="text-xl sm:text-2xl" />
           </button>
 
-          {/* Dropdown menu */}
           {isMenuOpen && (
             <div className="absolute right-0 top-12 w-48 bg-white border border-gray-200 rounded-md shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="py-1">
@@ -224,7 +222,6 @@ export default function QuestionPage() {
         </div>
       </div>
 
-      {/* Mode selector - Mobile optimized */}
       <div className="flex justify-center mb-6 sm:mb-8">
         <div className="bg-gray-100 p-1 rounded-lg inline-flex w-full sm:w-auto">
           {[
@@ -265,7 +262,6 @@ export default function QuestionPage() {
           onChange={(e) => {
             setText(e.target.value);
 
-            // This fixes the retry button issue!
             if (currentJobId) {
               setCurrentJobId(null);
               setJobStatus("idle");
@@ -279,7 +275,6 @@ export default function QuestionPage() {
         />
       )}
 
-      {/* ========== CHANGE 3: Upload mode ========== */}
       {mode === "upload" && (
         <label
           htmlFor="fileUpload"
@@ -349,18 +344,12 @@ export default function QuestionPage() {
             accept=".pdf,.jpg,.jpeg,.png"
             onChange={(e) => {
               setFile(e.target.files?.[0] || null);
-
-              // ✅ NEW: Reset job status when file changes
-              // This fixes the retry button issue!
               if (currentJobId) {
                 setCurrentJobId(null);
                 setJobStatus("idle");
               }
 
-              // ❌ OLD CODE (before the fix):
               // if (message.type === "error") setMessage({ type: null, text: "" });
-
-              // ✅ KEPT (still works):
               if (message.type === "error")
                 setMessage({ type: null, text: "" });
             }}
@@ -369,7 +358,6 @@ export default function QuestionPage() {
         </label>
       )}
 
-      {/* Message notification */}
       {message.type && (
         <div
           className={`mt-4 sm:mt-6 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm border flex items-start justify-between gap-2 sm:gap-3 animate-in fade-in slide-in-from-top-2
@@ -385,10 +373,10 @@ export default function QuestionPage() {
           <div className="flex gap-2 flex-1 min-w-0">
             <span className="mt-0.5 flex-shrink-0">
               {message.type === "error"
-                ? "⚠️"
+                ? ""
                 : message.type === "success"
                 ? "✓"
-                : "ℹ️"}
+                : ""}
             </span>
             <span className="break-words whitespace-pre-wrap">
               {message.text}

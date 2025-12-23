@@ -11,9 +11,25 @@ export class SubmissionController {
           .json({ success: false, message: "Unauthorized" });
       }
 
-      const data = await SubmissionService.getAllSubmissions(userId);
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 5;
 
-      return res.status(200).json({ success: true, submissions: data });
+      const data = await SubmissionService.getAllSubmissions(
+        userId,
+        page,
+        limit
+      );
+
+      return res.status(200).json({
+        success: true,
+        submissions: data.rows,
+        pagination: {
+          page,
+          limit,
+          total: data.count,
+          totalPages: Math.ceil(data.count / limit),
+        },
+      });
     } catch (err: any) {
       return res.status(500).json({ success: false, message: err.message });
     }
@@ -30,26 +46,27 @@ export class SubmissionController {
     }
   }
   static async deleteSubmission(req: Request, res: Response) {
-  try {
-    const userId = req.auth?.sub;
-    if (!userId) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+    try {
+      const userId = req.auth?.sub;
+      if (!userId) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
+      }
+
+      const { id } = req.params;
+
+      await SubmissionService.deleteSubmission(id, userId);
+
+      return res.status(200).json({
+        success: true,
+        message: "Submission deleted successfully",
+      });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        message: err.message,
+      });
     }
-
-    const { id } = req.params;
-
-    await SubmissionService.deleteSubmission(id, userId);
-
-    return res.status(200).json({
-      success: true,
-      message: "Submission deleted successfully",
-    });
-  } catch (err: any) {
-    return res.status(500).json({
-      success: false,
-      message: err.message,
-    });
   }
-}
-
 }

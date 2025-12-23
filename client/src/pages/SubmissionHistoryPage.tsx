@@ -6,12 +6,14 @@ import {
   FiClock,
   FiType,
   FiUploadCloud,
-  // FiArrowRight,
   FiActivity,
   FiTrendingUp,
   FiMoreVertical,
   FiTrash2,
   FiEye,
+  FiChevronLeft,
+  FiChevronRight,
+  FiArrowLeft,
 } from "react-icons/fi";
 import { SubmissionAPI, type SubmissionRecord } from "../api/submission.api";
 import { QuestionAPI } from "../api/question.api";
@@ -24,16 +26,49 @@ const socket = io(SOCKET_URL, { autoConnect: true });
 
 export default function SubmissionsPage() {
   const [submissions, setSubmissions] = useState<SubmissionRecord[]>([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 8,
+    total: 0,
+    totalPages: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const navigate = useNavigate();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const loadSubmissions = useCallback(async () => {
-    const data = await SubmissionAPI.getAll();
-    setSubmissions(data);
-  }, []);
+  // const loadSubmissions = useCallback(async (page: number = 1) => {
+  //   try {
+  //     setLoading(true);
+  //     const data = await SubmissionAPI.getAll(page, 8);
+  //     setSubmissions(data.submissions);
+  //     setPagination(data.pagination);
+  //     setupSocket(data.submissions);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
+  const loadSubmissions = useCallback(
+    async (page: number = 1) => {
+      try {
+        setLoading(true);
+
+        const data = await SubmissionAPI.getAll(page, pagination.limit);
+
+        setSubmissions(data.submissions);
+
+        setPagination({
+          ...data.pagination,
+          page, // frontend controls current page
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [pagination.limit]
+  );
 
   const setupSocket = useCallback(
     (items: SubmissionRecord[]) => {
@@ -41,25 +76,19 @@ export default function SubmissionsPage() {
         const channel = `job-status-${sub.id}`;
         socket.off(channel);
         socket.on(channel, () => {
-          loadSubmissions();
+          loadSubmissions(pagination.page);
         });
       });
     },
-    [loadSubmissions]
+    [loadSubmissions, pagination.page]
   );
+  useEffect(() => {
+    setupSocket(submissions);
+  }, [submissions, setupSocket]);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await SubmissionAPI.getAll();
-        setSubmissions(data);
-        setupSocket(data);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
+    // loadSubmissions(1);
+    loadSubmissions(pagination.page);
 
     return () => {
       submissions.forEach((sub) => {
@@ -68,7 +97,7 @@ export default function SubmissionsPage() {
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setupSocket]);
+  }, []);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -83,33 +112,24 @@ export default function SubmissionsPage() {
     e.stopPropagation();
     setOpenMenuId(null);
     await QuestionAPI.retryJob(submissionId);
-    await loadSubmissions();
+    await loadSubmissions(pagination.page);
   };
 
-  // const handleDelete = async (submissionId: string, e: React.MouseEvent) => {
-  //   e.stopPropagation();
-  //   setOpenMenuId(null);
-  //   // TODO: Implement delete functionality
-  //   console.log("Delete submission:", submissionId);
-  //   // await SubmissionAPI.delete(submissionId);
-  //   // await loadSubmissions();
-  // };
-
-  // const handleDelete = async (submissionId: string, e: React.MouseEvent) => {
-  //   e.stopPropagation();
-  //   setOpenMenuId(null);
-
-  //   await SubmissionAPI.delete(submissionId);
-  //   await loadSubmissions(); // refresh list
-  // };
   const handleDelete = async () => {
     if (!deleteId) return;
 
     await SubmissionAPI.delete(deleteId);
-    await loadSubmissions();
+    await loadSubmissions(pagination.page);
 
     setShowConfirm(false);
     setDeleteId(null);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      loadSubmissions(newPage);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const toggleMenu = (submissionId: string, e: React.MouseEvent) => {
@@ -156,15 +176,6 @@ export default function SubmissionsPage() {
     }
   };
 
-  // const getStats = () => {
-  //   const completed = submissions.filter(s => s.status === 'completed').length;
-  //   const avgScore = submissions
-  //     .filter(s => s.marks !== null && s.marks !== undefined)
-  //     .reduce((acc, s) => acc + (s.marks || 0), 0) / Math.max(completed, 1);
-
-  //   return { total: submissions.length, completed, avgScore: avgScore.toFixed(1) };
-  // };
-
   const getStats = () => {
     const completed = submissions.filter(
       (s) => s.status === "completed"
@@ -174,7 +185,7 @@ export default function SubmissionsPage() {
     const uploadedCount = submissions.filter((s) => s.mode === "upload").length;
 
     return {
-      total: submissions.length,
+      total: pagination.total,
       completed,
       typedCount,
       uploadedCount,
@@ -183,31 +194,44 @@ export default function SubmissionsPage() {
 
   const stats = getStats();
 
-  if (loading) {
+  if (loading && pagination.page === 1) {
     return <Loader text="Loading activities..." />;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
+      {/* <button
+             onClick={() => navigate(-1)}
+             className="p-2.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all duration-200"
+          >
+            <FiArrowLeft size={20} />
+          </button> */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-        {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2.5 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-md shadow-lg shadow-indigo-500/25">
+            {/* <div className="p-2.5 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-md shadow-lg shadow-indigo-500/25">
               <FiActivity className="w-6 h-6 text-white" />
+            </div> */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate(-1)}
+                className="p-2.5 rounded-lg bg-white border border-gray-200 text-gray-600 
+               hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 
+               transition-all duration-200"
+              >
+                <FiArrowLeft size={20} />
+              </button>
+
+              <h1 className="text-2xl font-bold">Activity Log</h1>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
-              Activity Log
-            </h1>
           </div>
           <p className="text-gray-600 text-sm sm:text-base ml-[52px]">
             Track your assessment history and performance results.
           </p>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-md p-6 shadow-sm border border-gray-200/60 hover:shadow-lg hover:border-blue-300/50 transition-all duration-300">
+          <div className="bg-white rounded-md p-6 shadow-sm border border-gray-200/60">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-semibold mb-1">
@@ -223,7 +247,7 @@ export default function SubmissionsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-md p-6 shadow-sm border border-gray-200/60 hover:shadow-lg hover:border-emerald-300/50 transition-all duration-300">
+          <div className="bg-white rounded-md p-6 shadow-sm border border-gray-200/60 ">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-semibold mb-1">
@@ -239,15 +263,8 @@ export default function SubmissionsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-md p-6 shadow-sm border border-gray-200/60 hover:shadow-lg hover:border-indigo-300/50 transition-all duration-300">
+          <div className="bg-white rounded-md p-6 shadow-sm border border-gray-200/60">
             <div className="flex items-center justify-between">
-              {/* <div>
-                <p className="text-gray-600 text-sm font-semibold mb-1">Average Score</p>
-                <p className="text-3xl font-bold text-indigo-600 tracking-tight">{stats.avgScore}</p>
-              </div> */}
-              {/* <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200/60 hover:shadow-lg transition-all"> */}
-              {/* <p className="text-gray-600 text-sm font-semibold mb-3">Submission Types</p> */}
-
               <div className="flex items-center gap-8">
                 <div className="flex items-center gap-2 text-indigo-600 font-bold">
                   <FiType />
@@ -260,8 +277,6 @@ export default function SubmissionsPage() {
                 </div>
               </div>
 
-              {/* </div> */}
-
               <div className="p-3.5 bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-xl border border-indigo-200/30">
                 <FiTrendingUp className="w-6 h-6 text-indigo-600" />
               </div>
@@ -269,7 +284,6 @@ export default function SubmissionsPage() {
           </div>
         </div>
 
-        {/* Submissions List */}
         <div className="bg-white rounded-md shadow-sm border border-gray-200/60 overflow-hidden">
           {submissions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
@@ -286,7 +300,6 @@ export default function SubmissionsPage() {
             </div>
           ) : (
             <>
-              {/* Desktop Table View */}
               <div className="hidden lg:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -321,7 +334,12 @@ export default function SubmissionsPage() {
                       >
                         <td className="py-5 px-6">
                           <span className="text-sm font-bold text-gray-400 group-hover:text-gray-600 transition-colors">
-                            {String(index + 1).padStart(2, "0")}
+                            {String(
+                              // index + 1
+                              (pagination.page - 1) * pagination.limit +
+                                index +
+                                1
+                            ).padStart(2, "0")}
                           </span>
                         </td>
 
@@ -357,7 +375,7 @@ export default function SubmissionsPage() {
 
                         <td className="py-5 px-6 text-center">
                           {s.marks !== undefined && s.marks !== null ? (
-                            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl  text-black font-bold text-md ">
+                            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl text-black font-bold text-md ">
                               {s.marks}
                             </div>
                           ) : (
@@ -382,15 +400,6 @@ export default function SubmissionsPage() {
                             className="flex items-center justify-center gap-2"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {/* <button
-                              title="View Details"
-                              onClick={() => navigate(`/submissions/${s.id}`)}
-                              className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-200 hover:scale-110 border border-transparent hover:border-indigo-200"
-                            >
-                              <FiArrowRight size={18} strokeWidth={2.5} />
-                            </button> */}
-
-                            {/* Three Dots Menu */}
                             <div className="relative">
                               <button
                                 title="More Actions"
@@ -400,7 +409,6 @@ export default function SubmissionsPage() {
                                 <FiMoreVertical size={18} strokeWidth={2.5} />
                               </button>
 
-                              {/* Dropdown Menu */}
                               {openMenuId === s.id && (
                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
                                   <button
@@ -424,7 +432,6 @@ export default function SubmissionsPage() {
                                   )}
 
                                   <button
-                                    // onClick={(e) => handleDelete(s.id, e)}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       setOpenMenuId(null);
@@ -454,7 +461,6 @@ export default function SubmissionsPage() {
                     key={s.id}
                     className="p-4 hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/30 transition-all duration-200 active:scale-[0.98]"
                   >
-                    {/* Header Row */}
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-bold text-gray-400">
@@ -477,7 +483,6 @@ export default function SubmissionsPage() {
                       <div className="flex items-center gap-2">
                         {getStatusBadge(s.status)}
 
-                        {/* Three Dots Menu for Mobile */}
                         <div
                           className="relative"
                           onClick={(e) => e.stopPropagation()}
@@ -509,13 +514,6 @@ export default function SubmissionsPage() {
                                 </button>
                               )}
 
-                              {/* <button
-                                onClick={(e) => handleDelete(s.id, e)}
-                                className="w-full px-4 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50 flex items-center gap-3 border-t border-gray-100"
-                              >
-                                <FiTrash2 size={16} />
-                                Delete Record
-                              </button> */}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -534,7 +532,6 @@ export default function SubmissionsPage() {
                       </div>
                     </div>
 
-                    {/* Content */}
                     <div
                       onClick={() => navigate(`/submissions/${s.id}`)}
                       className="space-y-2 mb-3 cursor-pointer"
@@ -556,10 +553,61 @@ export default function SubmissionsPage() {
                   </div>
                 ))}
               </div>
+              {/* //pagination */}
+              {pagination.totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+                  <div className="text-sm text-gray-600">
+                    Page{" "}
+                    <span className="font-semibold">{pagination.page}</span> of{" "}
+                    <span className="font-semibold">
+                      {pagination.totalPages}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handlePageChange(pagination.page - 1)}
+                      disabled={pagination.page === 1}
+                      className="p-2 text-gray-600 hover:bg-white hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors border border-gray-200 hover:border-indigo-200"
+                    >
+                      <FiChevronLeft size={18} />
+                    </button>
+
+                    {/* Page Numbers */}
+                    <div className="flex items-center gap-1">
+                      {Array.from(
+                        { length: pagination.totalPages },
+                        (_, i) => i + 1
+                      ).map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          className={`px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
+                            pagination.page === page
+                              ? "bg-indigo-600 text-white"
+                              : "text-gray-700 hover:bg-white border border-gray-200"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => handlePageChange(pagination.page + 1)}
+                      disabled={pagination.page === pagination.totalPages}
+                      className="p-2 text-gray-600 hover:bg-white hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors border border-gray-200 hover:border-indigo-200"
+                    >
+                      <FiChevronRight size={18} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
+
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-xl w-[90%] max-w-md p-6 animate-scaleIn">

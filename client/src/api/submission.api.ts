@@ -9,7 +9,6 @@ export interface ExtractedQuestion {
 
 export interface SubmissionRecord {
   id: string;
-  // title: string;
   mode: "typed" | "upload";
   marks?: number | null;
   totalMarks?: number | null;
@@ -19,7 +18,6 @@ export interface SubmissionRecord {
   errorMessage?: string | null;
   status: "pending" | "processing" | "completed" | "failed";
   createdAt: string;
-
   questionsList?: ExtractedQuestion[];
 }
 
@@ -35,10 +33,25 @@ export interface SubmissionDetail {
   answerSheets: AnswerSheetRecord[];
 }
 
+export interface PaginationData {
+  submissions: SubmissionRecord[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export const SubmissionAPI = {
-  getAll: async (): Promise<SubmissionRecord[]> => {
-    const res = await axiosClient.get("/api/submissions");
-    return Array.isArray(res.data.submissions) ? res.data.submissions : [];
+  getAll: async (page: number = 1, limit: number = 8): Promise<PaginationData> => {
+    const res = await axiosClient.get("/api/submissions", {
+      params: { page, limit },
+    });
+    return {
+      submissions: Array.isArray(res.data.submissions) ? res.data.submissions : [],
+      pagination: res.data.pagination,
+    };
   },
 
   getOne: async (id: string): Promise<SubmissionDetail> => {

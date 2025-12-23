@@ -7,6 +7,7 @@ import {
   FiFileText,
   FiEye,
   FiRefreshCw,
+  FiArrowLeft,
 } from "react-icons/fi";
 import {
   SubmissionAPI,
@@ -28,7 +29,7 @@ export default function SubmissionDetailPage() {
   const [data, setData] = useState<SubmissionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  
+
   const [showTypedText, setShowTypedText] = useState(false);
 
   const loadSubmission = async () => {
@@ -123,9 +124,9 @@ export default function SubmissionDetailPage() {
   };
 
   // if (loading) return <p className="p-10 text-center text-gray-500">Loading submission…</p>;
-    if (loading) {
-  return <Loader text="Loading..." />;
-}
+  if (loading) {
+    return <Loader text="Loading..." />;
+  }
 
   if (!data || error) {
     return (
@@ -140,81 +141,118 @@ export default function SubmissionDetailPage() {
 
   return (
     <div className="bg-white rounded-md shadow-lg border border-gray-100 p-8 w-full max-w-4xl mx-auto">
-      
       <div className="mb-8 border-b border-gray-100 pb-4">
-        <h1 className="text-2xl font-bold text-gray-800">Submission Details</h1>
-        {/* <p className="text-gray-500 text-sm mt-1">Manage question paper and answer sheets</p> */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="
+        flex items-center justify-center
+        h-9 w-9
+        rounded-lg
+        bg-white
+        border border-gray-300
+        text-gray-600
+        hover:bg-indigo-50
+        hover:text-indigo-600
+        hover:border-indigo-300
+        transition
+      "
+          >
+            <FiArrowLeft size={18} />
+          </button>
+
+          <h1 className="text-2xl font-bold text-gray-800">
+            Submission Details
+          </h1>
+        </div>
+
+        {/* <p className="text-gray-500 text-sm mt-1">
+          Manage question paper and answer sheets
+        </p> */}
       </div>
+
       <div className="bg-gray-50 border border-gray-200 rounded-md p-6 mb-8 transition-all">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
-                <h2 className="text-lg font-semibold text-gray-800">Question Paper</h2>
-                {getBadge(submission.status)}
+              <h2 className="text-lg font-semibold text-gray-800">
+                Question Paper
+              </h2>
+              {getBadge(submission.status)}
             </div>
             <div className="text-sm text-gray-600 space-x-4">
-                <span>Mode: <span className="font-semibold capitalize text-gray-800">{submission.mode}</span></span>
-                {submission.totalMarks && <span>Marks: <span className="font-semibold text-gray-800">{submission.totalMarks}</span></span>}
-                {/* {submission.questions && <span>Questions: <span className="font-semibold text-gray-800">{submission.questions}</span></span>} */}
+              <span>
+                Mode:{" "}
+                <span className="font-semibold capitalize text-gray-800">
+                  {submission.mode}
+                </span>
+              </span>
+              {submission.totalMarks && (
+                <span>
+                  Marks:{" "}
+                  <span className="font-semibold text-gray-800">
+                    {submission.totalMarks}
+                  </span>
+                </span>
+              )}
+              {/* {submission.questions && <span>Questions: <span className="font-semibold text-gray-800">{submission.questions}</span></span>} */}
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
             {submission.status === "completed" && (
-                <button
-                onClick={() => navigate(`/submissions/${submission.id}/questions`)}
+              <button
+                onClick={() =>
+                  navigate(`/submissions/${submission.id}/questions`)
+                }
                 className="px-4 py-2 bg-white border border-gray-300 text-blue-600 font-medium rounded-lg hover:bg-gray-100 transition shadow-sm flex items-center gap-2 text-sm"
-                >
-                <FiFileText />View Extracted
-                </button>
+              >
+                <FiFileText />
+                View Extracted
+              </button>
             )}
 
-          
             {submission.mode === "upload" && submission.fileUrl && (
-                <button
+              <button
                 onClick={() => window.open(submission.fileUrl!, "_blank")}
                 className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition shadow-sm flex items-center gap-2 text-sm"
-                >
+              >
                 <FiFileText /> Open File
-                </button>
+              </button>
             )}
 
-            
             {submission.mode === "typed" && submission.rawText && (
-                <button
+              <button
                 onClick={() => setShowTypedText(!showTypedText)}
                 className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition shadow-sm flex items-center gap-2 text-sm"
-                >
-                <FiFileText /> 
+              >
+                <FiFileText />
                 {showTypedText ? "Hide Question Text" : "View Question"}
-                
-                </button>
+              </button>
             )}
           </div>
         </div>
-        
-        
+
         {submission.errorMessage && (
           <div className="mt-4 text-red-700 bg-red-50 p-3 rounded-lg text-sm border border-red-100 flex items-start gap-2">
             <FiAlertTriangle className="mt-0.5 shrink-0" />
             <div>
-                <span className="font-semibold">Error:</span> {submission.errorMessage}
+              <span className="font-semibold">Error:</span>{" "}
+              {submission.errorMessage}
             </div>
           </div>
         )}
 
-        
         {submission.mode === "typed" && submission.rawText && showTypedText && (
           <div className="mt-6 animate-in fade-in slide-in-from-top-2">
-             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 max-h-[400px] overflow-y-auto custom-scrollbar">
-                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
-                    {submission.rawText}
-                </pre>
-             </div>
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 max-h-[400px] overflow-y-auto custom-scrollbar">
+              <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
+                {submission.rawText}
+              </pre>
+            </div>
           </div>
         )}
 
-        
         {submission.status === "failed" && (
           <div className="flex justify-end mt-4">
             <button
@@ -227,7 +265,6 @@ export default function SubmissionDetailPage() {
         )}
       </div>
 
-      
       {submission.status === "completed" && (
         <div>
           <div className="flex justify-between items-center mb-4">
@@ -242,7 +279,7 @@ export default function SubmissionDetailPage() {
 
           {sheets.length === 0 ? (
             <div className="text-center py-10 bg-gray-50 rounded-md border border-dashed border-gray-300">
-                <p className="text-gray-500">No answer sheets uploaded yet.</p>
+              <p className="text-gray-500">No answer sheets uploaded yet.</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -253,14 +290,22 @@ export default function SubmissionDetailPage() {
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-3">
-                        <h3 className="font-bold text-gray-800 text-lg">Answer Sheet {index + 1}</h3>
-                        {getBadge(sheet.status)}
+                      <h3 className="font-bold text-gray-800 text-lg">
+                        Answer Sheet {index + 1}
+                      </h3>
+                      {getBadge(sheet.status)}
                     </div>
 
                     {sheet.status === "completed" && (
-                        <p className="text-sm font-medium text-gray-600">
-                            Score: <span className="text-green-600 text-lg font-bold">{sheet.totalScore}</span> <span className="text-gray-400">/ {submission.totalMarks}</span>
-                        </p>
+                      <p className="text-sm font-medium text-gray-600">
+                        Score:{" "}
+                        <span className="text-green-600 text-lg font-bold">
+                          {sheet.totalScore}
+                        </span>{" "}
+                        <span className="text-gray-400">
+                          / {submission.totalMarks}
+                        </span>
+                      </p>
                     )}
 
                     {sheet.status === "failed" && sheet.errorMessage && (
@@ -273,7 +318,11 @@ export default function SubmissionDetailPage() {
                   <div className="flex items-center gap-3 w-full sm:w-auto">
                     {sheet.status === "completed" && (
                       <button
-                        onClick={() => navigate(`/results/sheet/${sheet.id}?index=${index + 1}`)}
+                        onClick={() =>
+                          navigate(
+                            `/results/sheet/${sheet.id}?index=${index + 1}`
+                          )
+                        }
                         className="flex-1 sm:flex-none px-5 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm flex items-center justify-center gap-2 text-sm"
                       >
                         <FiEye /> View
@@ -283,7 +332,11 @@ export default function SubmissionDetailPage() {
                     {sheet.status === "failed" && (
                       <>
                         <button
-                          onClick={() => navigate(`/results/sheet/${sheet.id}?index=${index + 1}`)}
+                          onClick={() =>
+                            navigate(
+                              `/results/sheet/${sheet.id}?index=${index + 1}`
+                            )
+                          }
                           className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm text-sm"
                         >
                           View

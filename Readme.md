@@ -30,3 +30,10 @@ Option B: Write a short note on Cyber Security. (15 Marks)
 4. Explain Newton's Second Law of Motion. (5 marks)
 5. What is 25 × 14? (2 marks)
 6. who is the prime minister of inida ? (5 marks)
+
+
+Day 1: Dashboard (done!)
+Day 2: Landing Page (done!)
+Day 3: Export PDF (done!)
+Day 4: Search & Filter (done!)
+Day 5: User Profile (done!)
