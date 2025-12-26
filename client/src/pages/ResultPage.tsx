@@ -10,7 +10,7 @@ import {
   FiEye,
   FiRefreshCw,
   FiFileText,
-  // FiExternalLink
+  FiBarChart2,
 } from "react-icons/fi";
 import Loader from "../components/Loader";
 
@@ -42,7 +42,7 @@ type QPFile =
 
 const trimError = (msg?: string | null): string => {
   if (!msg) return "";
-  return msg.length > 120 ? msg.slice(0, 120) + "..." : msg;
+  return msg.length > 100 ? msg.slice(0, 100) + "..." : msg;
 };
 
 export default function ResultsPage() {
@@ -111,7 +111,6 @@ export default function ResultsPage() {
 
       if (res.type === "file") {
         window.open(res.fileUrl, "_blank");
-
         setQpDetails(res);
       } else {
         setQpDetails(res);
@@ -130,183 +129,186 @@ export default function ResultsPage() {
     }
   };
 
-  if (loading)
-    // return <p className="p-10 text-center text-gray-500">Loading results...</p>;
-
-    return <Loader text="Loadings..." />;
+  if (loading) return <Loader text="Analyzing Performance..." />;
 
   if (error)
     return (
-      <p className="p-10 text-center text-red-600 border bg-red-50 m-4 rounded">
-        {error}
-      </p>
+      <div className="flex justify-center p-10">
+        <p className="bg-red-50 text-red-600 border border-red-100 px-6 py-4 rounded-lg shadow-sm">
+          {error}
+        </p>
+      </div>
     );
   if (!resultData) return null;
 
   const { questionPaper: qp, answers } = resultData;
+  const completedCount = answers.filter((a) => a.status === "completed").length;
 
   return (
-    <div className="bg-white rounded-md shadow-lg border border-gray-100 p-8 w-full max-w-4xl mx-auto">
-      <div className="mb-8 border-b border-gray-100 pb-4">
-        <h1 className="text-2xl font-bold text-gray-800">Evaluation Results</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          View scores and details for this session
-        </p>
-      </div>
+    <div className="w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10">
+      <div className="bg-white rounded shadow-sm border border-gray-200 p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <FiBarChart2 className="text-teal-600 text-xl" />
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">
+              Evaluation Dashboard
+            </h1>
+          </div>
+        </div>
 
-      <div className="bg-gray-50 border border-gray-200 rounded-md p-6 mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="font-semibold text-lg text-gray-800">
-              Question Paper
-            </h2>
-            <p className="text-gray-500 text-sm mt-1">
-              Total Marks:{" "}
-              <span className="font-bold text-gray-800">{qp.totalMarks}</span>
-            </p>
+        <div className="flex flex-col-reverse md:flex-row items-stretch md:items-center gap-4 md:gap-6 w-full md:w-auto">
+          <div className="flex gap-4 md:gap-8 bg-gradient-to-b from-gray-50 to-white px-4 md:px-8 py-3 rounded border border-gray-200 shadow-sm w-full md:w-auto justify-between md:justify-start">
+            <div className="flex-1 md:flex-none text-center md:text-left">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Papers
+              </p>
+              <p className="text-xl md:text-2xl font-bold text-gray-800">
+                {answers.length}
+              </p>
+            </div>
+
+            <div className="w-px h-10 bg-gray-200/60 hidden md:block"></div>
+
+            <div className="flex-1 md:flex-none text-center md:text-left">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Completed
+              </p>
+              <p className="text-xl md:text-2xl font-bold text-teal-600">
+                {completedCount}
+              </p>
+            </div>
+
+            <div className="w-px h-10 bg-gray-200/60 hidden md:block"></div>
+
+            <div className="flex-1 md:flex-none text-center md:text-right">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Marks
+              </p>
+              <p className="text-xl md:text-2xl font-bold text-gray-800">
+                {qp.totalMarks}
+              </p>
+            </div>
           </div>
 
           <button
             onClick={handleQuestionPaper}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition shadow-sm"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 hover:text-gray-900 hover:border-gray-400 transition-all shadow-sm text-sm"
           >
             <FiFileText />
-
-            {qpDetails
-              ? qpDetails.type === "file"
-                ? "Open File"
-                : "Hide"
-              : "View"}
+            {qpDetails && qpDetails.type !== "file" ? "Hide QP" : "View QP"}
           </button>
         </div>
-
-        {qpDetails && qpDetails.type === "text" && (
-          <div className="mt-6 animate-in fade-in slide-in-from-top-2">
-            <div className="bg-white rounded-md border border-gray-200 shadow-sm p-6 max-h-[400px] overflow-y-auto custom-scrollbar">
-              <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
-                {qpDetails.rawText}
-              </pre>
-            </div>
-          </div>
-        )}
       </div>
 
-      <div>
-        <h2 className="font-bold text-xl text-gray-800 mb-4">Answer Sheets</h2>
+      {qpDetails && qpDetails.type === "text" && (
+        <div className="bg-white rounded border border-gray-200 shadow-sm p-4 md:p-6 animate-in slide-in-from-top-2">
+          <h3 className="font-bold text-gray-800 mb-3 text-xs uppercase tracking-wider border-b pb-2">
+            Question Paper Content
+          </h3>
+          <div className="bg-gray-50 p-4 rounded border border-gray-100 max-h-[300px] overflow-y-auto custom-scrollbar">
+            <pre className="whitespace-pre-wrap text-sm text-gray-600 font-mono leading-relaxed">
+              {qpDetails.rawText}
+            </pre>
+          </div>
+        </div>
+      )}
 
-        <div className="space-y-4">
-          {answers.map((ans, index) => (
-            <div
-              key={ans.id}
-              className="p-5 border border-gray-200 rounded-md bg-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 group"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <h3 className="font-bold text-gray-800 text-lg">
+      <div className="space-y-4">
+        {answers.map((ans, index) => (
+          <div
+            key={ans.id}
+            className="group relative bg-white rounded border border-gray-200 overflow-hidden"
+          >
+            <div className="flex flex-col md:flex-row items-center p-4 md:p-5 md:pl-7 gap-4 md:gap-6">
+              <div className="flex-1 w-full md:w-auto flex items-center gap-4 md:gap-5">
+
+                <div>
+                  <h3 className="font-bold text-gray-900 text-lg">
                     Answer Sheet {index + 1}
                   </h3>
-
-                  {ans.status === "completed" ? (
-                    <span className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold flex items-center gap-1">
-                      <FiCheckCircle /> Completed
-                    </span>
-                  ) : ans.status === "processing" ? (
-                    <span className="px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-bold flex items-center gap-1">
-                      <FiClock /> Processing...
-                    </span>
-                  ) : ans.status === "failed" ? (
-                    <span className="px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold flex items-center gap-1">
-                      <FiAlertTriangle /> Failed
-                    </span>
-                  ) : (
-                    <span className="px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-bold">
-                      Pending
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    {ans.status === "completed" ? (
+                      <span className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold flex items-center gap-1">
+                        <FiCheckCircle /> Completed
+                      </span>
+                    ) : ans.status === "processing" ? (
+                      <span className="px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-bold flex items-center gap-1">
+                        <FiClock /> Processing...
+                      </span>
+                    ) : ans.status === "failed" ? (
+                      <span className="px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold flex items-center gap-1">
+                        <FiAlertTriangle /> Failed
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-bold">
+                        Pending
+                      </span>
+                    )}
+                  </div>
                 </div>
+              </div>
 
-                {ans.status === "completed" && (
-                  <p className="text-sm font-medium text-gray-600">
-                    Score:{" "}
-                    <span className="text-green-600 text-lg font-bold">
-                      {ans.totalScore}
-                    </span>{" "}
-                    <span className="text-gray-400">/ {qp.totalMarks}</span>
+              <div className="w-full md:w-auto flex justify-between md:justify-center items-center gap-8 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-10 md:pr-10">
+                {ans.status === "completed" ? (
+                  <div className="text-center md:text-left flex-1 md:flex-auto">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">
+                      Score Achieved
+                    </span>
+                    <div className="flex items-baseline justify-center md:justify-start gap-1.5 mt-1">
+                      <span className="text-2xl font-bold text-gray-800 tracking-tight">
+                        {ans.totalScore}
+                      </span>
+                      <span className="text-sm font-semibold text-gray-400">
+                        / {qp.totalMarks}
+                      </span>
+                    </div>
+                  </div>
+                ) : ans.status === "failed" ? (
+                  <p className="text-sm text-red-500 max-w-xs bg-red-50 px-3 py-1 rounded border border-red-100 flex-1 md:flex-auto text-center md:text-left">
+                    {trimError(ans.errorMessage)}
                   </p>
-                )}
-
-                {ans.status === "failed" && ans.errorMessage && (
-                  <p className="text-sm text-red-600  p-1.5  mt-1">
-                    Error: {trimError(ans.errorMessage)}
-                  </p>
+                ) : (
+                  <div className="flex items-center justify-center md:justify-start gap-2 text-gray-400 italic flex-1 md:flex-auto">
+                    <FiClock className="animate-spin" />
+                    <span className="text-sm">Evaluating...</span>
+                  </div>
                 )}
               </div>
 
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                {ans.status === "failed" && (
-                  // <button
-                  //   onClick={() => retrySheet(String(ans.id))}
-                  //   className="flex-1 sm:flex-none px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium flex items-center justify-center gap-2 transition"
-                  // >
-                  //   <FiRefreshCw /> Retry
-                  // </button>
+              <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                {ans.status === "completed" && (
                   <button
-                    onClick={() => retrySheet(String(ans.id))}
-                    className={`
-    flex-1 sm:flex-none px-4 py-2 rounded-md font-semibold text-sm text-gray-600
-    flex items-center justify-center gap-2 transition-all duration-300
-    backdrop-blur-sm shadow-sm border
-    bg-white/60 
-  `}
+                    onClick={() =>
+                      navigate(`/results/sheet/${ans.id}?index=${index + 1}`)
+                    }
+                    className="w-full md:w-auto flex-1 md:flex-none px-5 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm flex items-center justify-center gap-2 text-sm"
                   >
-                    <FiRefreshCw className="text-lg" />
-                    Retry
+                    <FiEye /> View
                   </button>
                 )}
 
-                {/* <button
-                  onClick={() =>
-                    navigate(`/results/sheet/${ans.id}?index=${index + 1}`)
-                  }
-                  disabled={
-                    ans.status !== "completed" && ans.status !== "failed"
-                  }
-                  className={`flex-1 sm:flex-none px-5 py-2 rounded-md font-medium text-sm flex items-center justify-center gap-2 transition-all
-                    ${
-                      ans.status === "completed" || ans.status === "failed"
-                        ? "text-black shadow-sm"
-                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    }
-                  `}
-                >
-                  <FiEye />
-                  View
-                </button> */}
-                <button
-                  onClick={() =>
-                    (ans.status === "completed" || ans.status === "failed") &&
-                    navigate(`/results/sheet/${ans.id}?index=${index + 1}`)
-                  }
-                  disabled={
-                    ans.status !== "completed" && ans.status !== "failed"
-                  }
-                  className={`
-    flex-1 sm:flex-none px-5 py-2 rounded-md font-medium text-sm 
-    flex items-center justify-center gap-2 transition-all duration-200
-    ${
-      ans.status === "completed" || ans.status === "failed"
-        ? "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm"
-        : "bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed"
-    }
-  `}
-                >
-                  <FiEye />
-                  View
-                </button>
+                {ans.status === "failed" && (
+                  <>
+                    <button
+                      onClick={() =>
+                        navigate(`/results/sheet/${ans.id}?index=${index + 1}`)
+                      }
+                      className="flex-1 md:flex-none px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm text-sm"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() => retrySheet(String(ans.id))}
+                      className="flex-1 md:flex-none px-4 py-2 bg-white border border-red-200 text-red-600 font-medium rounded-lg hover:bg-red-50 transition shadow-sm flex items-center justify-center gap-2 text-sm"
+                    >
+                      <FiRefreshCw /> Retry
+                    </button>
+                  </>
+                )}
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );

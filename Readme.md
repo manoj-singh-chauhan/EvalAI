@@ -37,3 +37,12 @@ Day 2: Landing Page (done!)
 Day 3: Export PDF (done!)
 Day 4: Search & Filter (done!)
 Day 5: User Profile (done!)
+
+class proxy
+class and object 
+clousers
+event loop
+web worker 
+event loop 
+try catch
+api versioning 

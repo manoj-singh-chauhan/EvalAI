@@ -1,16 +1,9 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { QuestionAPI } from "../api/question.api";
 import { io as socketIO } from "socket.io-client";
 import { SOCKET_URL } from "../config/env";
-import { useClerk } from "@clerk/clerk-react";
-import {
-  FiUpload,
-  FiType,
-  FiMoreVertical,
-  FiActivity,
-  FiLogOut,
-} from "react-icons/fi";
+import { FiUpload, FiType } from "react-icons/fi";
 
 const socket = socketIO(SOCKET_URL);
 
@@ -20,10 +13,6 @@ export default function QuestionPage() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const { signOut } = useClerk();
 
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState<
@@ -39,23 +28,10 @@ export default function QuestionPage() {
   });
 
   const navigate = useNavigate();
-  
 
   const showMessage = (type: "success" | "error" | "info", text: string) => {
     setMessage({ type, text });
   };
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   useEffect(() => {
     if (!currentJobId) return;
@@ -102,11 +78,6 @@ export default function QuestionPage() {
       showMessage("error", "Please select a file.");
       return;
     }
-
-    // setLoading(true);
-    // setCurrentJobId(null);
-    // setJobStatus("idle");
-    // setJobStatus("processing");
 
     setLoading(true);
     setCurrentJobId(null);
@@ -173,60 +144,23 @@ export default function QuestionPage() {
   const showRetryButton = jobStatus === "failed" && currentJobId !== null;
 
   return (
-    <div className="bg-white rounded-md shadow-lg border border-gray-100 p-4 sm:p-6 md:p-8 w-full max-w-4xl mx-auto">
-      <div className="flex items-start justify-between gap-3 sm:gap-4 mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-gray-100 relative">
-        <div className="flex-1 min-w-0">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+    <div className="bg-white rounded shadow-sm border border-gray-200 p-6 sm:p-8">
+      <div className="mb-8 pb-6 border-b border-gray-100">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             Create Question Paper
-          </h2>
-          <p className="text-gray-500 text-xs sm:text-sm mt-1">
+          </h1>
+          <p className="text-gray-500 text-sm">
             Choose a method to extract questions
           </p>
         </div>
-
-        <div className="relative flex-shrink-0" ref={menuRef}>
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors"
-            title="Menu"
-          >
-            <FiMoreVertical className="text-xl sm:text-2xl" />
-          </button>
-
-          {isMenuOpen && (
-            <div className="absolute right-0 top-12 w-48 bg-white border border-gray-200 rounded-md shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="py-1">
-                <button
-                  onClick={() => {
-                    navigate("/submissions");
-                    setIsMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left"
-                >
-                  <FiActivity className="text-blue-500" />
-                  View Activities
-                </button>
-
-                <div className="border-t border-gray-200 my-1"></div>
-
-                <button
-                  onClick={() => signOut()}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors text-left"
-                >
-                  <FiLogOut />
-                  Logout
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
-      <div className="flex justify-center mb-6 sm:mb-8">
-        <div className="bg-gray-100 p-1 rounded-lg inline-flex w-full sm:w-auto">
+      <div className="flex justify-center mb-8">
+        <div className="bg-gray-100 p-1 rounded inline-flex w-full sm:w-auto gap-1">
           {[
-            { id: "typed", label: "Type Manually", icon: FiType },
-            { id: "upload", label: "Upload File", icon: FiUpload },
+            { id: "typed", label: "Type", icon: FiType },
+            { id: "upload", label: "Upload", icon: FiUpload },
           ].map((m) => {
             const Icon = m.icon;
             const isActive = mode === m.id;
@@ -235,47 +169,37 @@ export default function QuestionPage() {
                 key={m.id}
                 onClick={() => setMode(m.id as "typed" | "upload")}
                 disabled={loading}
-                className={`flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 flex-1 sm:flex-initial ${
+                className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-md text-sm font-medium transition-all flex-1 sm:flex-initial ${
                   isActive
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                    ? "bg-white text-teal-600 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
                 }`}
               >
-                <Icon className="text-base sm:text-lg" />
-                <span className="hidden xs:inline">{m.label}</span>
-                <span className="xs:hidden">
-                  {m.id === "typed" ? "Type" : "Upload"}
-                </span>
+                <Icon className="w-4 h-4" />
+                <span>{m.label}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {mode === "typed" && (
+      {/* Input Area */}
+      {mode === "typed" ? (
         <textarea
-          className="w-full border border-gray-300 p-3 sm:p-4 rounded-md min-h-[200px] sm:min-h-[250px] outline-none text-sm sm:text-base"
-          placeholder={
-            "Paste or type the exam questions here.\n\nExample:\n1. Define networking. (5 Marks)\n2. Explain the OSI model. (10 Marks)"
-          }
+          className="w-full border border-gray-300 p-4 rounded min-h-[340px] outline-none text-sm resize-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 placeholder-gray-400"
+          placeholder={`Paste or type the exam questions here.\n\nExample:\n1. Define networking. (5 Marks)\n2. Explain the OSI model. (10 Marks)`}
           value={text}
           onChange={(e) => {
             setText(e.target.value);
-
             if (currentJobId) {
               setCurrentJobId(null);
               setJobStatus("idle");
             }
-
-            // if (message.type === "error") setMessage({ type: null, text: "" });
-
             if (message.type === "error") setMessage({ type: null, text: "" });
           }}
           disabled={loading}
         />
-      )}
-
-      {mode === "upload" && (
+      ) : (
         <label
           htmlFor="fileUpload"
           onDragOver={(e) => {
@@ -294,45 +218,45 @@ export default function QuestionPage() {
           }}
           className={`
             flex flex-col items-center justify-center 
-            w-full h-48 sm:h-64 border-2 border-dashed rounded-md cursor-pointer transition-all duration-200
+            w-full h-64 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200
             ${
               file
-                ? "border-green-400 bg-green-50"
+                ? "border-teal-400 bg-teal-50"
                 : isDragging
-                ? "border-blue-500 bg-blue-50 scale-[0.99]"
+                ? "border-teal-500 bg-teal-50 scale-[0.99]"
                 : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400"
             }
           `}
         >
           {file ? (
             <div className="text-center px-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
-                <FiUpload className="text-lg sm:text-xl" />
+              <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FiUpload className="w-6 h-6" />
               </div>
-              <span className="text-green-700 font-medium block text-sm sm:text-base break-all">
+              <span className="text-teal-700 font-medium block text-sm break-all">
                 {file.name}
               </span>
-              <span className="text-green-600 text-xs mt-1">
+              <span className="text-teal-600 text-xs mt-1">
                 Click to change file
               </span>
             </div>
           ) : (
             <>
               <div
-                className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-3 sm:mb-4 transition-colors ${
+                className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-colors ${
                   isDragging
-                    ? "bg-blue-100 text-blue-600"
+                    ? "bg-teal-100 text-teal-600"
                     : "bg-gray-200 text-gray-500"
                 }`}
               >
-                <FiUpload className="text-xl sm:text-2xl" />
+                <FiUpload className="w-8 h-8" />
               </div>
-              <span className="text-gray-700 font-medium text-sm sm:text-base">
+              <span className="text-gray-700 font-medium text-base">
                 {isDragging
                   ? "Drop the file here..."
                   : "Click or drag to upload"}
               </span>
-              <span className="text-gray-400 text-xs sm:text-sm mt-2">
+              <span className="text-gray-400 text-sm mt-2">
                 Supports PDF, JPG, PNG
               </span>
             </>
@@ -348,8 +272,6 @@ export default function QuestionPage() {
                 setCurrentJobId(null);
                 setJobStatus("idle");
               }
-
-              // if (message.type === "error") setMessage({ type: null, text: "" });
               if (message.type === "error")
                 setMessage({ type: null, text: "" });
             }}
@@ -358,29 +280,26 @@ export default function QuestionPage() {
         </label>
       )}
 
+      {/* Message Alert */}
       {message.type && (
         <div
-          className={`mt-4 sm:mt-6 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm border flex items-start justify-between gap-2 sm:gap-3 animate-in fade-in slide-in-from-top-2
-          ${
+          className={`mt-6 px-4 py-3 rounded-lg text-sm border flex items-start justify-between gap-3 animate-in fade-in slide-in-from-top-2 ${
             message.type === "success"
-              ? "bg-green-50 text-green-700 border-green-200"
+              ? "bg-teal-50 text-teal-700 border-teal-200"
               : message.type === "error"
               ? "bg-red-50 text-red-700 border-red-200"
               : "bg-blue-50 text-blue-700 border-blue-200"
-          }
-        `}
+          }`}
         >
           <div className="flex gap-2 flex-1 min-w-0">
             <span className="mt-0.5 flex-shrink-0">
               {message.type === "error"
-                ? ""
+                ? "⚠"
                 : message.type === "success"
                 ? "✓"
-                : ""}
+                : "ℹ"}
             </span>
-            <span className="break-words whitespace-pre-wrap">
-              {message.text}
-            </span>
+            <span className="break-words">{message.text}</span>
           </div>
 
           <button
@@ -392,12 +311,12 @@ export default function QuestionPage() {
         </div>
       )}
 
-      {/* Action buttons */}
-      <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-100 flex justify-end">
+      {/* Action Buttons */}
+      <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end gap-3">
         {showRetryButton ? (
           <button
             onClick={handleRetry}
-            className="w-full sm:w-auto px-6 sm:px-8 py-2.5 rounded-md bg-yellow-500 text-white font-medium shadow-sm text-sm sm:text-base"
+            className="w-full sm:w-auto px-8 py-2.5 rounded-lg bg-yellow-500 text-white font-medium hover:bg-yellow-600 transition-colors shadow-sm"
           >
             Retry
           </button>
@@ -405,10 +324,10 @@ export default function QuestionPage() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className={`w-full sm:w-auto px-6 sm:px-8 py-2.5 rounded-md text-white font-medium shadow-sm transition-all text-sm sm:text-base ${
+            className={`w-full sm:w-auto px-8 py-2.5 rounded-lg text-white font-medium transition-all shadow-sm ${
               loading
                 ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
+                : "bg-teal-500 hover:bg-teal-600"
             }`}
           >
             {loading ? (

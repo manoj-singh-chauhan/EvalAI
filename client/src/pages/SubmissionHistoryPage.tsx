@@ -199,19 +199,11 @@ export default function SubmissionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
-      {/* <button
-             onClick={() => navigate(-1)}
-             className="p-2.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all duration-200"
-          >
-            <FiArrowLeft size={20} />
-          </button> */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+    // <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
+    <div className="h-screen  bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-6">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            {/* <div className="p-2.5 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-md shadow-lg shadow-indigo-500/25">
-              <FiActivity className="w-6 h-6 text-white" />
-            </div> */}
             <div className="flex items-center gap-3">
               <button
                 onClick={() => navigate(-1)}
@@ -231,7 +223,7 @@ export default function SubmissionsPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-md p-6 shadow-sm border border-gray-200/60">
+          <div className="bg-white rounded p-6 shadow-sm border border-gray-200/60">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-semibold mb-1">
@@ -300,7 +292,7 @@ export default function SubmissionsPage() {
             </div>
           ) : (
             <>
-              <div className="hidden lg:block overflow-x-auto">
+              <div className="hidden lg:block overflow-x-auto custom-scroll">
                 <table className="w-full">
                   <thead>
                     <tr className="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
@@ -410,7 +402,8 @@ export default function SubmissionsPage() {
                               </button>
 
                               {openMenuId === s.id && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
+                                // <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
+                                <div className="absolute right-full  top-1/2 -translate-y-1/2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
                                   <button
                                     onClick={() =>
                                       navigate(`/submissions/${s.id}`)
@@ -495,7 +488,8 @@ export default function SubmissionsPage() {
                           </button>
 
                           {openMenuId === s.id && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
+                            // <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
+                            <div className="absolute right-full  top-1/2 -translate-y-1/3 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
                               <button
                                 onClick={() => navigate(`/submissions/${s.id}`)}
                                 className="w-full px-4 py-2.5 text-left text-sm font-semibold text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-3"
@@ -610,7 +604,7 @@ export default function SubmissionsPage() {
 
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-[90%] max-w-md p-6 animate-scaleIn">
+          <div className="bg-white rounded-xl shadow-xl w-[90%] max-w-md p-6 animate-scaleIn">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-3 rounded-full bg-red-100 text-red-600">
                 <FiTrash2 size={22} />

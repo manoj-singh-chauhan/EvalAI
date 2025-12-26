@@ -6,10 +6,12 @@ import {
   FiExternalLink,
   FiFileText,
   FiAlertCircle,
+  FiArrowLeft,
   FiCheck,
   FiX,
   FiTrash2,
   FiPlus,
+  FiSave,
 } from "react-icons/fi";
 
 interface QuestionItem {
@@ -107,44 +109,58 @@ export default function ReviewQuestionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-6 sm:py-10 px-4">
-      <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
-        {/* Header Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 sm:p-8">
-          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 sm:gap-6">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6">
+      <div className="max-w-1350pxl mx-auto space-y-6">
+        <div className="bg-white rounded  p-1">
+          <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-6">
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 tracking-tight">
-                Review Questions
-              </h1>
-              <p className="text-gray-600 mt-2 text-sm sm:text-base">
-                Questions are AI-extracted. Please review and confirm
-                correctness.
-              </p>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="
+              flex items-center justify-center
+              h-9 w-9 shrink-0
+              rounded-lg
+              bg-white
+              border border-gray-300
+              text-gray-600
+              hover:bg-indigo-50
+              hover:text-indigo-600
+              hover:border-indigo-300
+              transition
+            "
+                >
+                  <FiArrowLeft size={20} />
+                </button>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                    Review Questions
+                  </h1>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Verify extracted questions and marks before proceeding.
+                  </p>
+                </div>
+              </div>
 
-              {/* Stats Row */}
-              <div className="flex flex-wrap items-center gap-3 sm:gap-4 mt-4">
-                <div className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-200">
-                  <span className="text-xs sm:text-sm font-medium">
-                    Total Questions:
+              <div className="flex flex-wrap items-center gap-3 mt-5 ml-0 sm:ml-14">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-md border border-blue-100">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-blue-500">
+                    Count
                   </span>
-                  <span className="text-base sm:text-lg font-bold">
-                    {questions.length}
-                  </span>
+                  <span className="text-sm font-bold">{questions.length}</span>
                 </div>
 
-                <div className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-50 text-green-700 rounded-lg border border-green-200">
-                  <span className="text-xs sm:text-sm font-medium">
-                    Total Marks:
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-md border border-green-100">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-green-600">
+                    Total Marks
                   </span>
-                  <span className="text-base sm:text-lg font-bold">
-                    {totalMarks}
-                  </span>
+                  <span className="text-sm font-bold">{totalMarks}</span>
                 </div>
 
                 {flaggedCount > 0 && (
-                  <div className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg border border-yellow-200">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-700 rounded-md border border-yellow-200 animate-pulse">
                     <FiAlertCircle className="flex-shrink-0" />
-                    <span className="text-xs sm:text-sm font-medium">
+                    <span className="text-sm font-bold">
                       {flaggedCount} Flagged
                     </span>
                   </div>
@@ -152,226 +168,199 @@ export default function ReviewQuestionsPage() {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-2 sm:gap-3">
+            <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto mt-2 xl:mt-0 xl:self-start ml-0 sm:ml-14 xl:ml-0">
               {mode === "upload" && fileUrl && (
                 <button
                   onClick={() => window.open(fileUrl, "_blank")}
-                  className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-white text-gray-700 border-2 border-gray-300 rounded-lg hover:bg-gray-50 hover:border-blue-500 hover:text-blue-600 transition-all shadow-sm font-medium text-sm"
+                  className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium text-sm transition-all shadow-sm"
                 >
-                  <FiExternalLink className="flex-shrink-0" />
-                  <span className="hidden sm:inline">Original Paper</span>
-                  <span className="sm:hidden">Original</span>
+                  <FiExternalLink /> Original
                 </button>
               )}
 
               {mode === "typed" && rawText && (
                 <button
                   onClick={() => setShowTypedText(!showTypedText)}
-                  className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 border-2 rounded-lg transition-all shadow-sm font-medium text-sm ${
+                  className={`flex-1 xl:flex-none flex items-center justify-center gap-2 px-4 py-2.5 border rounded-lg transition-all font-medium text-sm shadow-sm ${
                     showTypedText
-                      ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
-                      : "bg-white text-gray-700 border-gray-300 hover:border-blue-500 hover:text-blue-600"
+                      ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
                   }`}
                 >
-                  <FiFileText className="flex-shrink-0" />
-                  <span className="hidden sm:inline">
-                    {showTypedText ? "Hide Original" : "Show Original"}
-                  </span>
-                  <span className="sm:hidden">
-                    {showTypedText ? "Hide" : "Show"}
-                  </span>
+                  <FiFileText />
+                  {showTypedText ? "Hide Text" : "Show Text"}
                 </button>
               )}
 
               <button
                 onClick={addNewQuestion}
-                className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-green-600 text-white border-2 border-green-600 rounded-lg hover:bg-green-700 transition-all shadow-sm font-medium text-sm"
+                className="flex-1 xl:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-green-700 border border-green-300 rounded-lg hover:bg-green-50 font-medium text-sm transition-all shadow-sm"
               >
-                <FiPlus className="flex-shrink-0" />
-                <span className="hidden sm:inline">Add Question</span>
-                <span className="sm:hidden">Add</span>
+                <FiPlus /> Add Question
+              </button>
+              <button
+                onClick={handleUpdate}
+                disabled={flaggedCount > 0}
+                className={`flex-1 xl:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm shadow-sm transition-all transform active:scale-95 ${
+                  flaggedCount > 0
+                    ? "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
+                    : "bg-gray-900 text-white hover:bg-gray-800 hover:shadow-md"
+                }`}
+              >
+                <FiSave />
+                {flaggedCount > 0 ? "Fix Issues" : "Save & Continue"}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Original Text Box */}
         {mode === "typed" && rawText && showTypedText && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-in slide-in-from-top-2 duration-300">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-5 sm:px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
-                  <FiFileText className="text-blue-600" />
-                  Original Question Paper
-                </h3>
-                <button
-                  onClick={() => setShowTypedText(false)}
-                  className="text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  <FiX className="text-xl" />
-                </button>
-              </div>
+          <div className="bg-white rounded  border border-gray-300 overflow-hidden animate-in slide-in-from-top-2 duration-300">
+            <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
+                <FiFileText className="text-gray-500" /> Original Text
+              </h3>
+              <button
+                onClick={() => setShowTypedText(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <FiX />
+              </button>
             </div>
-            <div className="p-5 sm:p-6">
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-[400px] overflow-y-auto custom-scrollbar">
-                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
-                  {rawText}
-                </pre>
-              </div>
+            <div className="p-6 max-h-[300px] overflow-y-auto custom-scrollbar">
+              <pre className="whitespace-pre-wrap text-sm text-gray-600 font-mono leading-relaxed">
+                {rawText}
+              </pre>
             </div>
           </div>
         )}
-
-        {/* Message Alert */}
         {message.type && (
           <div
-            className={`px-4 sm:px-5 py-3 sm:py-4 rounded-xl border-2 flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200 ${
+            className={`px-4 py-3 rounded-lg border flex items-start gap-3 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200 ${
               message.type === "success"
-                ? "bg-green-50 text-green-800 border-green-300"
+                ? "bg-green-50 text-green-800 border-green-200"
                 : message.type === "error"
-                ? "bg-red-50 text-red-800 border-red-300"
-                : "bg-blue-50 text-blue-800 border-blue-300"
+                ? "bg-red-50 text-red-800 border-red-200"
+                : "bg-blue-50 text-blue-800 border-blue-200"
             }`}
           >
-            <span className="mt-0.5 flex-shrink-0">
+            <span className="mt-0.5">
               {message.type === "success" ? (
-                <FiCheck className="text-xl" />
+                <FiCheck className="text-lg" />
               ) : message.type === "error" ? (
-                <FiAlertCircle className="text-xl" />
+                <FiAlertCircle className="text-lg" />
               ) : (
                 "ℹ️"
               )}
             </span>
-            <span className="text-sm sm:text-base font-medium flex-1">
-              {message.text}
-            </span>
+            <span className="text-sm font-medium flex-1">{message.text}</span>
             <button
               onClick={() => setMessage({ type: null, text: "" })}
-              className="text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0"
+              className="opacity-60 hover:opacity-100"
             >
               <FiX />
             </button>
           </div>
         )}
 
-        {/* Questions List */}
-        <div className="space-y-4 sm:space-y-5">
+        <div className="space-y-4">
           {questions.map((q, i) => (
             <div
               key={i}
-              className={`rounded-xl shadow-sm border-2 p-4 sm:p-6 transition-all hover:shadow-md ${
+              className={`group relative rounded border ${
                 q.flagged
-                  ? "bg-yellow-50 border-yellow-400 ring-2 ring-yellow-200"
-                  : "bg-white border-gray-200 hover:border-gray-300"
+                  ? "bg-red-50/50 border-red-300 shadow-sm"
+                  : "bg-white border-gray-200"
               }`}
             >
-              {/* Question Header */}
-              <div className="flex items-start justify-between gap-3 mb-4">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <span className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm font-bold flex-shrink-0">
+              <div className="p-5 sm:p-6">
+                <div className="flex items-start gap-4">
+                  <div className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-500 mt-1">
                     {i + 1}
-                  </span>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-800">
-                    Question {i + 1}
-                  </h3>
+                  </div>
+
+                  <div className="flex-1 space-y-4">
+                    <div className="flex justify-between items-start">
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        Question Text
+                      </label>
+                      <button
+                        onClick={() => deleteQuestion(i)}
+                        className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50"
+                        title="Remove Question"
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
+                    </div>
+
+                    <textarea
+                      value={q.text}
+                      onChange={(e) => {
+                        const updated = [...questions];
+                        updated[i].text = e.target.value;
+                        setQuestions(updated);
+                      }}
+                      className="w-full p-0 bg-transparent border-none resize-none focus:ring-0 text-gray-800 font-medium placeholder-gray-300 leading-relaxed"
+                      rows={2}
+                      placeholder="Type your question here..."
+                    />
+
+                    {q.flagged && (
+                      <div className="flex items-center gap-2 text-red-600 text-xs font-medium bg-red-100/50 px-2 py-1 rounded w-fit">
+                        <FiAlertCircle /> Mark allocation missing
+                      </div>
+                    )}
+
+                    <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                          Marks
+                        </label>
+                        <input
+                          type="number"
+                          value={q.marks ?? ""}
+                          onChange={(e) => {
+                            const updated = [...questions];
+                            updated[i].marks = Number(e.target.value);
+                            updated[i].flagged = false;
+                            setQuestions(updated);
+                          }}
+                          className={`w-20 p-1.5 text-center text-sm font-bold rounded border focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                            q.flagged
+                              ? "border-red-300 text-red-700 bg-white"
+                              : "border-gray-200 text-gray-800 bg-gray-50"
+                          }`}
+                          placeholder="0"
+                          min="0"
+                        />
+                      </div>
+                      <span className="text-xs text-gray-300 font-medium">
+                        Q.{i + 1}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-
-                <button
-                  onClick={() => deleteQuestion(i)}
-                  className="text-gray-400 hover:text-red-600 transition-colors p-1.5 hover:bg-red-50 rounded-lg flex-shrink-0"
-                  title="Delete question"
-                >
-                  <FiTrash2 className="text-base sm:text-lg" />
-                </button>
-              </div>
-
-              {/* Flagged Warning */}
-              {q.flagged && (
-                <div className="mb-4 px-3 sm:px-4 py-2 sm:py-3 bg-yellow-100 border border-yellow-300 rounded-lg text-xs sm:text-sm text-yellow-800 font-semibold flex items-center gap-2">
-                  <FiAlertCircle className="flex-shrink-0" />
-                  <span>Missing marks — please enter marks to continue</span>
-                </div>
-              )}
-
-              {/* Question Text */}
-              <div className="mb-4">
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 block">
-                  Question Text
-                </label>
-                <textarea
-                  value={q.text}
-                  onChange={(e) => {
-                    const updated = [...questions];
-                    updated[i].text = e.target.value;
-                    setQuestions(updated);
-                  }}
-                  className="w-full p-3 sm:p-4 rounded-lg border-2 border-gray-300 resize-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm sm:text-base"
-                  rows={3}
-                  placeholder="Enter question text..."
-                />
-              </div>
-
-              {/* Marks Input */}
-              <div>
-                <label className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 block">
-                  Marks
-                </label>
-                <input
-                  type="number"
-                  value={q.marks ?? ""}
-                  onChange={(e) => {
-                    const updated = [...questions];
-                    updated[i].marks = Number(e.target.value);
-                    updated[i].flagged = false;
-                    setQuestions(updated);
-                  }}
-                  className="p-2.5 sm:p-3 w-24 sm:w-28 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm sm:text-base font-medium"
-                  placeholder="0"
-                  min="0"
-                />
               </div>
             </div>
           ))}
         </div>
 
-        {/* Empty State */}
         {questions.length === 0 && (
-          <div className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FiFileText className="text-3xl text-gray-400" />
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 flex flex-col items-center justify-center text-center bg-gray-50/50">
+            <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-gray-100">
+              <FiFileText className="text-3xl text-gray-300" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-2">
-              No Questions Yet
+            <h3 className="text-lg font-semibold text-gray-800">
+              No Questions Added
             </h3>
-            <p className="text-gray-500 mb-4">
-              Click "Add Question" to get started
+            <p className="text-gray-500 text-sm mt-1 mb-6">
+              Get started by adding your first question manually.
             </p>
             <button
               onClick={addNewQuestion}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-sm font-medium"
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm transition-all"
             >
-              <FiPlus />
               Add First Question
-            </button>
-          </div>
-        )}
-
-        {/* Save Button */}
-        {questions.length > 0 && (
-          <div className="sticky bottom-4 pt-4">
-            <button
-              onClick={handleUpdate}
-              disabled={flaggedCount > 0}
-              className={`w-full py-3.5 sm:py-4 rounded-xl font-bold text-base sm:text-lg shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] ${
-                flaggedCount > 0
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-blue-500/50"
-              }`}
-            >
-              {flaggedCount > 0
-                ? `Fix ${flaggedCount} Flagged Question(s) to Continue`
-                : "Save & Continue"}
             </button>
           </div>
         )}

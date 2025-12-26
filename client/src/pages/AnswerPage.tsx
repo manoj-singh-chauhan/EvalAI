@@ -41,7 +41,8 @@ export default function AnswerPage() {
   const [questionData, setQuestionData] = useState<QuestionPaperData | null>(
     null
   );
-  const [strictnessLevel, setStrictnessLevel] = useState<StrictnessLevel>("moderate");
+  const [strictnessLevel, setStrictnessLevel] =
+    useState<StrictnessLevel>("moderate");
 
   const [message, setMessage] = useState<MessageState>({
     type: null,
@@ -111,7 +112,7 @@ export default function AnswerPage() {
   };
 
   return (
-    <div className="bg-white rounded-md shadow-lg border border-gray-100 p-8 w-full max-w-4xl mx-auto">
+    <div className="bg-white rounded border border-gray-200 p-8 w-full max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-gray-100">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">
@@ -125,7 +126,7 @@ export default function AnswerPage() {
 
       {questionData && (
         <div
-          className={`mb-8 border rounded-md p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors
+          className={`mb-8 border rounded p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors
             ${
               flaggedCount > 0
                 ? "bg-amber-50 border-amber-200"
@@ -174,7 +175,7 @@ export default function AnswerPage() {
 
           <button
             onClick={() => navigate(`/review-questions/${paperId}`)}
-            className={`w-full sm:w-auto px-5 py-2.5 text-sm font-semibold rounded-md shadow-sm transition-all flex items-center justify-center gap-2
+            className={`w-full sm:w-auto px-5 py-2.5 text-sm font-semibold rounded shadow-sm transition-all flex items-center justify-center gap-2
                 ${
                   flaggedCount > 0
                     ? "bg-amber-500 hover:bg-amber-600 text-white"
@@ -187,8 +188,7 @@ export default function AnswerPage() {
         </div>
       )}
 
-      
-      <div className="mb-8 border border-gray-200 rounded-lg p-6 bg-gradient-to-br from-purple-50 to-blue-50">
+      {/* <div className="mb-8 border border-gray-200 rounded p-6 bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 bg-purple-100 rounded-full text-purple-600">
             <FiAward className="text-xl" />
@@ -202,7 +202,7 @@ export default function AnswerPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <button
             onClick={() => setStrictnessLevel("lenient")}
-            className={`p-4 rounded-lg border-2 text-left transition-all ${
+            className={`p-4 rounded border-2 text-left transition-all ${
               strictnessLevel === "lenient"
                 ? "border-green-500 bg-green-50 shadow-md"
                 : "border-gray-200 bg-white hover:border-green-300"
@@ -221,7 +221,7 @@ export default function AnswerPage() {
 
           <button
             onClick={() => setStrictnessLevel("moderate")}
-            className={`p-4 rounded-lg border-2 text-left transition-all ${
+            className={`p-4 rounded border-2 text-left transition-all ${
               strictnessLevel === "moderate"
                 ? "border-blue-500 bg-blue-50 shadow-md"
                 : "border-gray-200 bg-white hover:border-blue-300"
@@ -240,7 +240,7 @@ export default function AnswerPage() {
 
           <button
             onClick={() => setStrictnessLevel("strict")}
-            className={`p-4 rounded-lg border-2 text-left transition-all ${
+            className={`p-4 rounded border-2 text-left transition-all ${
               strictnessLevel === "strict"
                 ? "border-red-500 bg-red-50 shadow-md"
                 : "border-gray-200 bg-white hover:border-red-300"
@@ -254,6 +254,84 @@ export default function AnswerPage() {
             </div>
             <p className="text-xs text-gray-600">
               Rigorous marking. Requires precision and complete answers for full marks.
+            </p>
+          </button>
+        </div>
+      </div> */}
+      <div className="mb-8 border border-gray-200 rounded p-6 bg-gradient-to-br from-purple-50 to-blue-50">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-purple-100 rounded-full text-purple-600">
+            <FiAward className="text-xl" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-800">Marking Strictness</h3>
+            <p className="text-sm text-gray-600">
+              Choose how strict the AI should be when evaluating answers
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* 1. LENIENT BUTTON */}
+          <button
+            onClick={() => setStrictnessLevel("lenient")}
+            className={`p-5 min-h-[120px] flex flex-col justify-center rounded border-2 text-left transition-all ${
+              strictnessLevel === "lenient"
+                ? "border-green-500 bg-green-50 shadow-md"
+                : "border-gray-200 bg-white hover:border-green-300"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2 w-full">
+              <span className="font-bold text-gray-800">Lenient</span>
+              {strictnessLevel === "lenient" && (
+                <FiCheckCircle className="text-green-600" />
+              )}
+            </div>
+            <p className="text-xs text-gray-600">
+              Generous marking. Awards full credit for showing understanding,
+              even with minor errors.
+            </p>
+          </button>
+
+          {/* 2. MODERATE BUTTON */}
+          <button
+            onClick={() => setStrictnessLevel("moderate")}
+            className={`p-5 min-h-[120px] flex flex-col justify-center rounded border-2 text-left transition-all ${
+              strictnessLevel === "moderate"
+                ? "border-blue-500 bg-blue-50 shadow-md"
+                : "border-gray-200 bg-white hover:border-blue-300"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2 w-full">
+              <span className="font-bold text-gray-800">Moderate</span>
+              {strictnessLevel === "moderate" && (
+                <FiCheckCircle className="text-blue-600" />
+              )}
+            </div>
+            <p className="text-xs text-gray-600">
+              Balanced approach. Standard academic marking with fair partial
+              credit.
+            </p>
+          </button>
+
+          {/* 3. STRICT BUTTON */}
+          <button
+            onClick={() => setStrictnessLevel("strict")}
+            className={`p-5 min-h-[120px] flex flex-col justify-center rounded border-2 text-left transition-all ${
+              strictnessLevel === "strict"
+                ? "border-red-500 bg-red-50 shadow-md"
+                : "border-gray-200 bg-white hover:border-red-300"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2 w-full">
+              <span className="font-bold text-gray-800">Strict</span>
+              {strictnessLevel === "strict" && (
+                <FiCheckCircle className="text-red-600" />
+              )}
+            </div>
+            <p className="text-xs text-gray-600">
+              Rigorous marking. Requires precision and complete answers for full
+              marks.
             </p>
           </button>
         </div>
@@ -279,7 +357,7 @@ export default function AnswerPage() {
         }}
         className={`
           flex flex-col items-center justify-center 
-          w-full h-64 border-2 border-dashed rounded-md cursor-pointer transition-all duration-200
+          w-full h-80 border-2 border-dashed rounded cursor-pointer transition-all duration-200
           ${
             isDragging
               ? "border-blue-500 bg-blue-50 scale-[0.99]"
@@ -327,7 +405,7 @@ export default function AnswerPage() {
             {files.map((f, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg group hover:border-blue-300 transition-colors"
+                className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded group hover:border-blue-300 transition-colors"
               >
                 <div className="flex items-center gap-3 overflow-hidden">
                   <div className="w-8 h-8 bg-white rounded flex items-center justify-center border border-gray-200 text-gray-500 shrink-0">
@@ -352,7 +430,7 @@ export default function AnswerPage() {
 
       {message.type && (
         <div
-          className={`mt-6 px-4 py-3 rounded-lg text-sm border flex items-start gap-3 animate-in fade-in slide-in-from-top-1
+          className={`mt-6 px-4 py-3 rounded text-sm border flex items-start gap-3 animate-in fade-in slide-in-from-top-1
           ${
             message.type === "error"
               ? "bg-red-50 text-red-700 border-red-200"
@@ -373,7 +451,7 @@ export default function AnswerPage() {
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className={`px-6 py-2 rounded-md text-white font-medium shadow-sm transition-all flex items-center gap-2 ${
+          className={`px-6 py-2 rounded text-white font-medium shadow-sm transition-all flex items-center gap-2 ${
             loading
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700 hover:shadow-md"
@@ -386,7 +464,10 @@ export default function AnswerPage() {
             </>
           ) : (
             <>
-              Evaluate with {strictnessLevel.charAt(0).toUpperCase() + strictnessLevel.slice(1)} Marking
+              Evaluate with{" "}
+              {strictnessLevel.charAt(0).toUpperCase() +
+                strictnessLevel.slice(1)}{" "}
+              Marking
             </>
           )}
         </button>

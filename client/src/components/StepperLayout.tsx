@@ -37,93 +37,93 @@ const StepperLayout: React.FC<StepperLayoutProps> = ({ children }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 md:py-12 px-4 md:px-6">
-      <div className="w-full max-w-4xl mx-auto">
-        <div className="mb-10 p-4 md:p-6 bg-white rounded-md shadow-md border border-gray-200">
-          <div className="flex items-center justify-between">
-            {steps.map((step, index) => {
-              const isActive = step.number === currentStep;
-              const isCompleted = step.number < currentStep;
+    <div className="w-full min-h-full flex flex-col">
+      <div className="max-w-[72rem] mx-auto px-4 sm:px-6 pt-8 pb-12 w-full">
+        <div className="flex items-center justify-center">
+          {steps.map((step, index) => {
+            const isActive = step.number === currentStep;
+            const isCompleted = step.number < currentStep;
 
-              const StepContent = (
-                <div className="flex flex-col items-center relative z-10">
-                  <div
-                    className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold text-base md:text-lg transition-all duration-300 border-2 ${
+            const StepContent = (
+              <div className="flex flex-col items-center relative z-10">
+                <div
+                  className={`
+                    w-9 h-9 text-sm md:w-12 md:h-12 md:text-lg 
+                    rounded-full flex items-center justify-center font-bold transition-all duration-300 border-2 
+                    ${
                       isActive
-                        ? "bg-blue-600 border-blue-600 text-white shadow-lg scale-110"
+                        ? "bg-teal-500 border-teal-500 text-white shadow-lg scale-110"
                         : isCompleted
-                        ? "bg-green-500 border-green-500 text-white"
+                        ? "bg-teal-500 border-teal-500 text-white"
                         : "bg-gray-100 border-gray-300 text-gray-400"
                     }`}
-                  >
-                    {isCompleted ? (
-                      <svg
-                        className="w-5 h-5 md:w-6 md:h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="3"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    ) : (
-                      step.number
-                    )}
-                  </div>
+                >
+                  {isCompleted ? (
+                    <svg
+                      className="w-4 h-4 md:w-6 md:h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="3"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  ) : (
+                    step.number
+                  )}
+                </div>
 
-                  <div
-                    className={`mt-2 text-xs md:text-sm font-medium hidden sm:block ${
+                <div
+                  className={`
+                    mt-2 text-[10px] w-20 whitespace-normal leading-tight md:mt-3 md:text-sm md:w-auto md:whitespace-nowrap font-medium text-center 
+                    ${
                       isActive || isCompleted
                         ? "text-gray-800"
                         : "text-gray-400"
                     }`}
-                  >
-                    {step.title}
-                  </div>
+                >
+                  {step.title}
                 </div>
-              );
+              </div>
+            );
 
-              return (
-                <React.Fragment key={step.number}>
-                  {isCompleted ? (
-                    <Link
-                      to={getStepPath(step.number)}
-                      className="cursor-pointer hover:opacity-80 transition-opacity"
-                    >
-                      {StepContent}
-                    </Link>
-                  ) : (
-                    <div aria-current={isActive ? "step" : undefined}>
-                      {StepContent}
-                    </div>
-                  )}
+            return (
+              <React.Fragment key={step.number}>
+                {isCompleted ? (
+                  <Link
+                    to={getStepPath(step.number)}
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                  >
+                    {StepContent}
+                  </Link>
+                ) : (
+                  <div aria-current={isActive ? "step" : undefined}>
+                    {StepContent}
+                  </div>
+                )}
 
-                  {index < steps.length - 1 && (
-                    <div className="flex-1 mx-2 md:mx-4 relative">
-                      <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 rounded" />
+                {index < steps.length - 1 && (
+                  <div className="flex-1 mx-2 min-w-[2rem] md:mx-6 md:min-w-16 relative h-1">
+                    <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 rounded" />
 
-                      <div
-                        className={`absolute top-1/2 left-0 h-1 -translate-y-1/2 rounded transition-all duration-500 ease-out ${
-                          isCompleted
-                            ? "w-full bg-green-500"
-                            : "w-0 bg-green-500"
-                        }`}
-                      />
-                    </div>
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
+                    <div
+                      className={`absolute top-1/2 left-0 h-1 -translate-y-1/2 rounded transition-all duration-500 ease-out ${
+                        isCompleted ? "w-full bg-teal-500" : "w-0 bg-teal-500"
+                      }`}
+                    />
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          })}
         </div>
-
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {children}
-        </div>
+      </div>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-12 w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {children}
       </div>
     </div>
   );

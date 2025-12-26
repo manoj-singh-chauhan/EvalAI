@@ -8,14 +8,19 @@ import ReviewQuestionsPage from "../pages/ReviewQuestionsPage";
 import SubmissionHistoryPage from "../pages/SubmissionHistoryPage";
 import SubmissionDetailPage from "../pages/SubmissionDetailPage";
 import StepperLayout from "../components/StepperLayout";
+import { SidebarWrapper } from "../components/SidebarWrapper";
 import AiExtractedQuestion from "../pages/AiExtrctedQuestion";
 import SignInPage from "../pages/SignInPage";
 import SignUpPage from "../pages/SignUpPage";
 import ProtectedRoute from "../components/ProtectedRoute";
-// import AdminUsersPage from "../pages/admin/AdminUsersPage";
-// import AdminUserActivityPage from "../pages/admin/AdminUserActivityPage";
 
-const WithTitle = ({ title, children }: { title: string; children: React.ReactNode }) => {
+const WithTitle = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => {
   useEffect(() => {
     document.title = title;
   }, [title]);
@@ -28,10 +33,15 @@ const StepperWrapper = () => (
   </StepperLayout>
 );
 
+const MainLayout = () => (
+  <SidebarWrapper>
+    <Outlet />
+  </SidebarWrapper>
+);
+
 const AppRoutes = () => {
   return (
     <Routes>
-
       <Route
         path="/sign-in"
         element={
@@ -50,96 +60,86 @@ const AppRoutes = () => {
         }
       />
 
+      {/* --- PROTECTED ROUTES (All Wrapped with Sidebar) --- */}
       <Route
         element={
           <ProtectedRoute>
-            <StepperWrapper />
+            <MainLayout />
           </ProtectedRoute>
         }
       >
+        {/* Group A: Creation Flow (WITH Stepper) */}
+        <Route element={<StepperWrapper />}>
+          <Route
+            path="/"
+            element={
+              <WithTitle title="AI Eval">
+                <QuestionPage />
+              </WithTitle>
+            }
+          />
+          <Route
+            path="/answers/:paperId"
+            element={
+              <WithTitle title="Answers | AI Eval">
+                <AnswerPage />
+              </WithTitle>
+            }
+          />
+          <Route
+            path="/results/:paperId"
+            element={
+              <WithTitle title="Results | AI Eval">
+                <ResultPage />
+              </WithTitle>
+            }
+          />
+        </Route>
         <Route
-          path="/"
+          path="/results/sheet/:answerId"
           element={
-            <WithTitle title="AI Eval">
-              <QuestionPage />
-           </WithTitle>
-          }
-        />
-
-        <Route
-          path="/answers/:paperId"
-          element={
-            <WithTitle title="Answers | AI Eval">
-              <AnswerPage />
+            <WithTitle title="Sheet | AI Eval">
+              <AnswerSheetPage />
             </WithTitle>
           }
         />
 
         <Route
-          path="/results/:paperId"
+          path="/review-questions/:paperId"
           element={
-            <WithTitle title="Results | AI Eval">
-              <ResultPage />
+            <WithTitle title="Review Qs | AI Eval">
+              <ReviewQuestionsPage />
+            </WithTitle>
+          }
+        />
+
+        <Route
+          path="/submissions"
+          element={
+            <WithTitle title="History | AI Eval">
+              <SubmissionHistoryPage />
+            </WithTitle>
+          }
+        />
+
+        <Route
+          path="/submissions/:id"
+          element={
+            <WithTitle title="Report | AI Eval">
+              <SubmissionDetailPage />
+            </WithTitle>
+          }
+        />
+
+        <Route
+          path="/submissions/:id/questions"
+          element={
+            <WithTitle title="AI Extract | AI Eval">
+              <AiExtractedQuestion />
             </WithTitle>
           }
         />
       </Route>
-
-      <Route
-        path="/results/sheet/:answerId"
-        element={
-          <ProtectedRoute>
-            <WithTitle title="Sheet | AI Eval">
-              <AnswerSheetPage />
-            </WithTitle>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/review-questions/:paperId"
-        element={
-          <ProtectedRoute>
-            <WithTitle title="Review Qs | AI Eval">
-              <ReviewQuestionsPage />
-            </WithTitle>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/submissions"
-        element={
-          <ProtectedRoute>
-            <WithTitle title="History | AI Eval">
-              <SubmissionHistoryPage />
-            </WithTitle>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/submissions/:id"
-        element={
-          <ProtectedRoute>
-            <WithTitle title="Report | AI Eval">
-              <SubmissionDetailPage />
-            </WithTitle>
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/submissions/:id/questions"
-        element={
-          <ProtectedRoute>
-            <WithTitle title="AI Extract | AI Eval">
-              <AiExtractedQuestion />
-            </WithTitle>
-          </ProtectedRoute>
-        }
-      />
-
       <Route
         path="*"
         element={
@@ -148,16 +148,6 @@ const AppRoutes = () => {
           </WithTitle>
         }
       />
-      {/* <Route
-  path="/admin/users"
-  element={<AdminUsersPage />}
-/>
-
-<Route
-  path="/admin/users/:userId"
-  element={<AdminUserActivityPage />}
-/> */}
-
     </Routes>
   );
 };
