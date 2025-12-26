@@ -1,5 +1,7 @@
+
 import { useEffect } from "react";
 import { Routes, Route, Outlet } from "react-router-dom";
+
 import QuestionPage from "../pages/QuestionPage";
 import AnswerPage from "../pages/AnswerPage";
 import ResultPage from "../pages/ResultPage";
@@ -7,12 +9,17 @@ import AnswerSheetPage from "../pages/AnswerSheetPage";
 import ReviewQuestionsPage from "../pages/ReviewQuestionsPage";
 import SubmissionHistoryPage from "../pages/SubmissionHistoryPage";
 import SubmissionDetailPage from "../pages/SubmissionDetailPage";
+import AiExtractedQuestion from "../pages/AiExtrctedQuestion";
+import Workflow from "../pages/Workflow";
+
 import StepperLayout from "../components/StepperLayout";
 import { SidebarWrapper } from "../components/SidebarWrapper";
-import AiExtractedQuestion from "../pages/AiExtrctedQuestion";
+import ProtectedRoute from "../components/ProtectedRoute";
+
 import SignInPage from "../pages/SignInPage";
 import SignUpPage from "../pages/SignUpPage";
-import ProtectedRoute from "../components/ProtectedRoute";
+import Analytics from "../pages/Analytics";
+
 
 const WithTitle = ({
   title,
@@ -24,8 +31,10 @@ const WithTitle = ({
   useEffect(() => {
     document.title = title;
   }, [title]);
+
   return <>{children}</>;
 };
+
 
 const StepperWrapper = () => (
   <StepperLayout>
@@ -38,6 +47,7 @@ const MainLayout = () => (
     <Outlet />
   </SidebarWrapper>
 );
+
 
 const AppRoutes = () => {
   return (
@@ -60,7 +70,6 @@ const AppRoutes = () => {
         }
       />
 
-      {/* --- PROTECTED ROUTES (All Wrapped with Sidebar) --- */}
       <Route
         element={
           <ProtectedRoute>
@@ -68,7 +77,6 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       >
-        {/* Group A: Creation Flow (WITH Stepper) */}
         <Route element={<StepperWrapper />}>
           <Route
             path="/"
@@ -78,6 +86,7 @@ const AppRoutes = () => {
               </WithTitle>
             }
           />
+
           <Route
             path="/answers/:paperId"
             element={
@@ -86,6 +95,7 @@ const AppRoutes = () => {
               </WithTitle>
             }
           />
+
           <Route
             path="/results/:paperId"
             element={
@@ -95,6 +105,24 @@ const AppRoutes = () => {
             }
           />
         </Route>
+
+        <Route
+          path="/workflow"
+          element={
+            <WithTitle title="Workflow | AI Eval">
+              <Workflow />
+            </WithTitle>
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            <WithTitle title="Analytics | AI Eval">
+              <Analytics />
+            </WithTitle>
+          }
+        />
+
         <Route
           path="/results/sheet/:answerId"
           element={
@@ -140,6 +168,7 @@ const AppRoutes = () => {
           }
         />
       </Route>
+
       <Route
         path="*"
         element={
