@@ -66,6 +66,7 @@ const AdminUserActivityPage = () => {
         if (activityData.success) {
           setActivity(activityData);
         }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         setError('Failed to load data');
       } finally {
