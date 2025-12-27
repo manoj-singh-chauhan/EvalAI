@@ -18,10 +18,6 @@ export const QuestionAPI = {
   },
   uploadPaper: async (file: File) => {
     try {
-      // const sigResponse = await axiosClient.get(
-      //   "/questions/get-upload-signature"
-      // );
-
       const sigResponse = await axiosClient.post(
         "/api/questions/get-upload-signature",
         {

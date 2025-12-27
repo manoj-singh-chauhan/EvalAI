@@ -85,7 +85,6 @@ export class AnswerService {
     questionPaperId: string,
     _incomingFiles: { fileUrl: string; mimeType: string }[]
   ) {
-    
     const record = await AnswerSheet.findByPk(recordId, {
       include: [{ model: AnswerSheetFile, as: "files" }],
     });
@@ -148,11 +147,10 @@ export class AnswerService {
       //   mergedAnswers
       // );
       const evaluated = await this.evaluateExtractedAnswers(
-  questions,
-  mergedAnswers,
-  strictnessLevel
-);
-
+        questions,
+        mergedAnswers,
+        strictnessLevel
+      );
 
       console.log("Evaluation result:", evaluated);
 
