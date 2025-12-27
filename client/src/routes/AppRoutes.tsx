@@ -18,8 +18,8 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import SignInPage from "../pages/SignInPage";
 import SignUpPage from "../pages/SignUpPage";
 import Analytics from "../pages/Analytics";
-import AdminUsersPage from "../pages/Admin/AdminUsersPage";
-import AdminUserActivityPage from "../pages/Admin/AdminUserActivityPage";
+import AdminUsersPage from "../pages/admin/AdminUsersPage";
+import AdminUserActivityPage from "../pages/admin/AdminUserActivityPage";
 
 const WithTitle = ({
   title,
