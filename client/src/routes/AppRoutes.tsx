@@ -68,24 +68,23 @@ const AppRoutes = () => {
         }
       /> */}
 
-        <Route
-  path="/sign-in/*"
-  element={
-    <WithTitle title="Login | AI Eval">
-      <SignInPage />
-    </WithTitle>
-  }
-/>
+      <Route
+        path="/sign-in/*"
+        element={
+          <WithTitle title="Login | AI Eval">
+            <SignInPage />
+          </WithTitle>
+        }
+      />
 
-<Route
-  path="/sign-up/*"
-  element={
-    <WithTitle title="Join | AI Eval">
-      <SignUpPage />
-    </WithTitle>
-  }
-/>
-
+      <Route
+        path="/sign-up/*"
+        element={
+          <WithTitle title="Join | AI Eval">
+            <SignUpPage />
+          </WithTitle>
+        }
+      />
 
       <Route
         element={
