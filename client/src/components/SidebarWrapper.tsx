@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   FiHome,
   FiActivity,
-  FiBarChart2,
+  // FiBarChart2,
   FiLogOut,
   FiX,
   FiLayers,
@@ -17,7 +17,6 @@ interface SidebarWrapperProps {
   children: React.ReactNode;
 }
 
-/* ===== INITIALS ===== */
 const getInitials = (fullName?: string | null) => {
   if (!fullName) return "U";
   const parts = fullName.trim().split(" ").filter(Boolean);
@@ -60,7 +59,6 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
   const { signOut } = useClerk();
   const { user } = useUser();
 
-  // Get user role from Clerk metadata
   const userRole = (user?.publicMetadata?.role as string) || null;
   const isAdmin = userRole === "admin";
 
@@ -79,10 +77,10 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
   const menuItems = [
     { path: "/", label: "Home", icon: FiHome },
     { path: "/submissions", label: "Activity", icon: FiActivity },
-    { path: "/analytics", label: "Analytics", icon: FiBarChart2 },
+    // { path: "/analytics", label: "Analytics", icon: FiBarChart2 },
     { path: "/workflow", label: "Workflow", icon: FiLayers },
     ...(isAdmin
-      ? [{ path: "/admin", label: "Dashboard", icon: FaUserTie }]
+      ? [{ path: "/admin", label: "Admin Dashboard", icon: FaUserTie }]
       : []),
   ];
 
@@ -224,7 +222,7 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
         <div className="flex-1 overflow-y-auto custom-scroll">{children}</div>
       </main>
 
-      {/* USER MENU */}
+      
       {showUserMenu && userBtnRef.current && (
         <div
           className="fixed z-[200] w-56 bg-white border rounded-lg shadow-xl"
@@ -243,7 +241,6 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
         </div>
       )}
 
-      {/* LOGOUT MODAL */}
       {showLogoutModal && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60">
           <div className="bg-white rounded-lg p-5 w-full max-w-xs">

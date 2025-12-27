@@ -13,9 +13,12 @@ export default function GlobalJobListener() {
       if (!event.startsWith("job-status-")) return;
 
       const jobId = event.replace("job-status-", "");
+      const myJobId = localStorage.getItem("myJobId");
+      if (jobId !== myJobId) return;
       const msg = data.message?.toLowerCase() ?? "";
 
       if (msg.includes("completed successfully") || msg.includes("extracted successfully")) {
+        localStorage.removeItem("myJobId");
         navigate(`/answers/${jobId}`);
       }
     });

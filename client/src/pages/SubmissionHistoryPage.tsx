@@ -99,7 +99,6 @@ export default function SubmissionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = () => setOpenMenuId(null);
     if (openMenuId) {
@@ -446,8 +445,6 @@ export default function SubmissionsPage() {
                   </tbody>
                 </table>
               </div>
-
-              {/* Mobile Card View */}
               <div className="lg:hidden divide-y divide-gray-100">
                 {submissions.map((s, index) => (
                   <div
@@ -547,7 +544,6 @@ export default function SubmissionsPage() {
                   </div>
                 ))}
               </div>
-              {/* //pagination */}
               {pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
                   <div className="text-sm text-gray-600">

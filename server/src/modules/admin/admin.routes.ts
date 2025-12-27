@@ -1,18 +1,19 @@
 import { Router } from "express";
-// import { requireAuth } from "../../middleware/auth.middleware";
 import { requireAdmin } from "../../middleware/admin.middleware";
 import { AdminController } from "./admin.controller";
 
 const router = Router();
-// router.get(
-//   "/test/users",
-//   AdminController.getAllUsers
-// );
 
 router.get(
   "/users",
   requireAdmin,
   AdminController.getAllUsers
+);
+
+router.get(
+  "/users/search",
+  requireAdmin,
+  AdminController.searchUsers
 );
 
 router.get(

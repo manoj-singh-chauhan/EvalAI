@@ -6,8 +6,22 @@ export const AdminAPI = {
     return res.data;
   },
 
-  getUserActivity: async (userId: string) => {
-    const res = await axiosClient.get(`/api/admin/users/${userId}/activity`);
+  searchUsers: async (search: string, role = "all", status = "all") => {
+    const res = await axiosClient.get("/api/admin/users/search", {
+      params: { search, role, status },
+    });
+    return res.data;
+  },
+
+  getUserActivity: async (
+    userId: string,
+    page: number = 1,
+    limit: number = 8
+  ) => {
+    const res = await axiosClient.get(
+      `/api/admin/users/${userId}/activity`,
+      { params: { page, limit } }
+    );
     return res.data;
   },
 };

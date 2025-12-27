@@ -17,9 +17,9 @@ import ProtectedRoute from "../components/ProtectedRoute";
 
 import SignInPage from "../pages/SignInPage";
 import SignUpPage from "../pages/SignUpPage";
-import Analytics from "../pages/Analytics";
 import AdminUsersPage from "../pages/admin/AdminUsersPage";
 import AdminUserActivityPage from "../pages/admin/AdminUserActivityPage";
+import NotFoundPage from "../pages/NotFoundPage";
 
 const WithTitle = ({
   title,
@@ -114,15 +114,6 @@ const AppRoutes = () => {
         />
 
         <Route
-          path="/analytics"
-          element={
-            <WithTitle title="Analytics | AI Eval">
-              <Analytics />
-            </WithTitle>
-          }
-        />
-
-        <Route
           path="/results/sheet/:answerId"
           element={
             <WithTitle title="Sheet | AI Eval">
@@ -187,11 +178,19 @@ const AppRoutes = () => {
         />
       </Route>
 
-      <Route
+      {/* <Route
         path="*"
         element={
           <WithTitle title="404 | AI Eval">
             <SignInPage />
+          </WithTitle>
+        }
+      /> */}
+      <Route
+        path="*"
+        element={
+          <WithTitle title="404 | AI Eval">
+            <NotFoundPage />
           </WithTitle>
         }
       />

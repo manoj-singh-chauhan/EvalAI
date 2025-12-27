@@ -100,6 +100,7 @@ export default function QuestionPage() {
       }
 
       setCurrentJobId(response.id);
+      localStorage.setItem("myJobId", response.id);
       setJobStatus("processing");
       showMessage("info", "Checking / extracting your question paper…");
     } catch (error: unknown) {
