@@ -1,18 +1,38 @@
-// import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
+import { clerkClient } from "@clerk/clerk-sdk-node";
 
-// export const requireAdmin = (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   const role = req.auth?.sessionClaims?.publicMetadata?.role;
+export const requireAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.auth?.sub;
 
-//   if (role !== "admin") {
-//     return res.status(403).json({
-//       success: false,
-//       message: "Admin access only",
-//     });
-//   }
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
 
-//   next();
-// };
+    const user = await clerkClient.users.getUser(userId);
+    const role = user?.publicMetadata?.role;
+
+    // console.log("User role:", role);
+    if (role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Admin access only",
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error("Admin check error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error checking admin status",
+    });
+  }
+};

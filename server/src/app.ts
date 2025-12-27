@@ -12,7 +12,7 @@ import { sequelize } from "./config/db";
 import { redisConnection } from "./config/redis";
 import submissionRoutes from "./modules/submissions/submissions.routes";
 import { requireAuth } from "./middleware/auth.middleware";
-// import adminRoutes from "./modules/admin/admin.routes";
+import adminRoutes from "./modules/admin/admin.routes";
 
 import "./config/cloudinaryUpload";
 import "./jobs/answer.worker";
@@ -92,7 +92,7 @@ app.use("/api/questions", requireAuth, questionRoutes);
 app.use("/api/answers", requireAuth, answerRoutes);
 app.use("/api/results", requireAuth, resultRoutes);
 app.use("/api/submissions", requireAuth, submissionRoutes);
-// app.use("/api/admin", adminRoutes);
+app.use("/api/admin",requireAuth, adminRoutes);
 
 printRoutes(app);
 

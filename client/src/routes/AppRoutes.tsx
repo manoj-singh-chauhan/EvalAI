@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Routes, Route, Outlet } from "react-router-dom";
 
@@ -19,7 +18,8 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import SignInPage from "../pages/SignInPage";
 import SignUpPage from "../pages/SignUpPage";
 import Analytics from "../pages/Analytics";
-
+import AdminUsersPage from "../pages/Admin/AdminUsersPage";
+import AdminUserActivityPage from "../pages/Admin/AdminUserActivityPage";
 
 const WithTitle = ({
   title,
@@ -35,7 +35,6 @@ const WithTitle = ({
   return <>{children}</>;
 };
 
-
 const StepperWrapper = () => (
   <StepperLayout>
     <Outlet />
@@ -47,7 +46,6 @@ const MainLayout = () => (
     <Outlet />
   </SidebarWrapper>
 );
-
 
 const AppRoutes = () => {
   return (
@@ -114,6 +112,7 @@ const AppRoutes = () => {
             </WithTitle>
           }
         />
+
         <Route
           path="/analytics"
           element={
@@ -137,6 +136,25 @@ const AppRoutes = () => {
           element={
             <WithTitle title="Review Qs | AI Eval">
               <ReviewQuestionsPage />
+            </WithTitle>
+          }
+        />
+
+        {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={
+            <WithTitle title="Admin Users | AI Eval">
+              <AdminUsersPage />
+            </WithTitle>
+          }
+        />
+
+        <Route
+          path="/admin/user/:userId"
+          element={
+            <WithTitle title="User Activity | AI Eval">
+              <AdminUserActivityPage />
             </WithTitle>
           }
         />
