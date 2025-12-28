@@ -45,13 +45,20 @@ STRICT EXTRACTION RULES
 
 4. OR questions:
    Merge all OR parts into ONE single question.
+
    The correct format MUST be:
 
    "(A) text...
    OR
    (B) text..."
-   
+
    If there are C, D, etc., preserve all.
+
+   NOTE:
+   If "OR" appears inline between two complete questions,
+   you MUST still treat it as an OR block and place "OR" on its own line
+   as shown in the format above.
+   Do NOT split when "or" is part of normal sentence meaning.
 
    Forbidden formats:
    - Option A:

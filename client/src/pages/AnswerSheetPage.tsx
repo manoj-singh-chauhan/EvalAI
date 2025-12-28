@@ -107,7 +107,7 @@ export default function AnswerSheetPage() {
               <span className="text-4xl font-bold text-green-600">
                 {sheet.totalScore}
               </span>
-              <span className="text-sm text-gray-400 font-medium">points</span>
+              <span className="text-sm text-gray-400 font-medium">Marks Achived</span>
             </div>
           </div>
 

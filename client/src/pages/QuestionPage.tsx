@@ -4,6 +4,8 @@ import { QuestionAPI } from "../api/question.api";
 import { io as socketIO } from "socket.io-client";
 import { SOCKET_URL } from "../config/env";
 import { FiUpload, FiType } from "react-icons/fi";
+import { FiCheckCircle, FiAlertTriangle, FiInfo } from "react-icons/fi";
+
 
 const socket = socketIO(SOCKET_URL);
 
@@ -293,13 +295,23 @@ export default function QuestionPage() {
           }`}
         >
           <div className="flex gap-2 flex-1 min-w-0">
-            <span className="mt-0.5 flex-shrink-0">
+            {/* <span className="mt-0.5 flex-shrink-0">
               {message.type === "error"
                 ? "⚠"
                 : message.type === "success"
                 ? "✓"
                 : "ℹ"}
-            </span>
+            </span> */}
+            <span className="mt-0.5 flex-shrink-0">
+  {message.type === "error" ? (
+    <FiAlertTriangle className="text-red-600" />
+  ) : message.type === "success" ? (
+    <FiCheckCircle className="text-green-600" />
+  ) : (
+    <FiInfo className="text-gray-500" />
+  )}
+</span>
+
             <span className="break-words">{message.text}</span>
           </div>
 
