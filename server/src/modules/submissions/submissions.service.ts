@@ -14,6 +14,63 @@ interface SubmissionFilters {
 }
 
 export class SubmissionService {
+  //   static async getAllSubmissions(
+  //     userId: string,
+  //     page: number,
+  //     limit: number,
+  //     filters?: SubmissionFilters
+  //   ) {
+  //     const offset = (page - 1) * limit;
+  //     const where: any = { createdBy: userId };
+
+  // if (filters?.startDate || filters?.endDate) {
+  //   where.createdAt = {};
+
+  //   if (
+  //     filters.startDate &&
+  //     !isNaN(Date.parse(filters.startDate))
+  //   ) {
+  //     where.createdAt[Op.gte] = new Date(filters.startDate);
+  //   }
+
+  //   if (
+  //     filters.endDate &&
+  //     !isNaN(Date.parse(filters.endDate))
+  //   ) {
+  //     const endDate = new Date(filters.endDate);
+  //     endDate.setHours(23, 59, 59, 999);
+  //     where.createdAt[Op.lte] = endDate;
+  //   }
+  // }
+
+  //     const result = await QuestionPaper.findAndCountAll({
+  //       where,
+  //       order: [["createdAt", "DESC"]],
+  //       limit,
+  //       offset,
+  //       attributes: [
+  //         "id",
+  //         "mode",
+  //         "totalMarks",
+  //         "status",
+  //         "errorMessage",
+  //         "createdAt",
+  //       ],
+  //     });
+
+  //     return {
+  //       count: result.count,
+  //       rows: result.rows.map((p) => ({
+  //         id: p.id,
+  //         mode: p.mode,
+  //         status: p.status,
+  //         marks: p.totalMarks,
+  //         questions: undefined,
+  //         createdAt: p.createdAt,
+  //       })),
+  //     };
+  //   }
+
   static async getAllSubmissions(
     userId: string,
     page: number,
@@ -23,27 +80,27 @@ export class SubmissionService {
     const offset = (page - 1) * limit;
     const where: any = { createdBy: userId };
 
-    // Mode filter
-    // Date range filter (safe)
-if (filters?.startDate || filters?.endDate) {
-  where.createdAt = {};
+    if (filters?.mode) {
+      where.mode = filters.mode;
+    }
 
-  if (
-    filters.startDate &&
-    !isNaN(Date.parse(filters.startDate))
-  ) {
-    where.createdAt[Op.gte] = new Date(filters.startDate);
-  }
+    if (filters?.status) {
+      where.status = filters.status;
+    }
 
-  if (
-    filters.endDate &&
-    !isNaN(Date.parse(filters.endDate))
-  ) {
-    const endDate = new Date(filters.endDate);
-    endDate.setHours(23, 59, 59, 999);
-    where.createdAt[Op.lte] = endDate;
-  }
-}
+    if (filters?.startDate || filters?.endDate) {
+      where.createdAt = {};
+
+      if (filters.startDate && !isNaN(Date.parse(filters.startDate))) {
+        where.createdAt[Op.gte] = new Date(filters.startDate);
+      }
+
+      if (filters.endDate && !isNaN(Date.parse(filters.endDate))) {
+        const endDate = new Date(filters.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        where.createdAt[Op.lte] = endDate;
+      }
+    }
 
     const result = await QuestionPaper.findAndCountAll({
       where,

@@ -62,7 +62,8 @@ export default function SubmissionsPage() {
   const loadSubmissions = useCallback(
     async (page: number = 1) => {
       try {
-        setLoading(true);
+        // setLoading(true);
+        if (page === 1) setLoading(true);
         const data = await SubmissionAPI.getAll(page, pagination.limit, {
           mode: filters.mode,
           status: filters.status,
@@ -109,9 +110,18 @@ export default function SubmissionsPage() {
   //   };
   // }, [filters]);
 
+  // useEffect(() => {
+  //   loadSubmissions(pagination.page);
+  // }, [pagination.page, filters, loadSubmissions]);
+
   useEffect(() => {
     loadSubmissions(pagination.page);
-  }, [pagination.page, filters, loadSubmissions]);
+  }, [pagination.page, loadSubmissions]);
+
+  useEffect(() => {
+    setPagination((p) => ({ ...p, page: 1 }));
+    loadSubmissions(1);
+  }, [filters, loadSubmissions]);
 
   useEffect(() => {
     const handleClickOutside = () => setOpenMenuId(null);
@@ -136,9 +146,16 @@ export default function SubmissionsPage() {
     setDeleteId(null);
   };
 
+  // const handlePageChange = (newPage: number) => {
+  //   if (newPage >= 1 && newPage <= pagination.totalPages) {
+  //     loadSubmissions(newPage);
+  //     window.scrollTo({ top: 0, behavior: "smooth" });
+  //   }
+  // };
+
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
-      loadSubmissions(newPage);
+      setPagination((p) => ({ ...p, page: newPage }));
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -331,7 +348,6 @@ export default function SubmissionsPage() {
           {showFilters && (
             <div className="mt-4 bg-white rounded-lg shadow-sm border border-gray-200/60 p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Mode Filter */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Submission Mode
