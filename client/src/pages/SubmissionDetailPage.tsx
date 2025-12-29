@@ -140,7 +140,7 @@ export default function SubmissionDetailPage() {
 
   return (
     <div className="h-screen bg-gray-50">
-      <div className="bg-white rounded-md shadow-lg border border-gray-100 p-4 md:p-8 w-full max-w-1350px mx-auto">
+      <div className="bg-white rounded border border-gray-100 p-4 md:p-8 w-full max-w-1350px mx-auto">
         <div className="mb-6 md:mb-8 border-b border-gray-100 pb-4">
           <div className="flex items-center gap-3">
             <button

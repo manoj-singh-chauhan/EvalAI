@@ -137,7 +137,8 @@ export default function ReviewQuestionsPage() {
                     Review Questions
                   </h1>
                   <p className="text-gray-500 text-sm mt-1">
-                    Verify extracted questions and marks before proceeding.
+                    {/* Verify extracted questions and marks before proceeding. */}
+                    Please verify the extracted questions and marks to ensure everything is correct before proceeding.
                   </p>
                 </div>
               </div>
