@@ -188,7 +188,7 @@ const AdminUserActivityPage = () => {
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
       <div className="max-w-1350pxl mx-auto px-q sm:px-6 lg:px-8 py-6 sm:py-8">
         {user && (
-          <div className="bg-white rounded shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="bg-white rounded  border border-gray-200 p-6 mb-8">
             <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
               <img
                 src={user.imageUrl}
@@ -223,7 +223,7 @@ const AdminUserActivityPage = () => {
           </div>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded  border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm font-semibold mb-1">Total Papers</p>
@@ -263,7 +263,7 @@ const AdminUserActivityPage = () => {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded  border border-gray-200 overflow-hidden">
           <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead>

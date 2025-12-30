@@ -246,7 +246,7 @@ export default function SubmissionDetailPage() {
               <div className="mt-6 animate-in fade-in slide-in-from-top-2">
                 {/* <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 md:p-6 max-h-[400px] overflow-y-auto custom-scrollbar"> */}
                 {/* <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 md:p-6 max-h-[400px] overflow-y-auto custom-scroll"> */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 md:p-6">
+                <div className="bg-white rounded-lg border border-gray-200  p-4 md:p-6">
                   <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed break-words">
                     {submission.rawText}
                   </pre>
