@@ -23,6 +23,8 @@ import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import { SOCKET_URL } from "../config/env";
 import Loader from "../components/Loader";
+import toast from "react-hot-toast";
+
 
 const socket = io(SOCKET_URL, { autoConnect: true });
 
@@ -131,12 +133,48 @@ export default function SubmissionsPage() {
     }
   }, [openMenuId]);
 
-  const handleRetry = async (submissionId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setOpenMenuId(null);
+  // const handleRetry = async (submissionId: string, e: React.MouseEvent) => {
+  //   e.stopPropagation();
+  //   setOpenMenuId(null);
+  //   await QuestionAPI.retryJob(submissionId);
+  //   await loadSubmissions(pagination.page);
+  // };
+
+ const handleRetry = async (
+  submissionId: string,
+  e: React.MouseEvent
+) => {
+  e.stopPropagation();
+  setOpenMenuId(null);
+
+  try {
     await QuestionAPI.retryJob(submissionId);
     await loadSubmissions(pagination.page);
-  };
+  } catch (err: unknown) {
+    if (
+      typeof err === "object" &&
+      err !== null &&
+      "response" in err
+    ) {
+      const error = err as {
+        response?: { status?: number; data?: { message?: string } };
+      };
+
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+
+      if (
+        status === 400 &&
+        typeof message === "string" &&
+        message.toLowerCase().includes("retry")
+      ) {
+        toast.error(message);
+      }
+    }
+  }
+};
+
+
 
   const handleDelete = async () => {
     if (!deleteId) return;

@@ -19,6 +19,7 @@ import { io } from "socket.io-client";
 import { SOCKET_URL } from "../config/env";
 import { AnswerAPI } from "../api/answer.api";
 import Loader from "../components/Loader";
+import toast from "react-hot-toast";
 
 const socket = io(SOCKET_URL, { autoConnect: true });
 
@@ -104,12 +105,36 @@ export default function SubmissionDetailPage() {
     }
   };
 
+  // const handleRetry = async (submissionId: string) => {
+  //   try {
+  //     await QuestionAPI.retryJob(submissionId);
+  //     await loadSubmission();
+  //   } catch {
+  //     alert("Retry failed.");
+  //   }
+  // };
+
   const handleRetry = async (submissionId: string) => {
     try {
       await QuestionAPI.retryJob(submissionId);
-      await loadSubmission();
-    } catch {
-      alert("Retry failed.");
+    } catch (err: unknown) {
+      const error = err as {
+        response?: {
+          status?: number;
+          data?: { message?: string };
+        };
+      };
+
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message;
+
+      if (
+        status === 400 &&
+        typeof message === "string" &&
+        message.toLowerCase().includes("retry")
+      ) {
+        toast.error(message);
+      }
     }
   };
 
@@ -182,14 +207,23 @@ export default function SubmissionDetailPage() {
                     {submission.mode}
                   </span>
                 </span>
-                {submission.totalMarks && (
+                {/* {submission.totalMarks && (
                   <span>
                     Marks:{" "}
                     <span className="font-semibold text-gray-800">
                       {submission.totalMarks}
                     </span>
                   </span>
-                )}
+                )} */}
+                {submission.totalMarks !== null &&
+                  submission.totalMarks !== undefined && (
+                    <span>
+                      Total Marks:{" "}
+                      <span className="font-semibold text-gray-800">
+                        {submission.totalMarks}
+                      </span>
+                    </span>
+                  )}
               </div>
             </div>
 

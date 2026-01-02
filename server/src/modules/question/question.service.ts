@@ -145,9 +145,15 @@ export class QuestionService {
         });
       }
 
+      // await record.update({
+      //   totalMarks: parsedData.totalMarks,
+      //   status: "completed",
+      // });
+
       await record.update({
         totalMarks: parsedData.totalMarks,
         status: "completed",
+        retryCount: 0,
       });
 
       this.emitStatus(recordId, "Completed successfully!");

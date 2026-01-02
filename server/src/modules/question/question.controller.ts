@@ -224,62 +224,128 @@ export class QuestionController {
     }
   }
 
+  // static async retryJob(req: Request, res: Response) {
+  //   try {
+  //     const parsed = retrySchema.safeParse(req.params);
+  //     if (!parsed.success) {
+  //       return res.status(400).json({
+  //         success: false,
+  //         message: parsed.error.issues[0].message,
+  //       });
+  //     }
+
+  //     const { id } = parsed.data;
+  //     const record = await QuestionPaper.findByPk(id);
+
+  //     if (!record) {
+  //       return res.status(404).json({
+  //         success: false,
+  //         message: "Record not found.",
+  //       });
+  //     }
+
+  //     if (record.status !== "failed") {
+  //       return res.status(400).json({
+  //         success: false,
+  //         message: "Only failed jobs can be retried.",
+  //       });
+  //     }
+
+  //     await record.update({
+  //       status: "pending",
+  //       errorMessage: null,
+  //     });
+
+  //     await QuestionService.scheduleQuestionJob({
+  //       type: record.mode === "upload" ? "file" : "text",
+  //       recordId: record.id,
+  //       data:
+  //         record.mode === "upload"
+  //           ? {
+  //               fileUrl: record.fileUrl || "",
+  //               mimeType: record.fileMimeType || "application/pdf",
+  //             }
+  //           : record.rawText || "",
+  //     });
+
+  //     return res.status(200).json({
+  //       success: true,
+  //       message: "Retrying…",
+  //     });
+  //   } catch (error: any) {
+  //     logger.error(`Retry Error: ${error.message}`);
+  //     res.status(500).json({
+  //       success: false,
+  //       message: "Failed to retry job.",
+  //     });
+  //   }
+  // }
+
   static async retryJob(req: Request, res: Response) {
-    try {
-      const parsed = retrySchema.safeParse(req.params);
-      if (!parsed.success) {
-        return res.status(400).json({
-          success: false,
-          message: parsed.error.issues[0].message,
-        });
-      }
-
-      const { id } = parsed.data;
-      const record = await QuestionPaper.findByPk(id);
-
-      if (!record) {
-        return res.status(404).json({
-          success: false,
-          message: "Record not found.",
-        });
-      }
-
-      if (record.status !== "failed") {
-        return res.status(400).json({
-          success: false,
-          message: "Only failed jobs can be retried.",
-        });
-      }
-
-      await record.update({
-        status: "pending",
-        errorMessage: null,
-      });
-
-      await QuestionService.scheduleQuestionJob({
-        type: record.mode === "upload" ? "file" : "text",
-        recordId: record.id,
-        data:
-          record.mode === "upload"
-            ? {
-                fileUrl: record.fileUrl || "",
-                mimeType: record.fileMimeType || "application/pdf",
-              }
-            : record.rawText || "",
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: "Retrying…",
-      });
-    } catch (error: any) {
-      logger.error(`Retry Error: ${error.message}`);
-      res.status(500).json({
+  try {
+    const parsed = retrySchema.safeParse(req.params);
+    if (!parsed.success) {
+      return res.status(400).json({
         success: false,
-        message: "Failed to retry job.",
+        message: parsed.error.issues[0].message,
       });
     }
+
+    const { id } = parsed.data;
+    const record = await QuestionPaper.findByPk(id);
+
+    if (!record) {
+      return res.status(404).json({
+        success: false,
+        message: "Record not found.",
+      });
+    }
+
+    if (record.status !== "failed") {
+      return res.status(400).json({
+        success: false,
+        message: "Only failed jobs can be retried.",
+      });
+    }
+
+    if (record.retryCount >= 3) {
+      return res.status(400).json({
+        success: false,
+        message: "Maximum retry attempts reached for this question paper.",
+      });
+    }
+
+    await record.update({
+      retryCount: record.retryCount + 1,
+      status: "pending",
+      errorMessage: null,
+    });
+
+    await QuestionService.scheduleQuestionJob({
+      type: record.mode === "upload" ? "file" : "text",
+      recordId: record.id,
+      data:
+        record.mode === "upload"
+          ? {
+              fileUrl: record.fileUrl || "",
+              mimeType: record.fileMimeType || "application/pdf",
+            }
+          : record.rawText || "",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Retrying…",
+    });
+  } catch (error: any) {
+    logger.error(`Retry Error: ${error.message}`);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retry job.",
+    });
   }
+}
+
 
   static async updateQuestions(req: Request, res: Response) {
     try {

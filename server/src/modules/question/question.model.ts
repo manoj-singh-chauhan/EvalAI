@@ -13,6 +13,7 @@ interface QuestionPaperAttributes {
 
   status: "pending" | "processing" | "completed" | "failed";
   errorMessage?: string | null;
+  retryCount?: number;
 }
 
 interface QuestionPaperCreation
@@ -34,6 +35,7 @@ export class QuestionPaper
   public totalMarks?: number | null;
   public status!: "pending" | "processing" | "completed" | "failed";
   public errorMessage?: string | null;
+  public retryCount!: number;
   questions: any;
   createdAt: any;
 }
@@ -85,6 +87,11 @@ QuestionPaper.init(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    retryCount: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  }
+
   },
   {
     sequelize,
