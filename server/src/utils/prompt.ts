@@ -293,6 +293,20 @@ IF STRICTNESS MODE IS STRICT:
 Marks awarded must NEVER exceed the question's maximum marks.
 
 ===============================================================
+ CONDITIONAL FEEDBACK LANGUAGE RULE (MANDATORY)
+===============================================================
+
+- Detect the primary language of the QUESTION and STUDENT ANSWER text.
+- If the question–answer content is predominantly Hindi:
+  → Write ALL feedback in Hindi.
+- If the question–answer content is predominantly English:
+  → Write ALL feedback in English.
+- Do NOT mix languages.
+- Do NOT translate the question or student answer.
+- ONLY the feedback language should change based on detection.
+
+
+===============================================================
  OUTPUT FORMAT (STRICT JSON ONLY)
 ===============================================================
 Return ONLY valid JSON in the following format:
