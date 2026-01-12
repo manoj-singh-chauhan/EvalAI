@@ -10,7 +10,7 @@ import {
 } from "react-icons/fi";
 import { useClerk, useUser } from "@clerk/clerk-react";
 import { BsReverseLayoutSidebarReverse } from "react-icons/bs";
-import { IoMdNotifications } from "react-icons/io";
+// import { IoMdNotifications } from "react-icons/io";
 import { FaUserTie } from "react-icons/fa6";
 
 interface SidebarWrapperProps {
@@ -214,9 +214,9 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
 
           <span className="ml-3 text-sm font-medium">AI Eval</span>
 
-          <div className="ml-auto">
+          {/* <div className="ml-auto">
             <IoMdNotifications className="w-6 h-6 text-gray-500" />
-          </div>
+          </div> */}
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scroll">{children}</div>
