@@ -36,32 +36,4 @@ Day 1: Dashboard (done!)
 Day 2: Landing Page (done!)
 Day 3: Export PDF (done!)
 Day 4: Search & Filter (done!)
-Day 5: User Profile (done!)
-
-class proxy
-class and object 
-clousers
-event loop
-web worker 
-event loop 
-try catch
-api versioning 
-
-class Solution {
-public:
-    int maxArea(vector<int>& h) {
-        int l=0, r=h.size()-1;
-        int m=0;
-
-        while(l<r){
-            int c =min(h[l],h[r]) * (r-l);
-            m = max(m,c);
-
-            if(h[l]< h[r]){
-                l++;
-            }
-            else r--;
-        }
-        return m;
-    }
-};
+Day 5: User Profile (workinggg)
