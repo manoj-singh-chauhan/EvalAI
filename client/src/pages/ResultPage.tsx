@@ -293,7 +293,7 @@ export default function ResultsPage() {
                       onClick={() =>
                         navigate(`/results/sheet/${ans.id}?index=${index + 1}`)
                       }
-                      className="flex-1 md:flex-none px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm text-sm"
+                      className="flex-1 md:flex-none px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded hover:bg-gray-50 transition shadow-sm text-sm"
                     >
                       View
                     </button>

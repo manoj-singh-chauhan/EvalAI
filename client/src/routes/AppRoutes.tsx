@@ -9,7 +9,7 @@ import ReviewQuestionsPage from "../pages/ReviewQuestionsPage";
 import SubmissionHistoryPage from "../pages/SubmissionHistoryPage";
 import SubmissionDetailPage from "../pages/SubmissionDetailPage";
 import AiExtractedQuestion from "../pages/AiExtrctedQuestion";
-import Workflow from "../pages/Workflow";
+// import Workflow from "../pages/Workflow";
 
 import StepperLayout from "../components/StepperLayout";
 import { SidebarWrapper } from "../components/SidebarWrapper";
@@ -122,14 +122,14 @@ const AppRoutes = () => {
           />
         </Route>
 
-        <Route
+        {/* <Route
           path="/workflow"
           element={
             <WithTitle title="Workflow | AI Eval">
               <Workflow />
             </WithTitle>
           }
-        />
+        /> */}
 
         <Route
           path="/results/sheet/:answerId"

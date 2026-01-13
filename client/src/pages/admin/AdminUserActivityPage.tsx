@@ -187,6 +187,40 @@ const AdminUserActivityPage = () => {
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
       <div className="max-w-1350pxl mx-auto px-q sm:px-6 lg:px-8 py-6 sm:py-8">
+       <div className="mb-6">
+  <div className="flex items-start gap-3">
+    {/* Back button */}
+    <button
+      onClick={() => navigate(-1)}
+      className="
+        flex items-center justify-center
+        h-9 w-9 shrink-0
+        rounded-lg
+        bg-white
+        border border-gray-300
+        text-gray-600
+        hover:bg-indigo-50
+        hover:text-indigo-600
+        hover:border-indigo-300
+        transition
+      "
+    >
+      <FiArrowLeft size={18} />
+    </button>
+
+    {/* Title + description */}
+    <div>
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
+        User Activity
+      </h1>
+      <p className="mt-1 text-sm text-gray-600">
+        Overview of user submissions, activity history, and evaluation status.
+      </p>
+    </div>
+  </div>
+</div>
+
+
         {user && (
           <div className="bg-white rounded  border border-gray-200 p-6 mb-8">
             <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">

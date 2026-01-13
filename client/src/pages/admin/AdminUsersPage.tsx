@@ -9,6 +9,7 @@ import {
   FiEye,
   FiSearch,
   FiX,
+  FiArrowLeft,
 } from "react-icons/fi";
 
 interface User {
@@ -136,13 +137,32 @@ const AdminUsersPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
       <div className="max-w-1250px mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
+          {/* <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
               Users Management
             </h1>
             <p className="text-sm sm:text-base text-gray-600">
               View all registered users and their details
             </p>
+          </div> */}
+          <div className="flex items-start gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2.5 rounded-lg bg-white border border-gray-200 text-gray-600 
+     hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 
+     transition-all duration-200"
+            >
+              <FiArrowLeft size={20} />
+            </button>
+
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
+                Users Management
+              </h1>
+              <p className="text-sm sm:text-base text-gray-600">
+                View all registered users and their details
+              </p>
+            </div>
           </div>
 
           <div className="relative w-full sm:max-w-md">

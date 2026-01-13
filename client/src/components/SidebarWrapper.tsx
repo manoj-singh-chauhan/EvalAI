@@ -6,7 +6,7 @@ import {
   // FiBarChart2,
   FiLogOut,
   FiX,
-  FiLayers,
+  // FiLayers,
 } from "react-icons/fi";
 import { useClerk, useUser } from "@clerk/clerk-react";
 import { BsReverseLayoutSidebarReverse } from "react-icons/bs";
@@ -78,7 +78,7 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
     { path: "/", label: "Home", icon: FiHome },
     { path: "/submissions", label: "Activity", icon: FiActivity },
     // { path: "/analytics", label: "Analytics", icon: FiBarChart2 },
-    { path: "/workflow", label: "Workflow", icon: FiLayers },
+    // { path: "/workflow", label: "Workflow", icon: FiLayers },
     ...(isAdmin
       ? [{ path: "/admin", label: "Admin Dashboard", icon: FaUserTie }]
       : []),
