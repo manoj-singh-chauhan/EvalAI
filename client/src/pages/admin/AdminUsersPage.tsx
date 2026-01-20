@@ -32,7 +32,7 @@ const AdminUsersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
-  // Fetch all users on mount
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -71,7 +71,7 @@ const AdminUsersPage = () => {
         setSearchLoading(false);
       }
     },
-    [allUsers]
+    [allUsers],
   );
 
   // Search with debounce
@@ -83,7 +83,6 @@ const AdminUsersPage = () => {
     return () => clearTimeout(timer);
   }, [searchTerm, handleSearch]);
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = () => setOpenMenuId(null);
     if (openMenuId) {
@@ -336,7 +335,7 @@ const AdminUsersPage = () => {
                       <td className="px-6 py-4">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(
-                            user.role
+                            user.role,
                           )}`}
                         >
                           {user.role}
@@ -345,7 +344,7 @@ const AdminUsersPage = () => {
                       <td className="px-6 py-4">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            user.status
+                            user.status,
                           )}`}
                         >
                           {user.status}
@@ -365,7 +364,7 @@ const AdminUsersPage = () => {
                             onClick={(e) => {
                               e.stopPropagation();
                               setOpenMenuId(
-                                openMenuId === user.id ? null : user.id
+                                openMenuId === user.id ? null : user.id,
                               );
                             }}
                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -465,14 +464,14 @@ const AdminUsersPage = () => {
                   <div className="flex items-center justify-between">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(
-                        user.role
+                        user.role,
                       )}`}
                     >
                       {user.role}
                     </span>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        user.status
+                        user.status,
                       )}`}
                     >
                       {user.status}

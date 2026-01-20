@@ -1,11 +1,19 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { AdminAPI } from '../../api/admin.api';
-import { 
-  FiArrowLeft, FiMail, FiCalendar, FiCheckCircle, 
-  FiAlertCircle, FiClock, FiType, FiUploadCloud, FiEye,
-  FiChevronLeft, FiChevronRight
-} from 'react-icons/fi';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { AdminAPI } from "../../api/admin.api";
+import {
+  FiArrowLeft,
+  FiMail,
+  FiCalendar,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiClock,
+  FiType,
+  FiUploadCloud,
+  FiEye,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
 
 interface User {
   id: string;
@@ -55,7 +63,7 @@ const AdminUserActivityPage = () => {
   const [user, setUser] = useState<User | null>(null);
   const [activity, setActivity] = useState<UserActivity | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,7 +72,7 @@ const AdminUserActivityPage = () => {
 
         const usersData = await AdminAPI.getAllUsers();
         const foundUser = usersData.users.find((u: User) => u.id === userId);
-        
+
         if (foundUser) {
           setUser(foundUser);
         }
@@ -73,9 +81,9 @@ const AdminUserActivityPage = () => {
         if (activityData.success) {
           setActivity(activityData);
         }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
-        setError('Failed to load data');
+        setError("Failed to load data");
       } finally {
         setLoading(false);
       }
@@ -85,8 +93,9 @@ const AdminUserActivityPage = () => {
   }, [userId]);
 
   const handlePageChange = async (newPage: number) => {
-    if (!activity || newPage < 1 || newPage > activity.pagination.totalPages) return;
-    
+    if (!activity || newPage < 1 || newPage > activity.pagination.totalPages)
+      return;
+
     setLoading(true);
     try {
       const activityData = await AdminAPI.getUserActivity(userId!, newPage, 8);
@@ -94,49 +103,49 @@ const AdminUserActivityPage = () => {
         setActivity(activityData);
       }
     } catch (err) {
-      console.error('Error loading page:', err);
+      console.error("Error loading page:", err);
     } finally {
       setLoading(false);
     }
   };
 
   const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(timestamp).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getRoleColor = (role: string) => {
-    return role === 'admin' 
-      ? 'bg-purple-100 text-purple-800' 
-      : 'bg-blue-100 text-blue-800';
+    return role === "admin"
+      ? "bg-purple-100 text-purple-800"
+      : "bg-blue-100 text-blue-800";
   };
 
   const getStatusColor = (status: string) => {
-    return status === 'active' 
-      ? 'bg-green-100 text-green-800' 
-      : 'bg-red-100 text-red-800';
+    return status === "active"
+      ? "bg-green-100 text-green-800"
+      : "bg-red-100 text-red-800";
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed':
+      case "completed":
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 text-xs font-semibold border border-emerald-200/50">
             <FiCheckCircle size={12} /> Completed
           </span>
         );
-      case 'processing':
+      case "processing":
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-700 text-xs font-semibold border border-blue-200/50">
             <FiClock size={12} className="animate-spin" /> Processing
           </span>
         );
-      case 'failed':
+      case "failed":
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 text-red-700 text-xs font-semibold border border-red-200/50">
             <FiAlertCircle size={12} /> Failed
@@ -164,7 +173,7 @@ const AdminUserActivityPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 p-6">
         <div className="max-w-6xl mx-auto">
           <button
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate("/admin")}
             className="mb-6 flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold"
           >
             <FiArrowLeft size={20} />
@@ -178,21 +187,24 @@ const AdminUserActivityPage = () => {
     );
   }
 
-  const stats = activity ? {
-    total: activity.summary.totalQuestionPapers,
-    typed: activity.allSubmissions.filter(s => s.mode === 'typed').length,
-    uploaded: activity.allSubmissions.filter(s => s.mode === 'upload').length,
-  } : { total: 0, typed: 0, uploaded: 0 };
+  const stats = activity
+    ? {
+        total: activity.summary.totalQuestionPapers,
+        typed: activity.allSubmissions.filter((s) => s.mode === "typed").length,
+        uploaded: activity.allSubmissions.filter((s) => s.mode === "upload")
+          .length,
+      }
+    : { total: 0, typed: 0, uploaded: 0 };
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
       <div className="max-w-1350pxl mx-auto px-q sm:px-6 lg:px-8 py-6 sm:py-8">
-       <div className="mb-6">
-  <div className="flex items-start gap-3">
-    {/* Back button */}
-    <button
-      onClick={() => navigate(-1)}
-      className="
+        <div className="mb-6">
+          <div className="flex items-start gap-3">
+            {/* Back button */}
+            <button
+              onClick={() => navigate(-1)}
+              className="
         flex items-center justify-center
         h-9 w-9 shrink-0
         rounded-lg
@@ -204,22 +216,22 @@ const AdminUserActivityPage = () => {
         hover:border-indigo-300
         transition
       "
-    >
-      <FiArrowLeft size={18} />
-    </button>
+            >
+              <FiArrowLeft size={18} />
+            </button>
 
-    {/* Title + description */}
-    <div>
-      <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
-        User Activity
-      </h1>
-      <p className="mt-1 text-sm text-gray-600">
-        Overview of user submissions, activity history, and evaluation status.
-      </p>
-    </div>
-  </div>
-</div>
-
+            {/* Title + description */}
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
+                User Activity
+              </h1>
+              <p className="mt-1 text-sm text-gray-600">
+                Overview of user submissions, activity history, and evaluation
+                status.
+              </p>
+            </div>
+          </div>
+        </div>
 
         {user && (
           <div className="bg-white rounded  border border-gray-200 p-6 mb-8">
@@ -233,7 +245,9 @@ const AdminUserActivityPage = () => {
                 }}
               />
               <div className="flex-1">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{user.name}</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                  {user.name}
+                </h1>
                 <div className="space-y-1 text-gray-600 mb-3">
                   <div className="flex items-center gap-2">
                     <FiMail size={16} />
@@ -241,14 +255,24 @@ const AdminUserActivityPage = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <FiCalendar size={16} />
-                    <span className="text-sm">Joined {formatDate(user.joinedAt)}</span>
+                    <span className="text-sm">
+                      Joined {formatDate(user.joinedAt)}
+                    </span>
                   </div>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${getRoleColor(user.role)}`}>
+                  <span
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold ${getRoleColor(
+                      user.role
+                    )}`}
+                  >
                     {user.role.toUpperCase()}
                   </span>
-                  <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(user.status)}`}>
+                  <span
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(
+                      user.status
+                    )}`}
+                  >
                     {user.status.toUpperCase()}
                   </span>
                 </div>
@@ -260,8 +284,12 @@ const AdminUserActivityPage = () => {
           <div className="bg-white rounded  border border-gray-200 p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-semibold mb-1">Total Papers</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-gray-600 text-sm font-semibold mb-1">
+                  Total Papers
+                </p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {stats.total}
+                </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-lg">
                 <FiCheckCircle className="w-6 h-6 text-blue-600" />
@@ -274,7 +302,9 @@ const AdminUserActivityPage = () => {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-indigo-600 font-bold">
                   <FiType size={18} />
-                  <span className="text-sm sm:text-base">Typed: {stats.typed}</span>
+                  <span className="text-sm sm:text-base">
+                    Typed: {stats.typed}
+                  </span>
                 </div>
               </div>
               <div className="p-3 bg-indigo-100 rounded-lg">
@@ -288,7 +318,9 @@ const AdminUserActivityPage = () => {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-orange-600 font-bold">
                   <FiUploadCloud size={18} />
-                  <span className="text-sm sm:text-base">Uploaded: {stats.uploaded}</span>
+                  <span className="text-sm sm:text-base">
+                    Uploaded: {stats.uploaded}
+                  </span>
                 </div>
               </div>
               <div className="p-3 bg-orange-100 rounded-lg">
@@ -302,37 +334,61 @@ const AdminUserActivityPage = () => {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">#</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Mode</th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase">Total Marks</th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase">Status</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase">Date</th>
-                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase">Action</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
+                    #
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">
+                    Mode
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase">
+                    Total Marks
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase">
+                    Date
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {!activity?.allSubmissions || activity.allSubmissions.length === 0 ? (
+                {!activity?.allSubmissions ||
+                activity.allSubmissions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-12 text-center text-gray-500"
+                    >
                       No question papers found
                     </td>
                   </tr>
                 ) : (
                   activity.allSubmissions.map((paper, idx) => (
-                    <tr key={paper.id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={paper.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
                       <td className="px-6 py-5 text-sm font-bold text-gray-400">
                         {String(
-                          (activity.pagination.page - 1) * activity.pagination.limit + idx + 1
-                        ).padStart(2, '0')}
+                          (activity.pagination.page - 1) *
+                            activity.pagination.limit +
+                            idx +
+                            1
+                        ).padStart(2, "0")}
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2.5 rounded-lg ${
-                            paper.mode === 'typed'
-                              ? 'bg-indigo-500/10 text-indigo-600'
-                              : 'bg-orange-500/10 text-orange-600'
-                          }`}>
-                            {paper.mode === 'typed' ? (
+                          <div
+                            className={`p-2.5 rounded-lg ${
+                              paper.mode === "typed"
+                                ? "bg-indigo-500/10 text-indigo-600"
+                                : "bg-orange-500/10 text-orange-600"
+                            }`}
+                          >
+                            {paper.mode === "typed" ? (
                               <FiType size={18} />
                             ) : (
                               <FiUploadCloud size={18} />
@@ -340,17 +396,23 @@ const AdminUserActivityPage = () => {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-gray-900">
-                              {paper.mode === 'typed' ? 'Typed Response' : 'File Upload'}
+                              {paper.mode === "typed"
+                                ? "Typed Response"
+                                : "File Upload"}
                             </p>
                             <p className="text-xs text-gray-500">
-                              {paper.mode === 'typed' ? 'Manual entry' : 'Document submission'}
+                              {paper.mode === "typed"
+                                ? "Manual entry"
+                                : "Document submission"}
                             </p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-5 text-center">
                         {paper.totalMarks !== undefined ? (
-                          <span className="text-sm font-bold text-gray-900">{paper.totalMarks}</span>
+                          <span className="text-sm font-bold text-gray-900">
+                            {paper.totalMarks}
+                          </span>
                         ) : (
                           <span className="text-gray-300">—</span>
                         )}
@@ -364,7 +426,7 @@ const AdminUserActivityPage = () => {
                         </span>
                       </td>
                       <td className="px-6 py-5 text-center">
-                        <button 
+                        <button
                           onClick={() => navigate(`/submissions/${paper.id}`)}
                           className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
                         >
@@ -379,7 +441,8 @@ const AdminUserActivityPage = () => {
             </table>
           </div>
           <div className="lg:hidden divide-y divide-gray-100">
-            {!activity?.allSubmissions || activity.allSubmissions.length === 0 ? (
+            {!activity?.allSubmissions ||
+            activity.allSubmissions.length === 0 ? (
               <div className="p-6 text-center text-gray-500">
                 No question papers found
               </div>
@@ -389,21 +452,29 @@ const AdminUserActivityPage = () => {
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3 flex-1">
                       <span className="text-sm font-bold text-gray-400">
-                        #{String((activity.pagination.page - 1) * activity.pagination.limit + idx + 1).padStart(2, '0')}
+                        #
+                        {String(
+                          (activity.pagination.page - 1) *
+                            activity.pagination.limit +
+                            idx +
+                            1
+                        ).padStart(2, "0")}
                       </span>
-                      <div className={`p-2 rounded-lg ${
-                        paper.mode === 'typed'
-                          ? 'bg-indigo-500/10 text-indigo-600'
-                          : 'bg-orange-500/10 text-orange-600'
-                      }`}>
-                        {paper.mode === 'typed' ? (
+                      <div
+                        className={`p-2 rounded-lg ${
+                          paper.mode === "typed"
+                            ? "bg-indigo-500/10 text-indigo-600"
+                            : "bg-orange-500/10 text-orange-600"
+                        }`}
+                      >
+                        {paper.mode === "typed" ? (
                           <FiType size={16} />
                         ) : (
                           <FiUploadCloud size={16} />
                         )}
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => navigate(`/submissions/${paper.id}`)}
                       className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors"
                     >
@@ -414,17 +485,19 @@ const AdminUserActivityPage = () => {
 
                   <div className="space-y-2 text-sm">
                     <p className="font-semibold text-gray-900">
-                      {paper.mode === 'typed' ? 'Typed Response' : 'File Upload'}
+                      {paper.mode === "typed"
+                        ? "Typed Response"
+                        : "File Upload"}
                     </p>
                     <div className="flex items-center justify-between text-xs text-gray-600">
                       <span>{formatDate(paper.createdAt)}</span>
                       {paper.totalMarks !== undefined && (
-                        <span className="font-semibold">{paper.totalMarks} marks</span>
+                        <span className="font-semibold">
+                          {paper.totalMarks} marks
+                        </span>
                       )}
                     </div>
-                    <div className="pt-2">
-                      {getStatusBadge(paper.status)}
-                    </div>
+                    <div className="pt-2">{getStatusBadge(paper.status)}</div>
                   </div>
                 </div>
               ))
@@ -434,8 +507,14 @@ const AdminUserActivityPage = () => {
           {activity && activity.pagination.totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
               <div className="text-sm text-gray-600">
-                Page <span className="font-semibold">{activity.pagination.page}</span> of{" "}
-                <span className="font-semibold">{activity.pagination.totalPages}</span>
+                Page{" "}
+                <span className="font-semibold">
+                  {activity.pagination.page}
+                </span>{" "}
+                of{" "}
+                <span className="font-semibold">
+                  {activity.pagination.totalPages}
+                </span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -467,7 +546,9 @@ const AdminUserActivityPage = () => {
 
                 <button
                   onClick={() => handlePageChange(activity.pagination.page + 1)}
-                  disabled={activity.pagination.page === activity.pagination.totalPages}
+                  disabled={
+                    activity.pagination.page === activity.pagination.totalPages
+                  }
                   className="p-2 text-gray-600 hover:bg-white hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors border border-gray-200 hover:border-indigo-200"
                 >
                   <FiChevronRight size={18} />

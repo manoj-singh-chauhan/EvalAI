@@ -67,13 +67,11 @@ export default function AIEvalWorkflow() {
 
   return (
     <div className="bg-gradient-to-br from-gray-50 via-white to-slate-50 overflow-hidden">
-      {/* Background blur (visual only) */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-10 left-10 w-72 h-72 bg-blue-200 rounded-full blur-3xl opacity-20" />
       </div>
 
       <div className="relative z-10">
-        {/* HERO SECTION (TOP GAP FIXED HERE) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100/50 rounded-full border border-blue-200 mb-6">
@@ -93,7 +91,6 @@ export default function AIEvalWorkflow() {
             </p>
           </div>
 
-          {/* Steps Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-24">
             {steps.map((step) => {
               const Icon = step.icon;
@@ -103,9 +100,7 @@ export default function AIEvalWorkflow() {
                   key={step.id}
                   className="group relative h-full"
                 >
-                  {/* Card */}
                   <div className="relative h-full p-8 sm:p-10 bg-white border-2 border-gray-200 rounded ">
-                    {/* Step Counter */}
                     <div className="flex items-center justify-between mb-6">
                       <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} text-white font-black text-2xl shadow-lg`}>
                         {step.id}
@@ -114,8 +109,6 @@ export default function AIEvalWorkflow() {
                         <ArrowRight className="w-4 h-4 text-gray-400" />
                       </div> */}
                     </div>
-
-                    {/* Title & Icon */}
                     <div className="mb-4">
                       <div className="flex items-center gap-3 mb-3">
                         <Icon className={`w-7 h-7 ${step.iconColor}`} />
@@ -125,7 +118,6 @@ export default function AIEvalWorkflow() {
                       </div>
                     </div>
 
-                    {/* Description */}
                     <p className="text-gray-700 font-semibold mb-2 text-base">
                       {step.description}
                     </p>
@@ -134,7 +126,6 @@ export default function AIEvalWorkflow() {
                       {step.details}
                     </p>
 
-                    {/* Features */}
                     <div className="space-y-3 mb-6">
                       {step.features.map((feature, idx) => (
                         <div key={idx} className="flex items-center gap-3">
@@ -145,8 +136,6 @@ export default function AIEvalWorkflow() {
                         </div>
                       ))}
                     </div>
-
-                    {/* Bottom accent */}
                     <div className={`h-1 rounded-full bg-gradient-to-r ${step.color}`}></div>
                   </div>
                 </div>
@@ -154,12 +143,10 @@ export default function AIEvalWorkflow() {
             })}
           </div>
 
-          {/* Process Flow */}
           <div className="mb-24">
             <h2 className="text-3xl sm:text-4xl font-black text-center text-gray-900 mb-16">The Complete Workflow</h2>
             
             <div className="relative">
-              {/* Connection Line */}
               <div className="hidden lg:block absolute top-8 left-0 right-0 h-1 bg-gradient-to-r from-blue-300 via-purple-300 to-pink-300 rounded-full"></div>
 
               <div className="grid grid-cols-2 lg:grid-cols-5 gap-6 relative z-10">
@@ -184,7 +171,6 @@ export default function AIEvalWorkflow() {
             </div>
           </div>
 
-          {/* Benefits Section */}
           <div className="mb-24">
             <h2 className="text-3xl sm:text-4xl font-black text-center text-gray-900 mb-12">Why Educators Love AI Eval</h2>
             

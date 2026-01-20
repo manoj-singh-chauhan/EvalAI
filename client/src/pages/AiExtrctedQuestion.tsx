@@ -49,10 +49,8 @@ export default function AiExtractedQuestion() {
   }
 
   return (
-    // CHANGE 1: Use h-screen + overflow-y-auto + custom-scroll
     // This ensures it takes the full screen height and scrolls internally
     <div className="h-screen bg-gray-50">
-      {/* CHANGE 2: Changed max-w-4xl to max-w-7xl for a wider, full-screen feel on desktop */}
       <div className="max-w-1350pxl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
         <div className="flex items-center gap-4 mb-8">
           <button
