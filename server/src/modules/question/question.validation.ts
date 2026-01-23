@@ -16,12 +16,6 @@ export const fileJobSchema = z.object({
     .min(3, "Invalid mimeType."),
 });
 
-// export const retrySchema = z.object({
-//   id: z
-//     .string()
-//     .min(1, "ID is required.")
-//     .refine((val) => !isNaN(Number(val)), "Invalid ID format."),
-// });
 
 export const retrySchema = z.object({
   id: z.string().uuid("Invalid ID format."),
