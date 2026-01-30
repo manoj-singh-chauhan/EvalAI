@@ -6,10 +6,14 @@ import logger from "../../config/logger";
 import { io } from "../../server";
 import Question from "./questionDetail.model";
 import { QUESTION_EXTRACTION_PROMPT } from "../../utils/prompt";
+import { CreditsService } from "../billing/credits.service";
 
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 // const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
-const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+const model = ai.getGenerativeModel({ 
+  model: "gemini-2.5-flash",
+  systemInstruction: "You are a professional exam coordinator. Your job is to extract questions from images or text with 100% accuracy in JSON format."
+});
 
 interface FileJobData {
   fileUrl: string;
@@ -22,27 +26,19 @@ export class QuestionService {
   static emitStatus(recordId: string, message: string) {
     io.emit(`job-status-${recordId}`, { message });
   }
-
   static async scheduleQuestionJob(job: {
-    type: string;
+    type: "file" | "text";
     recordId: string;
     data: JobData;
+    userId: string;
   }) {
-    await questionQueue.add(`create-question-${job.type}`, job);
-    logger.info(`Job added: ${job.type}, recordId ${job.recordId}`);
+    await questionQueue.add(`create-question-${job.type}`, {
+      type: job.type,
+      recordId: job.recordId,
+      data: job.data,
+    });
+    // logger.info(`Job added: ${job.type}, recordId ${job.recordId}`);
   }
-
-  // static normalizeQuestions(questions: any[]) {
-  //   return questions.map((q) => {
-  //     const marks = typeof q.marks === "number" ? q.marks : null;
-
-  //     if (marks === null) {
-  //       return { ...q, marks: null, flagged: true };
-  //     }
-
-  //     return { ...q, marks };
-  //   });
-  // }
 
   static normalizeQuestions(questions: any[]) {
     return questions.map((q, index) => {
@@ -60,7 +56,7 @@ export class QuestionService {
   static async processQuestionJob(
     type: "file" | "text",
     recordId: string,
-    data: JobData
+    data: JobData,
   ) {
     const record = await QuestionPaper.findByPk(recordId);
     if (!record) return;
@@ -68,15 +64,27 @@ export class QuestionService {
     await record.update({ status: "processing", errorMessage: null });
     this.emitStatus(
       recordId,
-      "checking or extracting your question pepar by ai "
+      "checking or extracting your question papar by ai ",
     );
 
     try {
-      let parsedData: { questions: any[]; totalMarks: number };
+      let parsedData: { 
+        questions: any[]; 
+        totalMarks: number 
+      };
+      let totalTokens = 0;
+      // const jsonConfig = {
+      //   generationConfig: {
+      //     responseMimeType: "application/json",
+      //   },
+      // };
 
       const jsonConfig = {
         generationConfig: {
           responseMimeType: "application/json",
+          temperature: 0.2,    
+          maxOutputTokens: 4096,
+          topP: 0.95,
         },
       };
 
@@ -103,6 +111,11 @@ export class QuestionService {
             },
           ],
         });
+       console.log(aiRes.response.usageMetadata);
+       const usage = aiRes.response.usageMetadata;
+       totalTokens = usage?.totalTokenCount || 0;
+
+
 
         const jsonText = aiRes.response.text().trim();
         const cleanJson = jsonText.replace(/```json/gi, "").replace(/```/g, "");
@@ -120,7 +133,9 @@ export class QuestionService {
             },
           ],
         });
-
+        console.log(aiRes.response.usageMetadata);
+        const usage = aiRes.response.usageMetadata;
+        totalTokens = usage?.totalTokenCount || 0;
         parsedData = JSON.parse(aiRes.response.text());
       }
 
@@ -149,6 +164,12 @@ export class QuestionService {
       //   totalMarks: parsedData.totalMarks,
       //   status: "completed",
       // });
+      const creditsToDeduct = Math.ceil(totalTokens / 1000);
+      const finalCost = Math.max(1, creditsToDeduct);
+
+      if (record.createdBy) {
+          await CreditsService.deductExact(record.createdBy, finalCost, "Question Extraction");
+      }
 
       await record.update({
         totalMarks: parsedData.totalMarks,

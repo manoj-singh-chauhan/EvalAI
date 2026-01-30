@@ -6,12 +6,13 @@ import { v2 as cloudinary } from "cloudinary";
 import { AnswerService } from "./answer.service";
 import logger from "../../config/logger";
 import EvaluatedAnswer from "./evaluatedAnswer.model";
+import { CreditsService } from "../billing/credits.service";
 
 export class AnswerController {
-
   static async getUploadSignature(req: Request, res: Response) {
     try {
       const { questionPaperId } = req.params;
+      const { fileSize } = req.query;
 
       if (!questionPaperId) {
         return res.status(400).json({
@@ -20,13 +21,23 @@ export class AnswerController {
         });
       }
 
+      const MAX_SIZE = 10 * 1024 * 1024;
+      if (fileSize && Number(fileSize) > MAX_SIZE) {
+        return res.status(400).json({
+          success: false,
+          message: "File too large. Maximum allowed size is 10 MB.",
+        });
+      }
+
       const folder = `ai-eval/job_${questionPaperId}/answers`;
       const timestamp = Math.round(Date.now() / 1000);
 
       const signature = cloudinary.utils.api_sign_request(
         { timestamp, folder },
-        process.env.CLOUDINARY_API_SECRET!
+        process.env.CLOUDINARY_API_SECRET!,
       );
+
+      console.log("answer signature : ", signature);
 
       res.status(200).json({
         success: true,
@@ -45,10 +56,16 @@ export class AnswerController {
     }
   }
 
-
   static async submitAnswerSheet(req: Request, res: Response) {
-    const parsed = submitAnswerSchema.safeParse(req.body);
+    const userId = req.auth?.sub;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
 
+    const parsed = submitAnswerSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({
         success: false,
@@ -56,21 +73,26 @@ export class AnswerController {
       });
     }
 
-    // const { questionPaperId, answerSheetFiles } = parsed.data;
     const { questionPaperId, answerSheetFiles, strictnessLevel } = parsed.data;
+    const balance = await CreditsService.getBalance(userId);
+
+    if (balance.plan === "free" && balance.credits <= 0) {
+      return res.status(403).json({
+        success: false,
+        error_code: "DAILY_LIMIT_EXCEEDED",
+        message:
+          "You have exhausted your daily credits. Upgrade plan to continue.",
+      });
+    }
 
     const createdIds: string[] = [];
 
-      for (const f of answerSheetFiles) {
-        // const sheet = await AnswerSheet.create({
-        //   questionPaperId,
-        //   status: "pending",
-        // });
-
+    for (const f of answerSheetFiles) {
       const sheet = await AnswerSheet.create({
         questionPaperId,
         strictnessLevel: strictnessLevel || "moderate",
         status: "pending",
+        createdBy: userId,
       });
 
       await AnswerSheetFile.create({
@@ -79,25 +101,21 @@ export class AnswerController {
         fileType: f.mimeType,
       });
 
-
       await AnswerService.scheduleAnswerJob({
         recordId: sheet.id,
         questionPaperId,
-        answerSheetFiles: [
-          { fileUrl: f.fileUrl, mimeType: f.mimeType }
-        ],
+        answerSheetFiles: [{ fileUrl: f.fileUrl, mimeType: f.mimeType }],
       });
 
       createdIds.push(sheet.id);
     }
 
-    res.status(202).json({
+    return res.status(202).json({
       success: true,
       ids: createdIds,
       message: "Answer sheets received. Evaluating...",
     });
   }
-
 
   static async getStatus(req: Request, res: Response) {
     try {
@@ -106,7 +124,7 @@ export class AnswerController {
       const sheet = await AnswerSheet.findByPk(id, {
         include: [
           { model: EvaluatedAnswer, as: "evaluatedAnswers" },
-          { model: AnswerSheetFile, as: "files" }
+          { model: AnswerSheetFile, as: "files" },
         ],
       });
 
@@ -133,8 +151,15 @@ export class AnswerController {
 
   static async retryJob(req: Request, res: Response) {
     try {
-      const parsed = retryAnswerSchema.safeParse(req.params);
+      const userId = req.auth?.sub;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized",
+        });
+      }
 
+      const parsed = retryAnswerSchema.safeParse(req.params);
       if (!parsed.success) {
         return res.status(400).json({
           success: false,
@@ -155,10 +180,27 @@ export class AnswerController {
         });
       }
 
+      if (sheet.createdBy !== userId) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not allowed to retry this answer sheet",
+        });
+      }
+
       if (sheet.status !== "failed") {
         return res.status(400).json({
           success: false,
           message: "Only failed jobs can be retried.",
+        });
+      }
+
+      const balance = await CreditsService.getBalance(userId);
+
+      if (balance.plan === "free" && balance.credits <= 0) {
+        return res.status(403).json({
+          success: false,
+          error_code: "DAILY_LIMIT_EXCEEDED",
+          message: "Insufficient credits to retry.",
         });
       }
 
@@ -180,7 +222,7 @@ export class AnswerController {
 
       return res.status(200).json({
         success: true,
-        message: "Retry. Please wait…",
+        message: "Retry started. Please wait…",
       });
     } catch (error: any) {
       logger.error(`AnswerController Retry Error: ${error.message}`);

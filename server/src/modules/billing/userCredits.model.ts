@@ -9,6 +9,7 @@ interface UserCreditsAttributes {
   credits: number;
   plan: UserPlan;
   lastRefillAt: Date | null;
+  planExpiresAt: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -25,7 +26,7 @@ class UserCredits
   public credits!: number;
   public plan!: UserPlan;
   public lastRefillAt!: Date | null;
-
+  public planExpiresAt!: Date | null;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -59,6 +60,10 @@ UserCredits.init(
     lastRefillAt: {
       type: DataTypes.DATE,
       allowNull: true,
+    },
+    planExpiresAt: {
+      type: DataTypes.DATE,
+      allowNull: true, // Null means full time Free
     },
   },
   {

@@ -6,6 +6,7 @@ class Transaction extends Model {
   public userId!: string;
   public type!: "free" | "use" | "purchase";
   public creditsChanged!: number;
+  public description!: string | null;
   public readonly createdAt!: Date;
 }
 
@@ -16,20 +17,21 @@ Transaction.init(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-
     userId: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-
     type: {
       type: DataTypes.ENUM("free", "use", "purchase"),
       allowNull: false,
     },
-
     creditsChanged: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    description: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {

@@ -6,7 +6,8 @@ dotenv.config({ path: ".env.development" });
 
 const apiKey = process.env.GEMINI_API_KEY as string;
 const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
-  model: "gemini-2.5-pro",
+  // model: "gemini-2.5-pro",
+  model : "gemini-2.5-flash",
 });
 
 (async () => {

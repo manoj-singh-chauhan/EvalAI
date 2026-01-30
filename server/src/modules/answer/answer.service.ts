@@ -3,20 +3,21 @@ import AnswerSheetFile from "./answerFile.model";
 import QuestionPaper from "../question/question.model";
 import Question from "../question/questionDetail.model";
 import EvaluatedAnswer from "./evaluatedAnswer.model";
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { downloadFile } from "../../utils/fileDownloader";
 import { answerQueue } from "../../jobs/answer.queue";
 import logger from "../../config/logger";
 import { io } from "../../server";
-import {
-  ANSWER_EVAL_PROMPT,
-  ANSWER_EXTRACTION_PROMPT,
-} from "../../utils/prompt";
+import {ANSWER_EVAL_PROMPT,ANSWER_EXTRACTION_PROMPT,} from "../../utils/prompt";
+import { CreditsService } from "../billing/credits.service";
+
 
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 // const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
-const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+const model = ai.getGenerativeModel({ 
+  model: "gemini-2.5-flash",
+  systemInstruction:"" 
+});
 
 export class AnswerService {
   static emitStatus(recordId: string, message: string) {
@@ -27,13 +28,20 @@ export class AnswerService {
     recordId: string;
     questionPaperId: string;
     answerSheetFiles: { fileUrl: string; mimeType: string }[];
-  }) {
-    await answerQueue.add("evaluate-answer", job);
+  }){
+    await answerQueue.add("evaluate-answer", {
+      recordId: job.recordId,
+      questionPaperId: job.questionPaperId,
+      answerSheetFiles: job.answerSheetFiles,
+    });
   }
+
 
   static async extractAnswersFromPage(mimeType: string, base64: string) {
     const aiRes = await model.generateContent({
-      generationConfig: { responseMimeType: "application/json" },
+      generationConfig: { 
+        responseMimeType: "application/json" 
+      },
       contents: [
         {
           role: "user",
@@ -49,48 +57,70 @@ export class AnswerService {
         },
       ],
     });
-
+    console.log("extraction", aiRes.response.usageMetadata);
+    const usage = aiRes.response.usageMetadata;
+    const tokens = usage?.totalTokenCount || 0;
     const raw = aiRes.response.text().trim();
     const clean = raw.replace(/```json|```/g, "");
-    return JSON.parse(clean);
+    return {
+      data: JSON.parse(clean),
+      tokens: tokens,
+    };
   }
 
-  // static async evaluateExtractedAnswers(questions: any[], answers: any) {
   static async evaluateExtractedAnswers(
     questions: any[],
     answers: any,
-    strictnessLevel: "lenient" | "moderate" | "strict"
+    strictnessLevel: "lenient" | "moderate" | "strict",
   ) {
     const aiRes = await model.generateContent({
-      generationConfig: { responseMimeType: "application/json" },
+      generationConfig: { 
+        responseMimeType: "application/json" 
+      },
       contents: [
         {
           role: "user",
           parts: [
-            // { text: ANSWER_EVAL_PROMPT },
             { text: ANSWER_EVAL_PROMPT(strictnessLevel) },
             { text: JSON.stringify({ questions, answers }) },
           ],
         },
       ],
     });
-
+    console.log("evaluation : ", aiRes.response.usageMetadata);
+    const usage = aiRes.response.usageMetadata;
+    const tokens = usage?.totalTokenCount || 0;
     const raw = aiRes.response.text().trim();
     const clean = raw.replace(/```json|```/g, "");
-    return JSON.parse(clean);
+    return {
+      data: JSON.parse(clean),
+      tokens: tokens,
+    };
   }
 
   static async processAnswerJob(
     recordId: string,
     questionPaperId: string,
-    _incomingFiles: { fileUrl: string; mimeType: string }[]
+    _incomingFiles: { fileUrl: string; mimeType: string }[],
   ) {
     const record = await AnswerSheet.findByPk(recordId, {
       include: [{ model: AnswerSheetFile, as: "files" }],
     });
 
     if (!record) return;
-    const strictnessLevel = record.strictnessLevel || "moderate";
+    if (record.createdBy) {
+      const balance = await CreditsService.getBalance(record.createdBy);
+
+      if (balance.plan === "free" && balance.credits <= 0) {
+        await record.update({
+          status: "failed",
+          errorMessage: "Daily credit limit reached.",
+        });
+        this.emitStatus(recordId, "Failed: Daily limit reached.");
+        return;
+      }
+    }
+    const strictnessLevel = record.strictnessLevel;
 
     const answerSheetFiles = record.files.map((f: any) => ({
       fileUrl: f.fileUrl,
@@ -99,7 +129,7 @@ export class AnswerService {
 
     await record.update({ status: "processing", errorMessage: null });
     this.emitStatus(recordId, "Reading answer sheet pages…");
-
+    let totalJobTokens = 0;
     try {
       const qp = await QuestionPaper.findByPk(questionPaperId, {
         include: [{ model: Question, as: "questions" }],
@@ -123,13 +153,10 @@ export class AnswerService {
         const buffer = await downloadFile(f.fileUrl);
         const base64 = buffer.toString("base64");
 
-        const extracted = await this.extractAnswersFromPage(f.mimeType, base64);
+        const result = await this.extractAnswersFromPage(f.mimeType, base64);
+        totalJobTokens += result.tokens;
+        const extracted = result.data;
 
-        // if (extracted.answers) {
-        //   for (const ans of extracted.answers) {
-        //     mergedAnswers[ans.questionNumber] = ans.studentAnswer;
-        //   }
-        // }
 
         if (extracted.answers) {
           for (const ans of extracted.answers) {
@@ -142,15 +169,13 @@ export class AnswerService {
       }
 
       this.emitStatus(recordId, "Evaluating extracted answers…");
-      // const evaluated = await this.evaluateExtractedAnswers(
-      //   questions,
-      //   mergedAnswers
-      // );
-      const evaluated = await this.evaluateExtractedAnswers(
+      const evalResult = await this.evaluateExtractedAnswers(
         questions,
         mergedAnswers,
-        strictnessLevel
+        strictnessLevel,
       );
+      totalJobTokens += evalResult.tokens;
+      const evaluated = evalResult.data;
 
       console.log("Evaluation result:", evaluated);
 
@@ -162,7 +187,7 @@ export class AnswerService {
 
       for (const ans of evaluated.evaluated) {
         const match = questions.find(
-          (q: any) => q.number === ans.questionNumber
+          (q: any) => q.number === ans.questionNumber,
         );
 
         await EvaluatedAnswer.create({
@@ -176,7 +201,16 @@ export class AnswerService {
           feedback: ans.feedback || "",
         });
       }
+      const cost = Math.ceil(totalJobTokens / 1000);
+      const finalCost = Math.max(1, cost);
 
+      if (record.createdBy) {
+        await CreditsService.deductExact(
+          record.createdBy,
+          finalCost,
+          "Answer Evaluation",
+        );
+      }
       await record.update({
         totalScore: evaluated.totalScore || 0,
         feedback: evaluated.feedback || "",

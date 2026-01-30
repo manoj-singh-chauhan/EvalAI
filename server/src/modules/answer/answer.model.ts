@@ -24,6 +24,7 @@ interface AnswerSheetAttributes {
   feedback?: string | null;
 
   status: "pending" | "processing" | "completed" | "failed";
+   createdBy: string;
   errorMessage?: string | null;
 }
 
@@ -45,6 +46,7 @@ export class AnswerSheet
   public feedback!: string | null;
 
   public status!: "pending" | "processing" | "completed" | "failed";
+   public createdBy!: string;
   public errorMessage!: string | null;
   files: any;
   evaluatedAnswers: any;
@@ -82,6 +84,11 @@ AnswerSheet.init(
     status: {
       type: DataTypes.ENUM("pending", "processing", "completed", "failed"),
       defaultValue: "pending",
+    },
+
+    createdBy: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
 
     errorMessage: {

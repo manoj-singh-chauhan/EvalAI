@@ -4,7 +4,6 @@ import { ResultsService } from "./results.service";
 export class ResultsController {
   static async getResults(req: Request, res: Response) {
     try {
-      // const paperId = Number(req.params.paperId);
       const paperId = req.params.paperId;
       const data = await ResultsService.getResults(paperId);
 

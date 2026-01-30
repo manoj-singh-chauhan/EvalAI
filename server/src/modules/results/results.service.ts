@@ -37,17 +37,6 @@ export class ResultsService {
     };
   }
 
-  //   static async getQuestionPaper(paperId: number) {
-  //     const paper = await QuestionPaper.findByPk(paperId);
-
-  //     if (!paper) throw new Error("Question paper not found");
-
-  //     return {
-  //       fileUrl: paper.fileUrl,
-  //       mimeType: "application/pdf",
-  //     };
-  //   }
-
   static async getQuestionPaper(paperId: string) {
     const paper = await QuestionPaper.findByPk(paperId);
 
@@ -67,27 +56,6 @@ export class ResultsService {
     };
   }
 
-  // static async getAnswerSheet(answerId: string) {
-  //   const answer = await AnswerSheet.findByPk(answerId, {
-  //     include: [
-  //       { model: EvaluatedAnswer, as: "evaluatedAnswers" },
-  //       { model: AnswerSheetFile, as: "files" },
-  //     ],
-  //   });
-
-  //   if (!answer) throw new Error("Answer sheet not found");
-
-  //   return {
-  //     id: answer.id,
-  //     questionPaperId: answer.questionPaperId,
-  //     answerSheetFiles: answer.files,
-  //     answers: answer.evaluatedAnswers,
-  //     totalScore: answer.totalScore,
-  //     feedback: answer.feedback,
-  //     status: answer.status,
-  //     errorMessage: answer.errorMessage,
-  //   };
-  // }
   static async getAnswerSheet(answerId: string) {
     const answer = await AnswerSheet.findByPk(answerId, {
       include: [

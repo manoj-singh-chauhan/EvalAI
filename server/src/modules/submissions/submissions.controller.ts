@@ -17,7 +17,7 @@ export class SubmissionController {
       const status = req.query.status as string | undefined;
       const startDate = req.query.startDate as string | undefined;
       const endDate = req.query.endDate as string | undefined;
-      // const search = req.query.search as string | undefined;
+      
 
       const filters = {
         mode,

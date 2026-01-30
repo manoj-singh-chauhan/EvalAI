@@ -15,12 +15,18 @@ export const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
   port: DB_PORT,
   dialect: "mysql",
   logging: false,
+  // pool: {
+  //   max: 10,
+  //   min: 0,
+  //   acquire: 30000,
+  //   idle: 10000,
+  // },
   pool: {
-    max: 10,
-    min: 0,
-    acquire: 30000,
-    idle: 10000,
-  },
+  max: 20,
+  min: 2,
+  acquire: 60000,
+  idle: 20000,
+},
   define: {
     timestamps: true,
     freezeTableName: true,
@@ -30,7 +36,7 @@ export const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
 export const connectDB = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
-    await sequelize.sync({ alter: true });
+    // await sequelize.sync({ alter: true });
     logger.info("Database connected successfully!");
   } catch (error: any) {
     logger.error("Database connection failed!");

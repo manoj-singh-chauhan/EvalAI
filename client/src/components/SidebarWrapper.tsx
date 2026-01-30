@@ -8,10 +8,13 @@ import {
   FiX,
   // FiLayers,
 } from "react-icons/fi";
+import { RiDashboardHorizontalLine } from "react-icons/ri";
 import { useClerk, useUser } from "@clerk/clerk-react";
 import { BsReverseLayoutSidebarReverse } from "react-icons/bs";
-// import { IoMdNotifications } from "react-icons/io";
+import { IoMdNotifications } from "react-icons/io";
 import { FaUserTie } from "react-icons/fa6";
+import { MdStars } from "react-icons/md";
+import { BillingAPI } from "../api/billing";
 
 interface SidebarWrapperProps {
   children: React.ReactNode;
@@ -55,12 +58,29 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const userBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [plan, setPlan] = useState<"free" | "pro">("free");
+
   const location = useLocation();
   const { signOut } = useClerk();
   const { user } = useUser();
 
   const userRole = (user?.publicMetadata?.role as string) || null;
   const isAdmin = userRole === "admin";
+
+  useEffect(() => {
+    const fetchPlan = async () => {
+      try {
+        const res = await BillingAPI.getMyPlan();
+        if (res?.plan) {
+          setPlan(res.plan);
+        }
+      } catch (err) {
+        console.error("Failed to fetch plan", err);
+      }
+    };
+
+    fetchPlan();
+  }, []);
 
   useEffect(() => {
     const onResize = () => {
@@ -75,10 +95,9 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
   }, []);
 
   const menuItems = [
-    { path: "/", label: "Home", icon: FiHome },
-    { path: "/submissions", label: "Activity", icon: FiActivity },
-    // { path: "/analytics", label: "Analytics", icon: FiBarChart2 },
-    // { path: "/workflow", label: "Workflow", icon: FiLayers },
+    { path: "/", label: "Question Extraction", icon: FiHome },
+    { path: "/submissions", label: "Dashboard", icon: RiDashboardHorizontalLine },
+    { path: "/activity", label: "Activity", icon: FiActivity },
     ...(isAdmin
       ? [{ path: "/admin", label: "Admin Dashboard", icon: FaUserTie }]
       : []),
@@ -106,7 +125,6 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
         </div>
       </div>
 
-      {/* Menu */}
       <nav className="flex-1 p-2 space-y-1 mt-4">
         {menuItems.map((item) => {
           const active = location.pathname === item.path;
@@ -131,8 +149,6 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
           );
         })}
       </nav>
-
-      {/* USER */}
       <div className="p-2">
         <button
           ref={userBtnRef}
@@ -142,12 +158,28 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
           }`}
         >
           <UserAvatar name={user?.fullName} />
+
           {isExpanded && (
-            <div className="text-left min-w-0">
-              <div className="text-sm font-medium truncate">
-                {user?.fullName}
+            <div className="text-left min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold truncate">
+                  {user?.fullName}
+                </span>
+
+                <span
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold
+              ${
+                plan === "pro"
+                  ? "bg-yellow-100 text-yellow-700"
+                  : "bg-gray-100 text-gray-600"
+              }`}
+                >
+                  <MdStars className="text-[10px]" />
+                  {plan}
+                </span>
               </div>
-              <div className="text-xs text-gray-500 truncate">
+
+              <div className="text-[11px] text-gray-400 truncate mt-0.5">
                 {user?.primaryEmailAddress?.emailAddress}
               </div>
             </div>
@@ -159,7 +191,6 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* DESKTOP SIDEBAR */}
       <aside
         className={`hidden md:flex bg-white transition-all ${
           expanded
@@ -170,7 +201,6 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
         <SidebarContent isExpanded={expanded} />
       </aside>
 
-      {/* MOBILE SIDEBAR */}
       {isMobile && mobileOpen && (
         <>
           <div
@@ -190,7 +220,6 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
       )}
 
       <main className="flex-1 flex flex-col">
-        {/* TOP BAR */}
         <div className="h-16 border-b bg-white flex items-center px-4">
           {isMobile && (
             <button
@@ -214,26 +243,38 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
 
           <span className="ml-3 text-sm font-medium">AI Eval</span>
 
-          {/* <div className="ml-auto">
+          <div className="ml-auto">
             <IoMdNotifications className="w-6 h-6 text-gray-500" />
-          </div> */}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scroll">{children}</div>
       </main>
 
-      
       {showUserMenu && userBtnRef.current && (
         <div
-          className="fixed z-[200] w-56 bg-white border rounded-lg shadow-xl"
+          className="fixed z-[200] w-56 bg-white border rounded-lg shadow-xl overflow-hidden"
           style={{
             left: userBtnRef.current.getBoundingClientRect().left,
-            top: userBtnRef.current.getBoundingClientRect().top - 70,
+            top: userBtnRef.current.getBoundingClientRect().top - 90,
           }}
         >
+          <Link
+            to="/billing"
+            onClick={() => setShowUserMenu(false)}
+            className="w-full flex items-center gap-2 px-4 py-3 text-sm
+                 text-teal-600 hover:bg-teal-50"
+          >
+            <MdStars />
+            Upgrade Plan
+          </Link>
+
+          <div className="h-px bg-gray-100" />
+
           <button
             onClick={() => setShowLogoutModal(true)}
-            className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+            className="w-full flex items-center gap-2 px-4 py-3 text-sm
+                 text-red-600 hover:bg-red-50"
           >
             <FiLogOut />
             Sign Out

@@ -37,3 +37,26 @@ Day 2: Landing Page (done!)
 Day 3: Export PDF (done!)
 Day 4: Search & Filter (done!)
 Day 5: User Profile (workinggg)
+
+
+function mapGeminiError(err: any) {
+  const status = err?.response?.status;
+
+  switch (status) {
+    case 400:
+      return "Invalid request. Please try again.";
+    case 401:
+      return "Authentication failed. Please try later.";
+    case 403:
+      return "This content is not allowed.";
+    case 404:
+      return "AI model not available.";
+    case 429:
+      return "Too many requests. Please wait.";
+    case 500:
+    case 503:
+      return "AI service is temporarily unavailable.";
+    default:
+      return "Something went wrong. Please try again.";
+  }
+}

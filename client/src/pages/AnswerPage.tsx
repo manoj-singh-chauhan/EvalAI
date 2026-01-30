@@ -39,7 +39,7 @@ export default function AnswerPage() {
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [questionData, setQuestionData] = useState<QuestionPaperData | null>(
-    null
+    null,
   );
   const [strictnessLevel, setStrictnessLevel] =
     useState<StrictnessLevel>("moderate");
@@ -52,7 +52,14 @@ export default function AnswerPage() {
   const showMessage = (type: MessageType, text: string) => {
     setMessage({ type, text });
   };
-
+  // const isInsufficientCredits =
+  //   message.type === "error" &&
+  //   message.text.toLowerCase().includes("insufficient");
+  const isInsufficientCredits =
+    message.type === "error" &&
+    (message.text.toLowerCase().includes("insufficient") ||
+      message.text.toLowerCase().includes("exhausted") ||
+      message.text.toLowerCase().includes("limit"));
   useEffect(() => {
     const loadQuestionPaper = async () => {
       if (!paperId) return;
@@ -105,7 +112,7 @@ export default function AnswerPage() {
       const err = error as { response?: { data?: { message?: string } } };
       showMessage(
         "error",
-        err.response?.data?.message || "Something went wrong"
+        err.response?.data?.message || "Something went wrong",
       );
       setLoading(false);
     }
@@ -188,76 +195,6 @@ export default function AnswerPage() {
         </div>
       )}
 
-      {/* <div className="mb-8 border border-gray-200 rounded p-6 bg-gradient-to-br from-purple-50 to-blue-50">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-purple-100 rounded-full text-purple-600">
-            <FiAward className="text-xl" />
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-800">Marking Strictness</h3>
-            <p className="text-sm text-gray-600">Choose how strict the AI should be when evaluating answers</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <button
-            onClick={() => setStrictnessLevel("lenient")}
-            className={`p-4 rounded border-2 text-left transition-all ${
-              strictnessLevel === "lenient"
-                ? "border-green-500 bg-green-50 shadow-md"
-                : "border-gray-200 bg-white hover:border-green-300"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-bold text-gray-800">Lenient</span>
-              {strictnessLevel === "lenient" && (
-                <FiCheckCircle className="text-green-600" />
-              )}
-            </div>
-            <p className="text-xs text-gray-600">
-              Generous marking. Awards full credit for showing understanding, even with minor errors.
-            </p>
-          </button>
-
-          <button
-            onClick={() => setStrictnessLevel("moderate")}
-            className={`p-4 rounded border-2 text-left transition-all ${
-              strictnessLevel === "moderate"
-                ? "border-blue-500 bg-blue-50 shadow-md"
-                : "border-gray-200 bg-white hover:border-blue-300"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-bold text-gray-800">Moderate</span>
-              {strictnessLevel === "moderate" && (
-                <FiCheckCircle className="text-blue-600" />
-              )}
-            </div>
-            <p className="text-xs text-gray-600">
-              Balanced approach. Standard academic marking with fair partial credit.
-            </p>
-          </button>
-
-          <button
-            onClick={() => setStrictnessLevel("strict")}
-            className={`p-4 rounded border-2 text-left transition-all ${
-              strictnessLevel === "strict"
-                ? "border-red-500 bg-red-50 shadow-md"
-                : "border-gray-200 bg-white hover:border-red-300"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-bold text-gray-800">Strict</span>
-              {strictnessLevel === "strict" && (
-                <FiCheckCircle className="text-red-600" />
-              )}
-            </div>
-            <p className="text-xs text-gray-600">
-              Rigorous marking. Requires precision and complete answers for full marks.
-            </p>
-          </button>
-        </div>
-      </div> */}
       <div className="mb-8 border border-gray-200 rounded p-6 bg-gradient-to-br from-purple-50 to-blue-50">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 bg-purple-100 rounded-full text-purple-600">
@@ -272,7 +209,6 @@ export default function AnswerPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* 1. LENIENT BUTTON */}
           <button
             onClick={() => setStrictnessLevel("lenient")}
             className={`p-5 min-h-[120px] flex flex-col justify-center rounded border-2 text-left transition-all ${
@@ -293,7 +229,6 @@ export default function AnswerPage() {
             </p>
           </button>
 
-          {/* 2. MODERATE BUTTON */}
           <button
             onClick={() => setStrictnessLevel("moderate")}
             className={`p-5 min-h-[120px] flex flex-col justify-center rounded border-2 text-left transition-all ${
@@ -314,7 +249,6 @@ export default function AnswerPage() {
             </p>
           </button>
 
-          {/* 3. STRICT BUTTON */}
           <button
             onClick={() => setStrictnessLevel("strict")}
             className={`p-5 min-h-[120px] flex flex-col justify-center rounded border-2 text-left transition-all ${
@@ -428,7 +362,7 @@ export default function AnswerPage() {
         </div>
       )}
 
-      {message.type && (
+      {/* {message.type && (
         <div
           className={`mt-6 px-4 py-3 rounded text-sm border flex items-start gap-3 animate-in fade-in slide-in-from-top-1
           ${
@@ -445,8 +379,55 @@ export default function AnswerPage() {
           </span>
           <span className="font-medium">{message.text}</span>
         </div>
-      )}
+      )} */}
+      {message.type && (
+        <div
+          className={`mt-6 px-4 py-3 rounded text-sm border flex items-start justify-between gap-3 animate-in fade-in slide-in-from-top-1
+      ${
+        message.type === "error"
+          ? "bg-red-50 text-red-700 border-red-200"
+          : message.type === "success"
+            ? "bg-green-50 text-green-700 border-green-200"
+            : "bg-blue-50 text-blue-700 border-blue-200"
+      }
+    `}
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-lg mt-0.5">
+              {message.type === "error" ? (
+                <FiAlertTriangle />
+              ) : (
+                <FiCheckCircle />
+              )}
+            </span>
 
+            <span className="font-medium">{message.text}</span>
+          </div>
+
+          <button
+            onClick={() => setMessage({ type: null, text: "" })}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="Close message"
+          >
+            <FiX />
+          </button>
+        </div>
+      )}
+      {isInsufficientCredits && (
+        <div className="mt-2 flex justify-end">
+          <button
+            onClick={() => navigate("/billing")}
+            className="
+        text-xs font-medium
+        text-teal-600 hover:text-teal-700
+        underline underline-offset-2
+        transition-colors
+      "
+          >
+            Unlock more usage →
+          </button>
+        </div>
+      )}
       <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
         <button
           onClick={handleSubmit}
@@ -463,12 +444,7 @@ export default function AnswerPage() {
               Processing...
             </>
           ) : (
-            <>
-              Evaluate with{" "}
-              {strictnessLevel.charAt(0).toUpperCase() +
-                strictnessLevel.slice(1)}{" "}
-              Marking
-            </>
+            <>Evaluate</>
           )}
         </button>
       </div>

@@ -19,7 +19,6 @@ export const requireAdmin = async (
     const user = await clerkClient.users.getUser(userId);
     const role = user?.publicMetadata?.role;
 
-    // console.log("User role:", role);
     if (role !== "admin") {
       return res.status(403).json({
         success: false,

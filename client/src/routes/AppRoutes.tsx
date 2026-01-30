@@ -20,6 +20,8 @@ import SignUpPage from "../pages/SignUpPage";
 import AdminUsersPage from "../pages/admin/AdminUsersPage";
 import AdminUserActivityPage from "../pages/admin/AdminUserActivityPage";
 import NotFoundPage from "../pages/NotFoundPage";
+import BillingPage from "../pages/BillingPage";
+import ActivityPage from "../pages/activity";
 
 const WithTitle = ({
   title,
@@ -85,6 +87,14 @@ const AppRoutes = () => {
           </WithTitle>
         }
       />
+      <Route
+    path="/billing"
+    element={
+      <WithTitle title="Billing | AI Eval">
+        <BillingPage />
+      </WithTitle>
+    }
+  />
 
       <Route
         element={
@@ -97,7 +107,7 @@ const AppRoutes = () => {
           <Route
             path="/"
             element={
-              <WithTitle title="AI Eval">
+              <WithTitle title="AI Eval | Question Extraction">
                 <QuestionPage />
               </WithTitle>
             }
@@ -122,14 +132,14 @@ const AppRoutes = () => {
           />
         </Route>
 
-        {/* <Route
-          path="/workflow"
-          element={
-            <WithTitle title="Workflow | AI Eval">
-              <Workflow />
+        <Route
+          path="/activity"
+          element = {
+            <WithTitle title="Activity | AI Eval">
+              <ActivityPage />
             </WithTitle>
           }
-        /> */}
+        />
 
         <Route
           path="/results/sheet/:answerId"
@@ -158,6 +168,7 @@ const AppRoutes = () => {
             </WithTitle>
           }
         />
+        
 
         <Route
           path="/admin/user/:userId"
@@ -171,7 +182,7 @@ const AppRoutes = () => {
         <Route
           path="/submissions"
           element={
-            <WithTitle title="History | AI Eval">
+            <WithTitle title="Dashboard | AI Eval">
               <SubmissionHistoryPage />
             </WithTitle>
           }
@@ -204,6 +215,8 @@ const AppRoutes = () => {
           </WithTitle>
         }
       /> */}
+      
+
       <Route
         path="*"
         element={

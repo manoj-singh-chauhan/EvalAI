@@ -7,14 +7,14 @@ import {
   FiType,
   FiUploadCloud,
   FiActivity,
-  FiTrendingUp,
+  // FiTrendingUp,
   FiMoreVertical,
   FiTrash2,
   FiEye,
   FiChevronLeft,
   FiChevronRight,
   FiArrowLeft,
-  FiFilter,
+  // FiFilter,
   FiX,
 } from "react-icons/fi";
 import { SubmissionAPI, type SubmissionRecord } from "../api/submission.api";
@@ -24,7 +24,6 @@ import { io } from "socket.io-client";
 import { SOCKET_URL } from "../config/env";
 import Loader from "../components/Loader";
 import toast from "react-hot-toast";
-
 
 const socket = io(SOCKET_URL, { autoConnect: true });
 
@@ -49,7 +48,7 @@ export default function SubmissionsPage() {
   const [submissions, setSubmissions] = useState<SubmissionRecord[]>([]);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 8,
+    limit: 10,
     total: 0,
     totalPages: 0,
   });
@@ -57,15 +56,16 @@ export default function SubmissionsPage() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  // const [showFilters, setShowFilters] = useState(true);
+  const showFilters = true;
   const [filters, setFilters] = useState<FilterState>({});
   const navigate = useNavigate();
 
   const loadSubmissions = useCallback(
     async (page: number = 1) => {
       try {
-        // setLoading(true);
-        if (page === 1) setLoading(true);
+        // if (page === 0) setLoading(true);
+        if (submissions.length === 0) setLoading(true);
         const data = await SubmissionAPI.getAll(page, pagination.limit, {
           mode: filters.mode,
           status: filters.status,
@@ -82,48 +82,38 @@ export default function SubmissionsPage() {
         setLoading(false);
       }
     },
-    [pagination.limit, filters]
+    [pagination.limit, filters, submissions.length],
   );
 
-  const setupSocket = useCallback((items: SubmissionRecord[]) => {
-    items.forEach((sub) => {
-      const channel = `job-status-${sub.id}`;
-      socket.off(channel);
-      // socket.on(channel, () => {
-      //   loadSubmissions(pagination.page);
-      // });
-      socket.on(channel, () => {
-        setPagination((p) => ({ ...p }));
+  const setupSocket = useCallback(
+    (items: SubmissionRecord[]) => {
+      items.forEach((sub) => {
+        if (sub.status === "processing" || sub.status === "pending") {
+          const channel = `job-status-${sub.id}`;
+          socket.off(channel);
+
+          socket.on(channel, () => {
+            loadSubmissions(pagination.page);
+          });
+        }
       });
-    });
-  }, []);
+    },
+    [loadSubmissions, pagination.page],
+  );
 
   useEffect(() => {
     setupSocket(submissions);
+
+    return () => {
+      submissions.forEach((sub) => {
+        socket.off(`job-status-${sub.id}`);
+      });
+    };
   }, [submissions, setupSocket]);
-
-  // useEffect(() => {
-  //   loadSubmissions(1);
-  //   return () => {
-  //     submissions.forEach((sub) => {
-  //       const channel = `job-status-${sub.id}`;
-  //       socket.off(channel);
-  //     });
-  //   };
-  // }, [filters]);
-
-  // useEffect(() => {
-  //   loadSubmissions(pagination.page);
-  // }, [pagination.page, filters, loadSubmissions]);
 
   useEffect(() => {
     loadSubmissions(pagination.page);
-  }, [pagination.page, loadSubmissions]);
-
-  useEffect(() => {
-    setPagination((p) => ({ ...p, page: 1 }));
-    loadSubmissions(1);
-  }, [filters, loadSubmissions]);
+  }, [pagination.page, filters, loadSubmissions]);
 
   useEffect(() => {
     const handleClickOutside = () => setOpenMenuId(null);
@@ -133,48 +123,51 @@ export default function SubmissionsPage() {
     }
   }, [openMenuId]);
 
-  // const handleRetry = async (submissionId: string, e: React.MouseEvent) => {
-  //   e.stopPropagation();
-  //   setOpenMenuId(null);
-  //   await QuestionAPI.retryJob(submissionId);
-  //   await loadSubmissions(pagination.page);
-  // };
+  const handleRetry = async (submissionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpenMenuId(null);
 
- const handleRetry = async (
-  submissionId: string,
-  e: React.MouseEvent
-) => {
-  e.stopPropagation();
-  setOpenMenuId(null);
-
-  try {
-    await QuestionAPI.retryJob(submissionId);
-    await loadSubmissions(pagination.page);
-  } catch (err: unknown) {
-    if (
-      typeof err === "object" &&
-      err !== null &&
-      "response" in err
-    ) {
-      const error = err as {
-        response?: { status?: number; data?: { message?: string } };
-      };
-
-      const status = error.response?.status;
-      const message = error.response?.data?.message;
-
+    try {
+      await QuestionAPI.retryJob(submissionId);
+      await loadSubmissions(pagination.page);
+      // toast.success("Retry started successfully!");
+    } catch (err: unknown) {
+      const res = (
+        err as {
+          response?: {
+            status?: number;
+            data?: { message?: string; error_code?: string };
+          };
+        }
+      ).response;
+      const msg = res?.data?.message || "Failed to retry job.";
       if (
-        status === 400 &&
-        typeof message === "string" &&
-        message.toLowerCase().includes("retry")
+        res &&
+        res.status === 403 &&
+        res.data?.error_code === "DAILY_LIMIT_EXCEEDED"
       ) {
-        toast.error(message);
+        toast.error(
+          (t) => (
+            <div className="flex flex-col gap-2 items-start">
+              <span>{msg}</span>
+              <button
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  navigate("/billing");
+                }}
+                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 underline"
+              >
+                Unlock more usage
+              </button>
+            </div>
+          ),
+          { duration: 3000 },
+        );
+      } else {
+        toast.error(msg);
       }
     }
-  }
-};
-
-
+  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -203,16 +196,6 @@ export default function SubmissionsPage() {
     setOpenMenuId(openMenuId === submissionId ? null : submissionId);
   };
 
-  // const handleFilterChange = (key: keyof FilterState, value: any) => {
-  //   if (value === "") {
-  //     const newFilters = { ...filters };
-  //     delete newFilters[key];
-  //     setFilters(newFilters);
-  //   } else {
-  //     setFilters((prev) => ({ ...prev, [key]: value }));
-  //   }
-  // };
-
   const handleFilterChange = (key: keyof FilterState, value: FilterValue) => {
     setPagination((p) => ({ ...p, page: 1 }));
     if (value === "") {
@@ -224,17 +207,13 @@ export default function SubmissionsPage() {
     }
   };
 
-  // const clearFilters = () => {
-  //   setFilters({});
-  // };
-
   const clearFilters = () => {
     setPagination((p) => ({ ...p, page: 1 }));
     setFilters({});
   };
 
   const hasActiveFilters = Object.values(filters).some(
-    (v) => v !== undefined && v !== ""
+    (v) => v !== undefined && v !== "",
   );
 
   const formatDate = (dateString: string) => {
@@ -276,25 +255,47 @@ export default function SubmissionsPage() {
     }
   };
 
-  const getStats = () => {
-    const completed = submissions.filter(
-      (s) => s.status === "completed"
-    ).length;
-    const typedCount = submissions.filter((s) => s.mode === "typed").length;
-    const uploadedCount = submissions.filter((s) => s.mode === "upload").length;
+  const renderPageButtons = () => {
+    const buttons = [];
+    const { page, totalPages } = pagination;
 
-    return {
-      total: pagination.total,
-      completed,
-      typedCount,
-      uploadedCount,
-    };
+    buttons.push(1);
+
+    if (page > 2) buttons.push("...");
+
+    for (
+      let i = Math.max(2, page - 1);
+      i <= Math.min(totalPages - 1, page + 1);
+      i++
+    ) {
+      if (!buttons.includes(i)) buttons.push(i);
+    }
+
+    if (page < totalPages - 2) buttons.push("...");
+
+    if (totalPages > 1 && !buttons.includes(totalPages))
+      buttons.push(totalPages);
+
+    return buttons.map((p, index) => (
+      <button
+        key={index}
+        onClick={() => typeof p === "number" && handlePageChange(p)}
+        disabled={typeof p !== "number"}
+        className={`px-3 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
+          pagination.page === p
+            ? "bg-indigo-600 text-white"
+            : p === "..."
+              ? "text-gray-400 cursor-default"
+              : "text-gray-700 hover:bg-white border border-gray-200"
+        }`}
+      >
+        {p}
+      </button>
+    ));
   };
 
-  const stats = getStats();
-
   if (loading && pagination.page === 1) {
-    return <Loader text="Loading activities..." />;
+    return <Loader text="Loading records..." />;
   }
 
   return (
@@ -310,79 +311,14 @@ export default function SubmissionsPage() {
             >
               <FiArrowLeft size={20} />
             </button>
-            <h1 className="text-2xl font-bold">Activity Log</h1>
+            <h1 className="text-2xl font-bold">User Dashboard</h1>
           </div>
           <p className="text-gray-600 text-sm sm:text-base ml-[52px]">
-            Track your assessment history and performance results.
+            Review your recent submissions and AI-generated scores.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded p-6 shadow-sm border border-gray-200/60">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-semibold mb-1">
-                  Total Submissions
-                </p>
-                <p className="text-3xl font-bold text-gray-900 tracking-tight">
-                  {stats.total}
-                </p>
-              </div>
-              <div className="p-3.5 bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-md border border-blue-200/30">
-                <FiActivity className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-md p-6 shadow-sm border border-gray-200/60">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-semibold mb-1">
-                  Completed
-                </p>
-                <p className="text-3xl font-bold text-emerald-600 tracking-tight">
-                  {stats.completed}
-                </p>
-              </div>
-              <div className="p-3.5 bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-md border border-emerald-200/30">
-                <FiCheckCircle className="w-6 h-6 text-emerald-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-md p-6 shadow-sm border border-gray-200/60">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-8">
-                <div className="flex items-center gap-2 text-indigo-600 font-bold">
-                  <FiType />
-                  <span>Typed: {stats.typedCount}</span>
-                </div>
-                <div className="flex items-center gap-2 text-orange-600 font-bold">
-                  <FiUploadCloud />
-                  <span>Uploaded: {stats.uploadedCount}</span>
-                </div>
-              </div>
-              <div className="p-3.5 bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-xl border border-indigo-200/30">
-                <FiTrendingUp className="w-6 h-6 text-indigo-600" />
-              </div>
-            </div>
-          </div>
-        </div>
         <div className="mb-6">
-          <div className="flex justify-end">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center px-4 py-2.5 rounded-lg font-semibold transition-all ${
-                hasActiveFilters
-                  ? "bg-indigo-600 text-white shadow-md"
-                  : "bg-white text-gray-700 border border-gray-200 hover:border-indigo-200"
-              }`}
-            >
-              Filter {hasActiveFilters && `(${Object.keys(filters).length})`}
-              <FiFilter size={18} className="ml-3" />
-            </button>
-          </div>
-
           {showFilters && (
             <div className="mt-4 bg-white rounded-lg shadow-sm border border-gray-200/60 p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -395,7 +331,7 @@ export default function SubmissionsPage() {
                     onChange={(e) =>
                       handleFilterChange(
                         "mode",
-                        e.target.value as "typed" | "upload" | ""
+                        e.target.value as "typed" | "upload" | "",
                       )
                     }
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -406,7 +342,6 @@ export default function SubmissionsPage() {
                   </select>
                 </div>
 
-                {/* Status Filter */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Status
@@ -421,7 +356,7 @@ export default function SubmissionsPage() {
                           | "processing"
                           | "completed"
                           | "failed"
-                          | ""
+                          | "",
                       )
                     }
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -434,7 +369,6 @@ export default function SubmissionsPage() {
                   </select>
                 </div>
 
-                {/* Start Date Filter */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Start Date
@@ -449,7 +383,6 @@ export default function SubmissionsPage() {
                   />
                 </div>
 
-                {/* End Date Filter */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     End Date
@@ -487,7 +420,7 @@ export default function SubmissionsPage() {
                 <FiActivity className="w-12 h-12 text-indigo-400" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
-                No activities found
+                No record found
               </h3>
               <p className="text-gray-600 text-sm max-w-sm leading-relaxed">
                 {hasActiveFilters
@@ -513,7 +446,10 @@ export default function SubmissionsPage() {
                       <th className="py-4 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="py-4 px-6 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      {/* <th className="py-4 px-6 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Date
+                      </th> */}
+                      <th className="py-4 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Date
                       </th>
                       <th className="py-4 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
@@ -534,7 +470,7 @@ export default function SubmissionsPage() {
                             {String(
                               (pagination.page - 1) * pagination.limit +
                                 index +
-                                1
+                                1,
                             ).padStart(2, "0")}
                           </span>
                         </td>
@@ -585,7 +521,12 @@ export default function SubmissionsPage() {
                           {getStatusBadge(s.status)}
                         </td>
 
-                        <td className="py-5 px-6 text-right">
+                        {/* <td className="py-5 px-6 text-right">
+                          <span className="text-sm text-gray-700 font-semibold">
+                            {formatDate(s.createdAt)}
+                          </span>
+                        </td> */}
+                        <td className="py-5 px-6 text-center">
                           <span className="text-sm text-gray-700 font-semibold">
                             {formatDate(s.createdAt)}
                           </span>
@@ -768,10 +709,10 @@ export default function SubmissionsPage() {
                       <FiChevronLeft size={18} />
                     </button>
 
-                    <div className="flex items-center gap-1">
+                    {/* <div className="flex items-center gap-1">
                       {Array.from(
                         { length: pagination.totalPages },
-                        (_, i) => i + 1
+                        (_, i) => i + 1,
                       ).map((page) => (
                         <button
                           key={page}
@@ -785,6 +726,9 @@ export default function SubmissionsPage() {
                           {page}
                         </button>
                       ))}
+                    </div> */}
+                    <div className="flex items-center gap-1 flex-wrap justify-center">
+                      {renderPageButtons()}
                     </div>
 
                     <button

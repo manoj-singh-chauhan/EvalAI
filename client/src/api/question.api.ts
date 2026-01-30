@@ -1,5 +1,6 @@
 import axios from "axios";
 import axiosClient from "./axiosClient";
+// import { v4 as uuidv4 } from 'uuid';
 
 interface TypedQuestionPayload {
   text: string;
@@ -17,6 +18,7 @@ export const QuestionAPI = {
     return res.data;
   },
   uploadPaper: async (file: File) => {
+    // const customJobId = uuidv4();
     try {
       const sigResponse = await axiosClient.post(
         "/api/questions/get-upload-signature",
@@ -24,12 +26,14 @@ export const QuestionAPI = {
           fileName: file.name,
           fileSize: file.size,
           mimeType: file.type,
-        }
+          // customJobId: customJobId,
+        },
       );
 
       const { signature, timestamp, folder, apiKey, cloudName, jobId } =
         sigResponse.data;
-
+      //   console.log(customJobId);
+      console.log("frontend response : ", sigResponse.data);
       const formData = new FormData();
       formData.append("file", file);
       formData.append("signature", signature);
@@ -48,16 +52,21 @@ export const QuestionAPI = {
         mimeType = "application/pdf";
       }
 
-      const jobResponse = await axiosClient.post("/api/questions/submit-file-job", {
-        jobId,
-        fileUrl: secure_url,
-        mimeType,
-      });
+      const jobResponse = await axiosClient.post(
+        "/api/questions/submit-file-job",
+        {
+          jobId,
+          fileUrl: secure_url,
+          mimeType,
+        },
+      );
 
       return jobResponse.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("Direct upload failed:", error.response?.data?.message);
+        throw error;
+      } else {
         throw error;
       }
     }
@@ -78,12 +87,6 @@ export const QuestionAPI = {
     return res.data;
   },
 
-  //   updateQuestions: async (id: string, questions: any[]) => {
-  //   const res = await axiosClient.put(`/questions/${id}/update-questions`, {
-  //     questions,
-  //   });
-  //   return res.data;
-  // },
   updateQuestions: async (id: string, questions: QuestionUpdateItem[]) => {
     const res = await axiosClient.put(`/api/questions/${id}/update-questions`, {
       questions,

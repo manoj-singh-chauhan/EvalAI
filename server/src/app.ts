@@ -13,6 +13,7 @@ import { redisConnection } from "./config/redis";
 import submissionRoutes from "./modules/submissions/submissions.routes";
 import { requireAuth } from "./middleware/auth.middleware";
 import adminRoutes from "./modules/admin/admin.routes";
+import billing from "./modules/billing/billing.routes"
 
 import "./config/cloudinaryUpload";
 import "./jobs/answer.worker";
@@ -28,6 +29,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use("/api/billing/webhook", express.raw({ type: "application/json" }));
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -93,6 +95,7 @@ app.use("/api/answers", requireAuth, answerRoutes);
 app.use("/api/results", requireAuth, resultRoutes);
 app.use("/api/submissions", requireAuth, submissionRoutes);
 app.use("/api/admin",requireAuth, adminRoutes);
+app.use("/api/billing",billing),
 
 printRoutes(app);
 

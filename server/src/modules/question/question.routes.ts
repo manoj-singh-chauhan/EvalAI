@@ -31,11 +31,6 @@ router.post(
   QuestionController.retryJob
 );
 
-// router.post(
-//   "/:id/update-questions",
-//   QuestionController.updateQuestions
-// );
-
 router.put(
   "/:id/update-questions", 
   QuestionController.updateQuestions

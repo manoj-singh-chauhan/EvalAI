@@ -4,30 +4,34 @@ import logger from "../../config/logger";
 import { v2 as cloudinary } from "cloudinary";
 import QuestionPaper from "./question.model";
 import Question from "./questionDetail.model";
+// import path from "path";
 import {
   typedQuestionSchema,
   fileJobSchema,
   retrySchema,
 } from "./question.validation";
+import { CreditsService } from "../billing/credits.service";
+import { v4 as uuidv4 } from 'uuid';  
 
 export class QuestionController {
   static async getUploadSignature(req: Request, res: Response) {
     try {
-      //  console.log(req);
       const { fileName, fileSize, mimeType } = req.body;
+      // console.log("this is request.body in backend signature ", req.body);
+      const jobId = uuidv4();
 
-      if (!fileName || !fileSize || !mimeType) {
+      if (!fileName || !fileSize || !mimeType ) {
         return res.status(400).json({
           success: false,
-          message: "fileName, fileSize and mimeType are required.",
+          message: "fileName, fileSize, mimeType and customJobId are required.",
         });
       }
 
-      const MAX_SIZE = 5 * 1024 * 1024;
+      const MAX_SIZE = 10 * 1024 * 1024;
       if (fileSize > MAX_SIZE) {
         return res.status(400).json({
           success: false,
-          message: "File too large. Maximum allowed size is 5 MB.",
+          message: `File too large. Maximum allowed size is ${MAX_SIZE} MB.`,
         });
       }
 
@@ -39,47 +43,18 @@ export class QuestionController {
         });
       }
 
-      const ext = fileName.split(".").pop()?.toLowerCase();
-      const allowedExt = ["pdf", "jpg", "jpeg", "png"];
-      if (!ext || !allowedExt.includes(ext)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid file extension.",
-        });
-      }
-
-      // const record = await QuestionPaper.create({
-      //   mode: "upload",
-      //   status: "pending",
-      // });
-
-      // const userId = req.auth?.userId;
-      const userId = req.auth?.sub;
-
-      if (!userId) {
-        return res
-          .status(401)
-          .json({ success: false, message: "Unauthorized" });
-      }
-
-      const record = await QuestionPaper.create({
-        mode: "upload",
-        status: "pending",
-        createdBy: userId,
-      });
-
-      const jobId = record.id;
       const folder = `ai-eval/job_${jobId}`;
       const timestamp = Math.round(Date.now() / 1000);
 
       const signature = cloudinary.utils.api_sign_request(
         { timestamp, folder },
-        process.env.CLOUDINARY_API_SECRET!
+        process.env.CLOUDINARY_API_SECRET!,
       );
+      // console.log("signature : ", signature);
 
       return res.status(200).json({
         success: true,
-        jobId,
+        jobId: jobId,
         folder,
         signature,
         timestamp,
@@ -89,10 +64,11 @@ export class QuestionController {
     } catch (error: any) {
       return res.status(500).json({
         success: false,
-        message: "Could not generate upload signature.",
+        message: error.message || "Could not generate upload signature.",
       });
     }
   }
+
   static async submitFileJob(req: Request, res: Response) {
     try {
       const { jobId, fileUrl, mimeType } = req.body;
@@ -104,41 +80,61 @@ export class QuestionController {
         });
       }
 
-      const record = await QuestionPaper.findByPk(jobId);
-      if (!record) {
-        return res.status(404).json({
+      const userId = req.auth?.sub;
+      if (!userId) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
+      }
+
+      const balance = await CreditsService.getBalance(userId);
+      if (balance.plan === "free" && balance.credits <= 0) {
+        return res.status(403).json({
           success: false,
-          message: "Invalid jobId.",
+          error_code: "DAILY_LIMIT_EXCEEDED",
+          message: "You have exhausted your daily credits.",
         });
       }
 
-      await record.update({
+      const record = await QuestionPaper.create({
+        id: jobId, // Primary Key
+        mode: "upload",
+        status: "pending",
+        createdBy: userId,
         fileUrl,
         fileMimeType: mimeType,
-        mode: "upload",
       });
+
+      // console.log("now record create in submit file jbo : ", record);
 
       await QuestionService.scheduleQuestionJob({
         type: "file",
-        recordId: jobId,
+        recordId: record.id,
         data: { fileUrl, mimeType },
+        userId,
       });
 
       return res.status(200).json({
         success: true,
-        id: jobId,
+        id: record.id,
         message: "File uploaded successfully. Analyzing your paper...",
       });
     } catch (error: any) {
-      return res.status(500).json({
+      return res.status(400).json({
         success: false,
-        message: "Failed to submit file job.",
+        message: error.message || "Failed to submit file job.",
       });
     }
   }
 
   static async submitTypedJob(req: Request, res: Response) {
     try {
+      const userId = req.auth?.sub;
+      if (!userId) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Unauthorized" });
+      }
       const parsed = typedQuestionSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({
@@ -149,18 +145,15 @@ export class QuestionController {
 
       const { text } = parsed.data;
 
-      // const record = await QuestionPaper.create({
-      //   mode: "typed",
-      //   rawText: text,
-      //   status: "pending",
-      // });
+      const balance = await CreditsService.getBalance(userId);
 
-      // const userId = req.auth?.userId;
-      const userId = req.auth?.sub;
-      if (!userId) {
-        return res
-          .status(401)
-          .json({ success: false, message: "Unauthorized" });
+      if (balance.plan === "free" && balance.credits <= 0) {
+        return res.status(403).json({
+          success: false,
+          error_code: "DAILY_LIMIT_EXCEEDED",
+          message:
+            "You have exhausted your daily credits. Upgrade plan to continue.",
+        });
       }
 
       const record = await QuestionPaper.create({
@@ -174,6 +167,7 @@ export class QuestionController {
         type: "text",
         recordId: record.id,
         data: text,
+        userId,
       });
 
       return res.status(202).json({
@@ -182,10 +176,10 @@ export class QuestionController {
         message: "We're analyzing your question now.",
       });
     } catch (error: any) {
-      logger.error(`Controller Error: ${error.message}`);
-      res.status(500).json({
+      // logger.error(`Controller Error: ${error.message}`);
+      res.status(400).json({
         success: false,
-        message: "Typed submission failed.",
+        message: error.message || "Typed submission failed.",
       });
     }
   }
@@ -282,70 +276,79 @@ export class QuestionController {
   // }
 
   static async retryJob(req: Request, res: Response) {
-  try {
-    const parsed = retrySchema.safeParse(req.params);
-    if (!parsed.success) {
-      return res.status(400).json({
+    try {
+      const parsed = retrySchema.safeParse(req.params);
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+          message: parsed.error.issues[0].message,
+        });
+      }
+
+      const { id } = parsed.data;
+      const record = await QuestionPaper.findByPk(id);
+
+      if (!record) {
+        return res.status(404).json({
+          success: false,
+          message: "Record not found.",
+        });
+      }
+
+      if (record.status !== "failed") {
+        return res.status(400).json({
+          success: false,
+          message: "Only failed jobs can be retried.",
+        });
+      }
+
+      if (record.retryCount >= 3) {
+        return res.status(400).json({
+          success: false,
+          message: "Maximum retry attempts reached for this question paper.",
+        });
+      }
+
+      const balance = await CreditsService.getBalance(record.createdBy);
+
+      if (balance.plan === "free" && balance.credits <= 0) {
+        return res.status(403).json({
+          success: false,
+          error_code: "DAILY_LIMIT_EXCEEDED",
+          message: "Insufficient credits to retry.",
+        });
+      }
+
+      await record.update({
+        retryCount: record.retryCount + 1,
+        status: "pending",
+        errorMessage: null,
+      });
+
+      await QuestionService.scheduleQuestionJob({
+        type: record.mode === "upload" ? "file" : "text",
+        recordId: record.id,
+        data:
+          record.mode === "upload"
+            ? {
+                fileUrl: record.fileUrl || "",
+                mimeType: record.fileMimeType || "application/pdf",
+              }
+            : record.rawText || "",
+        userId: record.createdBy,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Retrying…",
+      });
+    } catch (error: any) {
+      return res.status(500).json({
         success: false,
-        message: parsed.error.issues[0].message,
+        message: error.message || "Failed to retry job.",
       });
     }
-
-    const { id } = parsed.data;
-    const record = await QuestionPaper.findByPk(id);
-
-    if (!record) {
-      return res.status(404).json({
-        success: false,
-        message: "Record not found.",
-      });
-    }
-
-    if (record.status !== "failed") {
-      return res.status(400).json({
-        success: false,
-        message: "Only failed jobs can be retried.",
-      });
-    }
-
-    if (record.retryCount >= 3) {
-      return res.status(400).json({
-        success: false,
-        message: "Maximum retry attempts reached for this question paper.",
-      });
-    }
-
-    await record.update({
-      retryCount: record.retryCount + 1,
-      status: "pending",
-      errorMessage: null,
-    });
-
-    await QuestionService.scheduleQuestionJob({
-      type: record.mode === "upload" ? "file" : "text",
-      recordId: record.id,
-      data:
-        record.mode === "upload"
-          ? {
-              fileUrl: record.fileUrl || "",
-              mimeType: record.fileMimeType || "application/pdf",
-            }
-          : record.rawText || "",
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "Retrying…",
-    });
-  } catch (error: any) {
-    logger.error(`Retry Error: ${error.message}`);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retry job.",
-    });
   }
-}
-
 
   static async updateQuestions(req: Request, res: Response) {
     try {

@@ -19,7 +19,7 @@ import { io } from "socket.io-client";
 import { SOCKET_URL } from "../config/env";
 import { AnswerAPI } from "../api/answer.api";
 import Loader from "../components/Loader";
-import toast from "react-hot-toast";
+// import toast from "react-hot-toast";
 
 const socket = io(SOCKET_URL, { autoConnect: true });
 
@@ -32,6 +32,23 @@ export default function SubmissionDetailPage() {
   const [error, setError] = useState("");
 
   const [showTypedText, setShowTypedText] = useState(false);
+  const [questionRetryError, setQuestionRetryError] = useState<string | null>(
+    null,
+  );
+  const [answerSheetError, setAnswerSheetError] = useState<string | null>(null);
+  const isAnswerInsufficientCredits =
+    typeof answerSheetError === "string" &&
+    (answerSheetError.toLowerCase().includes("insufficient") ||
+      answerSheetError.toLowerCase().includes("limit") ||
+      answerSheetError.toLowerCase().includes("exhausted"));
+  // const isQuestionInsufficientCredits =
+  //   typeof questionRetryError === "string" &&
+  //   questionRetryError.toLowerCase().includes("insufficient");
+  const isQuestionInsufficientCredits =
+    typeof questionRetryError === "string" &&
+    (questionRetryError.toLowerCase().includes("insufficient") ||
+      questionRetryError.toLowerCase().includes("limit") ||
+      questionRetryError.toLowerCase().includes("exhausted"));
 
   const loadSubmission = async () => {
     try {
@@ -44,36 +61,86 @@ export default function SubmissionDetailPage() {
     setLoading(false);
   };
 
+  // useEffect(() => {
+  //   if (!id) return;
+
+  //   const setupSocketListeners = async () => {
+  //     const res = await SubmissionAPI.getOne(id);
+  //     setData(res);
+
+  //     const qpChannel = `job-status-${id}`;
+  //     socket.off(qpChannel);
+  //     socket.on(qpChannel, () => {
+  //       loadSubmission();
+  //     });
+
+  //     res.answerSheets.forEach((sheet) => {
+  //       const ansChannel = `answer-status-${sheet.id}`;
+  //       socket.off(ansChannel);
+  //       socket.on(ansChannel, () => {
+  //         loadSubmission();
+  //       });
+  //     });
+
+  //     setLoading(false);
+  //   };
+
+  //   setupSocketListeners();
+
+  //   return () => {
+  //     socket.off();
+  //   };
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [id]);
+
   useEffect(() => {
     if (!id) return;
 
+    const qpChannel = `job-status-${id}`;
+    let answerChannels: string[] = [];
+    let isMounted = true;
+
+    const loadSubmissionLocal = async () => {
+      try {
+        const res = await SubmissionAPI.getOne(id);
+        if (isMounted) setData(res);
+      } catch (err) {
+        console.error(err);
+        if (isMounted) setError("Failed to load submission.");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
     const setupSocketListeners = async () => {
-      const res = await SubmissionAPI.getOne(id);
-      setData(res);
+      try {
+        await loadSubmissionLocal();
 
-      const qpChannel = `job-status-${id}`;
-      socket.off(qpChannel);
-      socket.on(qpChannel, () => {
-        loadSubmission();
-      });
+        socket.off(qpChannel);
+        socket.on(qpChannel, loadSubmissionLocal);
 
-      res.answerSheets.forEach((sheet) => {
-        const ansChannel = `answer-status-${sheet.id}`;
-        socket.off(ansChannel);
-        socket.on(ansChannel, () => {
-          loadSubmission();
+        const res = await SubmissionAPI.getOne(id);
+
+        answerChannels = res.answerSheets.map(
+          (sheet) => `answer-status-${sheet.id}`,
+        );
+
+        answerChannels.forEach((channel) => {
+          socket.off(channel);
+          socket.on(channel, loadSubmissionLocal);
         });
-      });
-
-      setLoading(false);
+      } catch (err) {
+        console.error("Socket setup error:", err);
+      }
     };
 
     setupSocketListeners();
 
     return () => {
-      socket.off();
+      isMounted = false;
+      socket.off(qpChannel);
+      answerChannels.forEach((ch) => socket.off(ch));
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const getBadge = (status: string) => {
@@ -105,16 +172,9 @@ export default function SubmissionDetailPage() {
     }
   };
 
-  // const handleRetry = async (submissionId: string) => {
-  //   try {
-  //     await QuestionAPI.retryJob(submissionId);
-  //     await loadSubmission();
-  //   } catch {
-  //     alert("Retry failed.");
-  //   }
-  // };
-
   const handleRetry = async (submissionId: string) => {
+    setQuestionRetryError(null);
+
     try {
       await QuestionAPI.retryJob(submissionId);
     } catch (err: unknown) {
@@ -125,26 +185,59 @@ export default function SubmissionDetailPage() {
         };
       };
 
-      const status = error?.response?.status;
-      const message = error?.response?.data?.message;
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
 
+      // if ((status === 400 || status === 402) && typeof message === "string") {
+      //   setQuestionRetryError(message);
+      // } else {
+      // Added 403 status check
       if (
-        status === 400 &&
-        typeof message === "string" &&
-        message.toLowerCase().includes("retry")
+        (status === 400 || status === 402 || status === 403) &&
+        typeof message === "string"
       ) {
-        toast.error(message);
+        setQuestionRetryError(message);
+      } else {
+        setQuestionRetryError("Retry failed. Please try again.");
       }
     }
   };
 
+  // const handleRetryAnswer = async (sheetId: string) => {
+  //   try {
+  //     await AnswerAPI.retryJob(sheetId);
+  //     await loadSubmission();
+  //   } catch (err) {
+  //     console.error("Answer retry failed:", err);
+  //     alert("Retry failed.");
+  //   }
+  // };
   const handleRetryAnswer = async (sheetId: string) => {
+    setAnswerSheetError(null); // Clear previous errors
+
     try {
       await AnswerAPI.retryJob(sheetId);
       await loadSubmission();
-    } catch (err) {
-      console.error("Answer retry failed:", err);
-      alert("Retry failed.");
+    } catch (err: unknown) {
+      const error = err as {
+        response?: {
+          status?: number;
+          data?: { message?: string };
+        };
+      };
+
+      const status = error.response?.status;
+      const message = error.response?.data?.message;
+
+      // Check for 403 (Limit) or other errors
+      if (
+        (status === 400 || status === 402 || status === 403) &&
+        typeof message === "string"
+      ) {
+        setAnswerSheetError(message);
+      } else {
+        setAnswerSheetError("Retry failed. Please try again.");
+      }
     }
   };
 
@@ -264,13 +357,36 @@ export default function SubmissionDetailPage() {
             </div>
           </div>
 
-          {submission.errorMessage && (
+          {questionRetryError ? (
+            <div className="mt-4 text-red-700 bg-red-50 p-3 rounded-lg text-sm border border-red-100 flex items-start gap-2">
+              <FiAlertTriangle className="mt-0.5 shrink-0" />
+              <div className="break-words">
+                <span className="font-semibold">Error:</span>{" "}
+                {questionRetryError}
+              </div>
+            </div>
+          ) : submission.errorMessage ? (
             <div className="mt-4 text-red-700 bg-red-50 p-3 rounded-lg text-sm border border-red-100 flex items-start gap-2">
               <FiAlertTriangle className="mt-0.5 shrink-0" />
               <div className="break-words">
                 <span className="font-semibold">Error:</span>{" "}
                 {submission.errorMessage}
               </div>
+            </div>
+          ) : null}
+          {isQuestionInsufficientCredits && (
+            <div className="mt-2 flex justify-end">
+              <button
+                onClick={() => navigate("/billing")}
+                className="
+        text-xs font-medium
+        text-red-600 hover:text-red-700
+        underline underline-offset-2
+        transition-colors
+      "
+              >
+                Unlock more usage →
+              </button>
             </div>
           )}
 
@@ -299,7 +415,6 @@ export default function SubmissionDetailPage() {
             </div>
           )}
         </div>
-
         {submission.status === "completed" && (
           <div>
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
@@ -311,6 +426,28 @@ export default function SubmissionDetailPage() {
                 + Add Answer Sheet
               </button>
             </div>
+            {answerSheetError && (
+              <div className="mb-4 text-red-700 bg-red-50 p-3 rounded-lg text-sm border border-red-100 flex flex-col gap-2">
+                <div className="flex items-start gap-2">
+                  <FiAlertTriangle className="mt-0.5 shrink-0" />
+                  <div className="break-words">
+                    <span className="font-semibold">Error:</span>{" "}
+                    {answerSheetError}
+                  </div>
+                </div>
+
+                {isAnswerInsufficientCredits && (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => navigate("/billing")}
+                      className="text-xs font-medium text-red-600 hover:text-red-700 underline underline-offset-2 transition-colors"
+                    >
+                      Unlock more usage →
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {sheets.length === 0 ? (
               <div className="text-center py-10 bg-gray-50 rounded-md border border-dashed border-gray-300">
@@ -355,7 +492,7 @@ export default function SubmissionDetailPage() {
                         <button
                           onClick={() =>
                             navigate(
-                              `/results/sheet/${sheet.id}?index=${index + 1}`
+                              `/results/sheet/${sheet.id}?index=${index + 1}`,
                             )
                           }
                           className="flex-1 md:flex-none px-5 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm flex items-center justify-center gap-2 text-sm"
@@ -369,7 +506,7 @@ export default function SubmissionDetailPage() {
                           <button
                             onClick={() =>
                               navigate(
-                                `/results/sheet/${sheet.id}?index=${index + 1}`
+                                `/results/sheet/${sheet.id}?index=${index + 1}`,
                               )
                             }
                             className="flex-1 md:flex-none px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm text-sm"

@@ -55,14 +55,13 @@ export const SubmissionAPI = {
   getAll: async (
     page: number = 1,
     limit: number = 8,
-    filters?: SubmissionFilters
+    filters?: SubmissionFilters,
   ): Promise<PaginationData> => {
     // const params: any = { page, limit };
     const params: Record<string, string | number> = {
       page,
       limit,
     };
-
 
     if (filters?.mode) params.mode = filters.mode;
     if (filters?.status) params.status = filters.status;

@@ -24,17 +24,22 @@ export const AnswerAPI = {
   submit: async ({
     questionPaperId,
     files,
-    strictnessLevel = "moderate", // Default to moderate
+    strictnessLevel = "moderate",
   }: SubmitAnswerArgs): Promise<SubmitAnswerResponse> => {
+    
+    // const sigRes = await axiosClient.get(
+    //   `/api/answers/get-upload-signature/${questionPaperId}`
+    // );
     const sigRes = await axiosClient.get(
-      `/api/answers/get-upload-signature/${questionPaperId}`
-    );
-
+  `/api/answers/get-upload-signature/${questionPaperId}?fileSize=${files[0].size}`
+);
     const { signature, timestamp, folder, apiKey, cloudName } = sigRes.data;
+    console.log(sigRes.data);
+    const uploadPromises = files.map(async (file) => {
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error(`${file.name} is too large (Max 10MB)`);
+      }
 
-    const uploadedFiles: { fileUrl: string; mimeType: string }[] = [];
-
-    for (const file of files) {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("signature", signature);
@@ -45,16 +50,18 @@ export const AnswerAPI = {
       const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`;
       const uploadRes = await axios.post(uploadUrl, formData);
 
-      uploadedFiles.push({
+      return {
         fileUrl: uploadRes.data.secure_url,
         mimeType: file.type || "application/octet-stream",
-      });
-    }
+      };
+    });
+
+    const uploadedFiles = await Promise.all(uploadPromises);
 
     const res = await axiosClient.post("/api/answers/submit", {
       questionPaperId,
       answerSheetFiles: uploadedFiles,
-      strictnessLevel, // Send strictness level to backend
+      strictnessLevel,
     });
 
     return res.data;

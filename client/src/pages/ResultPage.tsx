@@ -11,6 +11,7 @@ import {
   FiRefreshCw,
   FiFileText,
   FiBarChart2,
+  FiX,
 } from "react-icons/fi";
 import Loader from "../components/Loader";
 
@@ -42,7 +43,7 @@ type QPFile =
 
 const trimError = (msg?: string | null): string => {
   if (!msg) return "";
-  return msg.length > 100 ? msg.slice(0, 100) + "..." : msg;
+  return msg.length > 90 ? msg.slice(0, 90) + "..." : msg;
 };
 
 export default function ResultsPage() {
@@ -52,14 +53,16 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
   const [resultData, setResultData] = useState<ResultResponse | null>(null);
   const [qpDetails, setQpDetails] = useState<QPFile | null>(null);
-  const [error, setError] = useState("");
+  
+  const [pageError, setPageError] = useState(""); 
+  const [actionError, setActionError] = useState(""); 
 
   const refreshResults = useCallback(async () => {
     try {
       const updated = await ResultAPI.getResults(String(paperId));
       setResultData(updated);
     } catch {
-      setError("Failed to refresh results.");
+      console.error("Failed to refresh results.");
     }
   }, [paperId]);
 
@@ -85,7 +88,7 @@ export default function ResultsPage() {
         setResultData(res);
         setupSocketListeners(res.answers);
       } catch {
-        setError("Failed to load results.");
+        setPageError("Failed to load results.");
       }
       setLoading(false);
     };
@@ -116,36 +119,73 @@ export default function ResultsPage() {
         setQpDetails(res);
       }
     } catch {
-      setError("Could not load question paper.");
+      setActionError("Could not load question paper.");
     }
   };
 
   const retrySheet = async (id: string) => {
+    setActionError("");
     try {
       await ResultAPI.retryAnswer(String(id));
       await refreshResults();
-    } catch {
-      setError("Retry failed. Try again later.");
+    } catch (error: unknown) {
+      const err = error as { response?: { status: number; data?: { error_code: string; message: string } } };
+      const res = err.response;
+      if (res && res.status === 403 && res.data?.error_code === "DAILY_LIMIT_EXCEEDED") {
+          setActionError(res.data.message);
+      } else {
+          setActionError("Retry failed. Try again later.");
+      }
     }
   };
 
   if (loading) return <Loader text="Analyzing Performance..." />;
 
-  if (error)
+  if (pageError)
     return (
       <div className="flex justify-center p-10">
         <p className="bg-red-50 text-red-600 border border-red-100 px-6 py-4 rounded-lg shadow-sm">
-          {error}
+          {pageError}
         </p>
       </div>
     );
+    
   if (!resultData) return null;
 
   const { questionPaper: qp, answers } = resultData;
   const completedCount = answers.filter((a) => a.status === "completed").length;
 
+
+  const isCreditError = actionError.toLowerCase().includes("limit") || 
+                        actionError.toLowerCase().includes("exhausted") ||
+                        actionError.toLowerCase().includes("insufficient");
+
   return (
     <div className="w-full mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10">
+      {actionError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-sm">
+           <div className="flex items-center gap-2">
+             <FiAlertTriangle className="shrink-0" />
+             <span className="text-sm font-medium">{actionError}</span>
+           </div>
+
+           <div className="flex items-center gap-4 w-full sm:w-auto justify-end">
+             {isCreditError && (
+                <button
+                    onClick={() => navigate("/billing")}
+                    className="text-xs font-bold text-teal-600 hover:text-teal-700 underline underline-offset-2 whitespace-nowrap"
+                >
+                    Unlock more usage →
+                </button>
+             )}
+             
+             <button onClick={() => setActionError("")} className="text-gray-400 hover:text-gray-600">
+                <FiX />
+             </button>
+           </div>
+        </div>
+      )}
+
       <div className="bg-white rounded shadow-sm border border-gray-200 p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6">
         <div>
           <div className="flex items-center gap-2 mb-1">

@@ -3,74 +3,163 @@ import { sequelize } from "../../config/db";
 import UserCredits from "./userCredits.model";
 import Transaction from "./transaction.model";
 
-const FREE_CREDITS = 10;
+const SIGNUP_BONUS = 50;
+const FREE_DAILY_LIMIT = 25;
+const PRO_DAILY_LIMIT = 500;
 
 export class CreditsService {
   static async getOrCreate(userId: string, t?: SequelizeTransaction) {
     let credits = await UserCredits.findOne({
       where: { userId },
       transaction: t,
-      lock: t ? t.LOCK.UPDATE : undefined,
+      lock: t ? SequelizeTransaction.LOCK.UPDATE : undefined,
     });
 
     if (!credits) {
       credits = await UserCredits.create(
         {
           userId,
-          credits: FREE_CREDITS,
+          credits: SIGNUP_BONUS,
           plan: "free",
           lastRefillAt: new Date(),
+          planExpiresAt: null,
         },
-        { transaction: t }
+        { transaction: t },
       );
 
       await Transaction.create(
         {
           userId,
           type: "free",
-          creditsChanged: FREE_CREDITS,
+          creditsChanged: SIGNUP_BONUS,
+          description: "Welcome Bonus",
         },
-        { transaction: t }
+        { transaction: t },
+      );
+    }
+    return credits;
+  }
+
+  static async refillDailyCredits(userId: string, t?: SequelizeTransaction) {
+    const credits = await this.getOrCreate(userId, t);
+    if (credits.plan === "pro" && credits.planExpiresAt) {
+      const now = new Date();
+      const expiryDate = new Date(credits.planExpiresAt);
+      if (now > expiryDate) {
+        credits.plan = "free";
+        credits.planExpiresAt = null;
+        // console.log("plan expired Downgraded to free");
+      }
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (credits.lastRefillAt) {
+      const last = new Date(credits.lastRefillAt);
+      last.setHours(0, 0, 0, 0);
+      if (last.getTime() === today.getTime()) {
+        return credits;
+      }
+    }
+
+    let dailyLimit = FREE_DAILY_LIMIT;
+    if (credits.plan === "pro") {
+      dailyLimit = PRO_DAILY_LIMIT;
+    }
+
+    let creditsAdded = 0;
+
+    if (credits.credits < dailyLimit) {
+      creditsAdded = dailyLimit - credits.credits;
+      credits.credits = dailyLimit;
+    }
+
+    credits.lastRefillAt = new Date();
+    await credits.save({ transaction: t });
+
+    if (creditsAdded > 0) {
+      await Transaction.create(
+        {
+          userId,
+          type: "free",
+          creditsChanged: creditsAdded,
+          description: "Daily Refill (Reset)",
+        },
+        { transaction: t },
       );
     }
 
     return credits;
   }
 
+  // static async getBalance(userId: string) {
+  //   await this.refillDailyCredits(userId);
+  //   const credits = await UserCredits.findOne({ where: { userId } });
 
-  static async requireAndDeduct(
+  //   if (!credits) {
+  //     return { credits: 0, plan: "free" };
+  //   }
+
+  //   return {
+  //     credits: credits.credits,
+  //     plan: credits.plan,
+  //     planExpiresAt: credits.planExpiresAt,
+  //   };
+  // }
+
+  static async getBalance(userId: string) {
+    await this.refillDailyCredits(userId);
+
+    const credits = await UserCredits.findOne({ where: { userId } });
+
+    if (!credits) {
+      return { credits: 0, plan: "free" };
+    }
+
+    if (
+      credits.plan === "pro" &&
+      credits.planExpiresAt &&
+      new Date(credits.planExpiresAt) < new Date()
+    ) {
+      credits.plan = "free";
+      credits.planExpiresAt = null;
+      await credits.save();
+    }
+
+    return {
+      credits: credits.credits,
+      plan: credits.plan,
+      planExpiresAt: credits.planExpiresAt,
+    };
+  }
+
+  static async deductExact(
     userId: string,
-    requiredCredits: number
-  ): Promise<UserCredits> {
+    amountToDeduct: number,
+    note: string = "AI Usage",
+  ) {
     return sequelize.transaction(async (t) => {
-      const credits = await this.getOrCreate(userId, t);
+      const credits = await UserCredits.findOne({
+        where: { userId },
+        transaction: t,
+        lock: SequelizeTransaction.LOCK.UPDATE,
+      });
 
-      if (credits.credits < requiredCredits) {
-        throw new Error("Insufficient credits");
-      }
+      if (!credits) return;
 
-      credits.credits -= requiredCredits;
+      credits.credits -= amountToDeduct;
       await credits.save({ transaction: t });
 
       await Transaction.create(
         {
           userId,
           type: "use",
-          creditsChanged: -requiredCredits,
+          creditsChanged: -amountToDeduct,
+          description: note,
         },
-        { transaction: t }
+        { transaction: t },
       );
-
-      return credits;
     });
-  }
-
-  
-  static async getBalance(userId: string) {
-    const credits = await this.getOrCreate(userId);
-    return {
-      credits: credits.credits,
-      plan: credits.plan,
-    };
   }
 }

@@ -6,7 +6,6 @@ import { SOCKET_URL } from "../config/env";
 import { FiUpload, FiType } from "react-icons/fi";
 import { FiCheckCircle, FiAlertTriangle, FiInfo } from "react-icons/fi";
 
-
 const socket = socketIO(SOCKET_URL);
 
 export default function QuestionPage() {
@@ -30,7 +29,11 @@ export default function QuestionPage() {
   });
 
   const navigate = useNavigate();
-
+  const isInsufficientCredits =
+    message.type === "error" &&
+    (message.text.toLowerCase().includes("insufficient") || 
+     message.text.toLowerCase().includes("exhausted") || 
+     message.text.toLowerCase().includes("limit"));
   const showMessage = (type: "success" | "error" | "info", text: string) => {
     setMessage({ type, text });
   };
@@ -109,7 +112,7 @@ export default function QuestionPage() {
       const err = error as { response?: { data?: { message?: string } } };
       showMessage(
         "error",
-        err.response?.data?.message || "Something went wrong."
+        err.response?.data?.message || "Something went wrong.",
       );
       setLoading(false);
       setJobStatus("failed");
@@ -185,8 +188,6 @@ export default function QuestionPage() {
           })}
         </div>
       </div>
-
-      {/* Input Area */}
       {mode === "typed" ? (
         <textarea
           className="w-full border border-gray-300 p-4 rounded min-h-[340px] outline-none text-sm resize-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 placeholder-gray-400"
@@ -226,8 +227,8 @@ export default function QuestionPage() {
               file
                 ? "border-teal-400 bg-teal-50"
                 : isDragging
-                ? "border-teal-500 bg-teal-50 scale-[0.99]"
-                : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400"
+                  ? "border-teal-500 bg-teal-50 scale-[0.99]"
+                  : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400"
             }
           `}
         >
@@ -282,16 +283,14 @@ export default function QuestionPage() {
           />
         </label>
       )}
-
-      {/* Message Alert */}
       {message.type && (
         <div
           className={`mt-6 px-4 py-3 rounded-lg text-sm border flex items-start justify-between gap-3 animate-in fade-in slide-in-from-top-2 ${
             message.type === "success"
               ? "bg-teal-50 text-teal-700 border-teal-200"
               : message.type === "error"
-              ? "bg-red-50 text-red-700 border-red-200"
-              : "bg-blue-50 text-blue-700 border-blue-200"
+                ? "bg-red-50 text-red-700 border-red-200"
+                : "bg-blue-50 text-blue-700 border-blue-200"
           }`}
         >
           <div className="flex gap-2 flex-1 min-w-0">
@@ -303,14 +302,14 @@ export default function QuestionPage() {
                 : "ℹ"}
             </span> */}
             <span className="mt-0.5 flex-shrink-0">
-  {message.type === "error" ? (
-    <FiAlertTriangle className="text-red-600" />
-  ) : message.type === "success" ? (
-    <FiCheckCircle className="text-green-600" />
-  ) : (
-    <FiInfo className="text-gray-500" />
-  )}
-</span>
+              {message.type === "error" ? (
+                <FiAlertTriangle className="text-red-600" />
+              ) : message.type === "success" ? (
+                <FiCheckCircle className="text-green-600" />
+              ) : (
+                <FiInfo className="text-gray-500" />
+              )}
+            </span>
 
             <span className="break-words">{message.text}</span>
           </div>
@@ -323,8 +322,22 @@ export default function QuestionPage() {
           </button>
         </div>
       )}
+      {isInsufficientCredits && (
+        <div className="mt-2 flex justify-end">
+          <button
+            onClick={() => navigate("/billing")}
+            className="
+        text-xs font-medium
+        text-teal-600 hover:text-teal-700
+        underline underline-offset-2
+        transition-colors
+      "
+          >
+            Unlock more usage →
+          </button>
+        </div>
+      )}
 
-      {/* Action Buttons */}
       <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end gap-3">
         {showRetryButton ? (
           <button
