@@ -19,6 +19,7 @@ export interface SubmissionRecord {
   status: "pending" | "processing" | "completed" | "failed";
   createdAt: string;
   questionsList?: ExtractedQuestion[];
+  createdBy: string;
 }
 
 export interface AnswerSheetRecord {

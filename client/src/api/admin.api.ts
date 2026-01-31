@@ -16,12 +16,11 @@ export const AdminAPI = {
   getUserActivity: async (
     userId: string,
     page: number = 1,
-    limit: number = 8
+    limit: number = 8,
   ) => {
-    const res = await axiosClient.get(
-      `/api/admin/users/${userId}/activity`,
-      { params: { page, limit } }
-    );
+    const res = await axiosClient.get(`/api/admin/users/${userId}/activity`, {
+      params: { page, limit },
+    });
     return res.data;
   },
 };

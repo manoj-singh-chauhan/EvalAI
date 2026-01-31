@@ -28,12 +28,15 @@ export default function QuestionPage() {
     text: "",
   });
 
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   const navigate = useNavigate();
   const isInsufficientCredits =
     message.type === "error" &&
-    (message.text.toLowerCase().includes("insufficient") || 
-     message.text.toLowerCase().includes("exhausted") || 
-     message.text.toLowerCase().includes("limit"));
+    (message.text.toLowerCase().includes("insufficient") ||
+      message.text.toLowerCase().includes("exhausted") ||
+      message.text.toLowerCase().includes("limit"));
+
   const showMessage = (type: "success" | "error" | "info", text: string) => {
     setMessage({ type, text });
   };
@@ -85,16 +88,26 @@ export default function QuestionPage() {
     }
 
     setLoading(true);
+    setUploadProgress(0);
     setCurrentJobId(null);
     setJobStatus("processing");
-    showMessage("info", "Submitting...");
+
+    setMessage({ type: null, text: "" });
 
     try {
       let response;
       if (mode === "typed") {
+        showMessage("info", "Submitting your questions...");
         response = await QuestionAPI.submitTyped({ text });
       } else {
-        response = await QuestionAPI.uploadPaper(file as File);
+        // await new Promise((resolve) => setTimeout(resolve, 5000));
+
+        response = await QuestionAPI.uploadPaper(file as File, (percent) => {
+          setUploadProgress(percent);
+          if (percent === 100) {
+            showMessage("info", "File uploaded! Sending to AI...");
+          }
+        });
       }
 
       if (!response.success) {
@@ -148,6 +161,13 @@ export default function QuestionPage() {
 
   const showSubmitButton = currentJobId === null;
   const showRetryButton = jobStatus === "failed" && currentJobId !== null;
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+    if (bytes < 1024 * 1024 * 1024)
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  };
 
   return (
     <div className="bg-white rounded shadow-sm border border-gray-200 p-6 sm:p-8">
@@ -188,10 +208,11 @@ export default function QuestionPage() {
           })}
         </div>
       </div>
+
       {mode === "typed" ? (
         <textarea
-          className="w-full border border-gray-300 p-4 rounded min-h-[340px] outline-none text-sm resize-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 placeholder-gray-400"
-          placeholder={`Paste or type the exam questions here.\n\nExample:\n1. Define networking. (5 Marks)\n2. Explain the OSI model. (10 Marks)`}
+          className="w-full border border-gray-300 p-4 rounded min-h-[365px] outline-none text-sm resize-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 placeholder-gray-400"
+          placeholder={`Enter or paste your exam questions here.\n\nFormat Example:\nQ1. Define Computer Networking. (5 Marks)\nQ2. Explain the OSI Model with diagram. (10 Marks)\nQ3. Write short notes on TCP vs UDP. (5 Marks)`}
           value={text}
           onChange={(e) => {
             setText(e.target.value);
@@ -199,191 +220,203 @@ export default function QuestionPage() {
               setCurrentJobId(null);
               setJobStatus("idle");
             }
-            if (message.type === "error") setMessage({ type: null, text: "" });
           }}
           disabled={loading}
         />
       ) : (
-        <label
-          htmlFor="fileUpload"
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={(e) => {
-            e.preventDefault();
-            setIsDragging(false);
-          }}
-          onDrop={(e) => {
-            e.preventDefault();
-            setIsDragging(false);
-            const droppedFile = e.dataTransfer.files?.[0];
-            if (droppedFile) setFile(droppedFile);
-          }}
-          className={`
-            flex flex-col items-center justify-center 
-            w-full h-64 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200
-            ${
-              file
-                ? "border-teal-400 bg-teal-50"
-                : isDragging
-                  ? "border-teal-500 bg-teal-50 scale-[0.99]"
-                  : "border-gray-300 bg-gray-50 hover:bg-gray-100 hover:border-gray-400"
-            }
-          `}
-        >
-          {file ? (
-            <div className="text-center px-4">
-              <div className="w-12 h-12 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                <FiUpload className="w-6 h-6" />
-              </div>
-              <span className="text-teal-700 font-medium block text-sm break-all">
-                {file.name}
-              </span>
-              <span className="text-teal-600 text-xs mt-1">
-                Click to change file
-              </span>
-            </div>
-          ) : (
-            <>
-              <div
-                className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-colors ${
-                  isDragging
-                    ? "bg-teal-100 text-teal-600"
-                    : "bg-gray-200 text-gray-500"
-                }`}
-              >
-                <FiUpload className="w-8 h-8" />
-              </div>
-              <span className="text-gray-700 font-medium text-base">
-                {isDragging
-                  ? "Drop the file here..."
-                  : "Click or drag to upload"}
-              </span>
-              <span className="text-gray-400 text-sm mt-2">
-                Supports PDF, JPG, PNG
-              </span>
-            </>
-          )}
-
-          <input
-            id="fileUpload"
-            type="file"
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={(e) => {
-              setFile(e.target.files?.[0] || null);
-              if (currentJobId) {
-                setCurrentJobId(null);
-                setJobStatus("idle");
-              }
-              if (message.type === "error")
-                setMessage({ type: null, text: "" });
+        <div className="space-y-4 w-full">
+          <label
+            htmlFor="fileUpload"
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
             }}
-            className="hidden"
-          />
-        </label>
-      )}
-      {message.type && (
-        <div
-          className={`mt-6 px-4 py-3 rounded-lg text-sm border flex items-start justify-between gap-3 animate-in fade-in slide-in-from-top-2 ${
-            message.type === "success"
-              ? "bg-teal-50 text-teal-700 border-teal-200"
-              : message.type === "error"
-                ? "bg-red-50 text-red-700 border-red-200"
-                : "bg-blue-50 text-blue-700 border-blue-200"
-          }`}
-        >
-          <div className="flex gap-2 flex-1 min-w-0">
-            {/* <span className="mt-0.5 flex-shrink-0">
-              {message.type === "error"
-                ? "⚠"
-                : message.type === "success"
-                ? "✓"
-                : "ℹ"}
-            </span> */}
-            <span className="mt-0.5 flex-shrink-0">
-              {message.type === "error" ? (
-                <FiAlertTriangle className="text-red-600" />
-              ) : message.type === "success" ? (
-                <FiCheckCircle className="text-green-600" />
-              ) : (
-                <FiInfo className="text-gray-500" />
-              )}
-            </span>
-
-            <span className="break-words">{message.text}</span>
-          </div>
-
-          <button
-            onClick={() => setMessage({ type: null, text: "" })}
-            className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+            onDragLeave={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              const droppedFile = e.dataTransfer.files?.[0];
+              if (droppedFile) setFile(droppedFile);
+            }}
+            className={`relative flex flex-col items-center justify-center w-full h-72 border-2 border-dashed rounded cursor-pointer transition-all duration-300 ease-in-out overflow-hidden
+        ${
+          file
+            ? "border-teal-500 bg-teal-50/50 shadow-inner"
+            : "border-gray-300 bg-gray-50 "
+        }`}
           >
-            ✕
-          </button>
+            <div className="relative z-10 flex flex-col items-center justify-center text-center px-6">
+              {file ? (
+                <div className="animate-in zoom-in duration-300">
+                  <div className="relative mb-3 flex justify-center">
+                    <div className="w-20 h-20 bg-teal-100 text-teal-600 rounded-2xl flex items-center justify-center shadow-sm border border-teal-200">
+                      <FiUpload className="w-10 h-10" />
+                    </div>
+                  </div>
+
+                  <h3 className="text-lg font-bold text-gray-900 mb-1 break-all px-4">
+                    {file.name}
+                  </h3>
+                  <p className="text-sm text-teal-600 font-medium">
+                    {formatFileSize(file.size)} • Ready to Evaluate
+                  </p>
+
+                  <button
+                    type="button"
+                    className="mt-4 text-xs font-semibold text-gray-500 hover:text-red-500 underline transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setFile(null);
+                    }}
+                  >
+                    Remove and choose another
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div
+                    className={`w-20 h-20 mx-auto rounded-2xl flex items-center justify-center transition-colors duration-300 ${isDragging ? "bg-teal-200 text-teal-700" : "bg-gray-100 text-gray-400"}`}
+                  >
+                    <FiUpload
+                      className={`w-10 h-10 ${isDragging ? "animate-bounce" : ""}`}
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-xl font-semibold text-gray-800">
+                      {isDragging
+                        ? "Drop your paper here"
+                        : "Upload Question Paper"}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Drag and drop your file
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3 justify-center pt-2">
+                    <span className="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-wider shadow-sm">
+                      PDF
+                    </span>
+                    <span className="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-wider shadow-sm">
+                      JPG
+                    </span>
+                    <span className="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-wider shadow-sm">
+                      PNG
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <input
+              id="fileUpload"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="hidden"
+            />
+          </label>
+
+          {!file && (
+            <p className="text-center text-xs text-gray-400 italic">
+              * Maximum file size: 10MB. Make sure the text is clearly visible.
+            </p>
+          )}
         </div>
       )}
+
+      <div className="mt-6">
+        {message.text && (
+          <div
+            className={`px-4 py-3 rounded-lg text-sm border flex items-center justify-between gap-3 ${
+              message.type === "success"
+                ? "bg-teal-50 text-teal-700 border-teal-200"
+                : message.type === "error"
+                  ? "bg-red-50 text-red-700 border-red-200"
+                  : "bg-blue-50 text-blue-700 border-blue-200"
+            }`}
+          >
+            <div className="flex gap-2 items-center">
+              {message.type === "error" ? (
+                <FiAlertTriangle />
+              ) : message.type === "success" ? (
+                <FiCheckCircle />
+              ) : (
+                <FiInfo />
+              )}
+              <span>{message.text}</span>
+            </div>
+            <button onClick={() => setMessage({ type: null, text: "" })}>
+              ✕
+            </button>
+          </div>
+        )}
+
+        {loading &&
+          mode === "upload" &&
+          uploadProgress > 0 &&
+          uploadProgress < 100 && (
+            <div className="mt-6 w-full animate-in fade-in slide-in-from-bottom-2">
+              <div className="flex justify-between mb-1.5">
+                <span className="text-sm font-bold text-teal-700">
+                  Uploading Question Paper...
+                </span>
+                <span className="text-sm font-bold text-teal-700">
+                  {uploadProgress}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden border border-gray-100 shadow-inner">
+                <div
+                  className="bg-teal-500 h-full rounded-full transition-all duration-300 ease-out shadow-sm"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+      </div>
+
       {isInsufficientCredits && (
         <div className="mt-2 flex justify-end">
           <button
             onClick={() => navigate("/billing")}
-            className="
-        text-xs font-medium
-        text-teal-600 hover:text-teal-700
-        underline underline-offset-2
-        transition-colors
-      "
+            className="text-xs font-medium text-teal-600 underline"
           >
             Unlock more usage →
           </button>
         </div>
       )}
 
-      <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end gap-3">
-        {showRetryButton ? (
+      <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end gap-3 items-center">
+        {showRetryButton && !loading && (
           <button
             onClick={handleRetry}
-            className="w-full sm:w-auto px-8 py-2.5 rounded-lg bg-yellow-500 text-white font-medium hover:bg-yellow-600 transition-colors shadow-sm"
+            className="px-8 py-2.5 rounded-lg bg-yellow-500 text-white font-medium hover:bg-yellow-600 transition-colors shadow-sm"
           >
             Retry
           </button>
-        ) : showSubmitButton ? (
+        )}
+
+        {showSubmitButton && !loading && (
           <button
             onClick={handleSubmit}
-            disabled={loading}
-            className={`w-full sm:w-auto px-8 py-2.5 rounded-lg text-white font-medium transition-all shadow-sm ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-teal-500 hover:bg-teal-600"
-            }`}
+            className="w-full sm:w-auto px-10 py-2.5 rounded-lg text-white font-bold bg-teal-500 hover:bg-teal-600 transition-all shadow-md active:scale-95"
           >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg
-                  className="animate-spin h-4 w-4 text-white"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Processing...
-              </span>
-            ) : (
-              "Submit"
-            )}
+            Submit
           </button>
-        ) : null}
+        )}
+
+        {loading &&
+          (mode === "typed" ||
+            uploadProgress === 100 ||
+            uploadProgress === 0) && (
+            <div className="flex items-center gap-2 text-teal-600 font-bold animate-pulse">
+              <div className="w-2.5 h-2.5 bg-teal-500 rounded-full animate-bounce"></div>
+              Evaluation in progress...
+            </div>
+          )}
       </div>
     </div>
   );

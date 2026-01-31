@@ -3,7 +3,7 @@ import logger from "../config/logger";
 
 export const downloadFile = async (url: string): Promise<Buffer> => {
   try {
-    logger.info("Downloading file from Cloudinary...");
+    logger.info("Take file from Cloudinary...");
 
     const response = await axios.get(url, {
       responseType: "arraybuffer",

@@ -15,7 +15,7 @@ import {
   FiChevronRight,
   FiArrowLeft,
   // FiFilter,
-  FiX,
+  // FiX,
 } from "react-icons/fi";
 import { SubmissionAPI, type SubmissionRecord } from "../api/submission.api";
 import { QuestionAPI } from "../api/question.api";
@@ -207,10 +207,10 @@ export default function SubmissionsPage() {
     }
   };
 
-  const clearFilters = () => {
-    setPagination((p) => ({ ...p, page: 1 }));
-    setFilters({});
-  };
+  // const clearFilters = () => {
+  //   setPagination((p) => ({ ...p, page: 1 }));
+  //   setFilters({});
+  // };
 
   const hasActiveFilters = Object.values(filters).some(
     (v) => v !== undefined && v !== "",
@@ -398,7 +398,7 @@ export default function SubmissionsPage() {
                 </div>
               </div>
 
-              {hasActiveFilters && (
+              {/* {hasActiveFilters && (
                 <div className="flex justify-end">
                   <button
                     onClick={clearFilters}
@@ -408,7 +408,7 @@ export default function SubmissionsPage() {
                     Clear Filters
                   </button>
                 </div>
-              )}
+              )} */}
             </div>
           )}
         </div>

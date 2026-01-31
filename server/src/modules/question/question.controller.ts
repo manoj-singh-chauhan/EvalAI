@@ -26,7 +26,10 @@ export class QuestionController {
           message: "fileName, fileSize, mimeType and customJobId are required.",
         });
       }
-
+      // return res.status(400).json({
+      //     success: false,
+      //     message: "fileName, fileSize, mimeType and customJobId are required.",
+      //   });
       const MAX_SIZE = 10 * 1024 * 1024;
       if (fileSize > MAX_SIZE) {
         return res.status(400).json({
@@ -88,7 +91,7 @@ export class QuestionController {
       }
 
       const balance = await CreditsService.getBalance(userId);
-      if (balance.plan === "free" && balance.credits <= 0) {
+      if (balance.plan === "free" && balance.credits <= 1) {
         return res.status(403).json({
           success: false,
           error_code: "DAILY_LIMIT_EXCEEDED",
@@ -147,7 +150,7 @@ export class QuestionController {
 
       const balance = await CreditsService.getBalance(userId);
 
-      if (balance.plan === "free" && balance.credits <= 0) {
+      if (balance.plan === "free" && balance.credits <= 1) {
         return res.status(403).json({
           success: false,
           error_code: "DAILY_LIMIT_EXCEEDED",
@@ -217,63 +220,6 @@ export class QuestionController {
       });
     }
   }
-
-  // static async retryJob(req: Request, res: Response) {
-  //   try {
-  //     const parsed = retrySchema.safeParse(req.params);
-  //     if (!parsed.success) {
-  //       return res.status(400).json({
-  //         success: false,
-  //         message: parsed.error.issues[0].message,
-  //       });
-  //     }
-
-  //     const { id } = parsed.data;
-  //     const record = await QuestionPaper.findByPk(id);
-
-  //     if (!record) {
-  //       return res.status(404).json({
-  //         success: false,
-  //         message: "Record not found.",
-  //       });
-  //     }
-
-  //     if (record.status !== "failed") {
-  //       return res.status(400).json({
-  //         success: false,
-  //         message: "Only failed jobs can be retried.",
-  //       });
-  //     }
-
-  //     await record.update({
-  //       status: "pending",
-  //       errorMessage: null,
-  //     });
-
-  //     await QuestionService.scheduleQuestionJob({
-  //       type: record.mode === "upload" ? "file" : "text",
-  //       recordId: record.id,
-  //       data:
-  //         record.mode === "upload"
-  //           ? {
-  //               fileUrl: record.fileUrl || "",
-  //               mimeType: record.fileMimeType || "application/pdf",
-  //             }
-  //           : record.rawText || "",
-  //     });
-
-  //     return res.status(200).json({
-  //       success: true,
-  //       message: "Retrying…",
-  //     });
-  //   } catch (error: any) {
-  //     logger.error(`Retry Error: ${error.message}`);
-  //     res.status(500).json({
-  //       success: false,
-  //       message: "Failed to retry job.",
-  //     });
-  //   }
-  // }
 
   static async retryJob(req: Request, res: Response) {
     try {

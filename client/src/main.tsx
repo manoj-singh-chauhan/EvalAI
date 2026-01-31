@@ -13,11 +13,6 @@ if (!CLERK_PUBLISHABLE_KEY) {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    {/* <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </ClerkProvider> */}
     <ClerkProvider
       publishableKey={CLERK_PUBLISHABLE_KEY}
       afterSignInUrl="/"

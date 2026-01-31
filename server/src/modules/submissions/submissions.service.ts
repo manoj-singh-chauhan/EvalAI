@@ -57,6 +57,7 @@ export class SubmissionService {
         "status",
         "errorMessage",
         "createdAt",
+        "createdBy",
       ],
     });
 
@@ -69,6 +70,7 @@ export class SubmissionService {
         marks: p.totalMarks,
         questions: undefined,
         createdAt: p.createdAt,
+        createdBy: p.createdBy,
       })),
     };
   }
@@ -105,6 +107,7 @@ export class SubmissionService {
         errorMessage: paper.errorMessage,
         fileUrl: paper.fileUrl,
         rawText: paper.rawText,
+        createdBy: paper.createdBy,
 
         questionsList: paper.questions.map((q: any) => ({
           id: q.id,

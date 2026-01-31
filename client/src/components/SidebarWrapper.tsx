@@ -56,7 +56,7 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const userBtnRef = useRef<HTMLButtonElement | null>(null);
   const [plan, setPlan] = useState<"free" | "pro">("free");
 
@@ -96,7 +96,11 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
 
   const menuItems = [
     { path: "/", label: "Question Extraction", icon: FiHome },
-    { path: "/submissions", label: "Dashboard", icon: RiDashboardHorizontalLine },
+    {
+      path: "/submissions",
+      label: "Dashboard",
+      icon: RiDashboardHorizontalLine,
+    },
     { path: "/activity", label: "Activity", icon: FiActivity },
     ...(isAdmin
       ? [{ path: "/admin", label: "Admin Dashboard", icon: FaUserTie }]
@@ -109,9 +113,27 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
     await signOut();
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        showUserMenu &&
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node) &&
+        userBtnRef.current &&
+        !userBtnRef.current.contains(event.target as Node)
+      ) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showUserMenu]);
+
   const SidebarContent = ({ isExpanded }: { isExpanded: boolean }) => (
     <div className="flex flex-col h-full bg-white">
-      {/* Logo */}
       <div
         className={`h-16 flex items-center border-b ${
           isExpanded ? "px-4" : "justify-center"
@@ -253,6 +275,7 @@ export const SidebarWrapper: React.FC<SidebarWrapperProps> = ({ children }) => {
 
       {showUserMenu && userBtnRef.current && (
         <div
+          ref={menuRef}
           className="fixed z-[200] w-56 bg-white border rounded-lg shadow-xl overflow-hidden"
           style={{
             left: userBtnRef.current.getBoundingClientRect().left,

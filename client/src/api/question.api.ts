@@ -17,7 +17,7 @@ export const QuestionAPI = {
     const res = await axiosClient.post("/api/questions/submit-typed-job", data);
     return res.data;
   },
-  uploadPaper: async (file: File) => {
+  uploadPaper: async (file: File, onProgress: (p:number)=>void) => {
     // const customJobId = uuidv4();
     try {
       const sigResponse = await axiosClient.post(
@@ -43,7 +43,17 @@ export const QuestionAPI = {
 
       const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`;
 
-      const cloudinaryResponse = await axios.post(uploadUrl, formData);
+      // const cloudinaryResponse = await axios.post(uploadUrl, formData);
+      const cloudinaryResponse = await axios.post(uploadUrl, formData, {
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            onProgress(percentCompleted); // Pass percent to Frontend Page question pepat 
+          }
+        },
+      });
 
       const { secure_url, format, resource_type } = cloudinaryResponse.data;
 

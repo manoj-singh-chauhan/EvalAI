@@ -34,5 +34,4 @@ export function printRoutes(app: Application) {
   scan(root);
 
   console.table(routes);
-// console.log(routes);
 }

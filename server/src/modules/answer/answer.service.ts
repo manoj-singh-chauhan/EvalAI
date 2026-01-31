@@ -8,15 +8,17 @@ import { downloadFile } from "../../utils/fileDownloader";
 import { answerQueue } from "../../jobs/answer.queue";
 import logger from "../../config/logger";
 import { io } from "../../server";
-import {ANSWER_EVAL_PROMPT,ANSWER_EXTRACTION_PROMPT,} from "../../utils/prompt";
+import {
+  ANSWER_EVAL_PROMPT,
+  ANSWER_EXTRACTION_PROMPT,
+} from "../../utils/prompt";
 import { CreditsService } from "../billing/credits.service";
-
 
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 // const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
-const model = ai.getGenerativeModel({ 
+const model = ai.getGenerativeModel({
   model: "gemini-2.5-flash",
-  systemInstruction:"" 
+  systemInstruction: "",
 });
 
 export class AnswerService {
@@ -28,7 +30,7 @@ export class AnswerService {
     recordId: string;
     questionPaperId: string;
     answerSheetFiles: { fileUrl: string; mimeType: string }[];
-  }){
+  }) {
     await answerQueue.add("evaluate-answer", {
       recordId: job.recordId,
       questionPaperId: job.questionPaperId,
@@ -36,11 +38,10 @@ export class AnswerService {
     });
   }
 
-
   static async extractAnswersFromPage(mimeType: string, base64: string) {
     const aiRes = await model.generateContent({
-      generationConfig: { 
-        responseMimeType: "application/json" 
+      generationConfig: {
+        responseMimeType: "application/json",
       },
       contents: [
         {
@@ -74,8 +75,8 @@ export class AnswerService {
     strictnessLevel: "lenient" | "moderate" | "strict",
   ) {
     const aiRes = await model.generateContent({
-      generationConfig: { 
-        responseMimeType: "application/json" 
+      generationConfig: {
+        responseMimeType: "application/json",
       },
       contents: [
         {
@@ -108,6 +109,14 @@ export class AnswerService {
     });
 
     if (!record) return;
+
+    // await record.update({
+    //   status: "failed",
+    //   errorMessage: "SIMULATED_ERROR: Testing frontend retry logic."
+    // });
+    // this.emitStatus(recordId, "Failed: Simulated error for testing.");
+    // return;
+
     if (record.createdBy) {
       const balance = await CreditsService.getBalance(record.createdBy);
 
@@ -156,7 +165,6 @@ export class AnswerService {
         const result = await this.extractAnswersFromPage(f.mimeType, base64);
         totalJobTokens += result.tokens;
         const extracted = result.data;
-
 
         if (extracted.answers) {
           for (const ans of extracted.answers) {

@@ -19,14 +19,14 @@ import { io } from "socket.io-client";
 import { SOCKET_URL } from "../config/env";
 import { AnswerAPI } from "../api/answer.api";
 import Loader from "../components/Loader";
-// import toast from "react-hot-toast";
+import { useUser } from "@clerk/clerk-react";
 
 const socket = io(SOCKET_URL, { autoConnect: true });
 
 export default function SubmissionDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-
+  const { user } = useUser();
   const [data, setData] = useState<SubmissionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -60,38 +60,6 @@ export default function SubmissionDetailPage() {
     }
     setLoading(false);
   };
-
-  // useEffect(() => {
-  //   if (!id) return;
-
-  //   const setupSocketListeners = async () => {
-  //     const res = await SubmissionAPI.getOne(id);
-  //     setData(res);
-
-  //     const qpChannel = `job-status-${id}`;
-  //     socket.off(qpChannel);
-  //     socket.on(qpChannel, () => {
-  //       loadSubmission();
-  //     });
-
-  //     res.answerSheets.forEach((sheet) => {
-  //       const ansChannel = `answer-status-${sheet.id}`;
-  //       socket.off(ansChannel);
-  //       socket.on(ansChannel, () => {
-  //         loadSubmission();
-  //       });
-  //     });
-
-  //     setLoading(false);
-  //   };
-
-  //   setupSocketListeners();
-
-  //   return () => {
-  //     socket.off();
-  //   };
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -404,7 +372,7 @@ export default function SubmissionDetailPage() {
               </div>
             )}
 
-          {submission.status === "failed" && (
+          {/* {submission.status === "failed" && (
             <div className="flex justify-end mt-4">
               <button
                 onClick={() => handleRetry(submission.id)}
@@ -413,18 +381,39 @@ export default function SubmissionDetailPage() {
                 <FiRefreshCw /> Retry
               </button>
             </div>
-          )}
+          )} */}
+          {submission.status === "failed" &&
+            (user?.publicMetadata?.role !== "admin" ||
+              submission.createdBy === user?.id) && (
+              <div className="flex justify-end mt-4">
+                <button
+                  onClick={() => handleRetry(submission.id)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition shadow-sm text-sm font-medium"
+                >
+                  <FiRefreshCw /> Retry
+                </button>
+              </div>
+            )}
         </div>
         {submission.status === "completed" && (
           <div>
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
               <h2 className="text-xl font-bold text-gray-800">Answer Sheets</h2>
-              <button
+              {/* <button
                 onClick={() => navigate(`/answers/${submission.id}`)}
                 className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium shadow-sm transition-all"
               >
                 + Add Answer Sheet
-              </button>
+              </button> */}
+              {(user?.publicMetadata?.role !== "admin" ||
+                submission.createdBy === user?.id) && (
+                <button
+                  onClick={() => navigate(`/answers/${submission.id}`)}
+                  className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium shadow-sm transition-all"
+                >
+                  + Add Answer Sheet
+                </button>
+              )}
             </div>
             {answerSheetError && (
               <div className="mb-4 text-red-700 bg-red-50 p-3 rounded-lg text-sm border border-red-100 flex flex-col gap-2">
@@ -513,12 +502,21 @@ export default function SubmissionDetailPage() {
                           >
                             View
                           </button>
-                          <button
+                          {/* <button
                             onClick={() => handleRetryAnswer(sheet.id)}
                             className="flex-1 md:flex-none px-4 py-2 bg-white border border-red-200 text-red-600 font-medium rounded-lg hover:bg-red-50 transition shadow-sm flex items-center justify-center gap-2 text-sm"
                           >
                             <FiRefreshCw /> Retry
-                          </button>
+                          </button> */}
+                          {(user?.publicMetadata?.role !== "admin" ||
+                            submission.createdBy === user?.id) && (
+                            <button
+                              onClick={() => handleRetryAnswer(sheet.id)}
+                              className="flex-1 md:flex-none px-4 py-2 bg-white border border-red-200 text-red-600 font-medium rounded-lg hover:bg-red-50 transition shadow-sm flex items-center justify-center gap-2 text-sm"
+                            >
+                              <FiRefreshCw /> Retry
+                            </button>
+                          )}
                         </>
                       )}
                     </div>

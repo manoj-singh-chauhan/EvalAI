@@ -30,9 +30,9 @@ export const AnswerAPI = {
     // const sigRes = await axiosClient.get(
     //   `/api/answers/get-upload-signature/${questionPaperId}`
     // );
-    const sigRes = await axiosClient.get(
-  `/api/answers/get-upload-signature/${questionPaperId}?fileSize=${files[0].size}`
-);
+     const sigRes = await axiosClient.get(
+        `/api/answers/get-upload-signature/${questionPaperId}?fileSize=${files[0].size}`
+     );
     const { signature, timestamp, folder, apiKey, cloudName } = sigRes.data;
     console.log(sigRes.data);
     const uploadPromises = files.map(async (file) => {

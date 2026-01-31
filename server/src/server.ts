@@ -7,9 +7,7 @@ import { Server } from "socket.io";
 dotenv.config({ path: ".env.development" });
 
 const PORT = Number(process.env.PORT);
-
 const httpServer = createServer(app);
-
 export const io = new Server(httpServer, {
   cors: {
     origin: process.env.FRONTEND_URL,

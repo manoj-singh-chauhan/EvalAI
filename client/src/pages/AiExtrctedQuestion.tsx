@@ -85,17 +85,6 @@ export default function AiExtractedQuestion() {
               {totalMarks ?? 0}
             </p>
           </div>
-          {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <p className="text-gray-600 text-xs font-semibold mb-1 uppercase tracking-wide">
-              Avg. Marks
-            </p>
-            <p className="text-2xl font-bold text-gray-900">
-              {questions.length > 0
-                ? ((questions.reduce((sum, q) => sum + (q.marks || 0), 0) /
-                    questions.length) as number).toFixed(1)
-                : "0"}
-            </p>
-          </div> */}
         </div>
 
         {questions.length === 0 ? (

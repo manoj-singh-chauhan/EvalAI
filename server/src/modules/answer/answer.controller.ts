@@ -76,7 +76,7 @@ export class AnswerController {
     const { questionPaperId, answerSheetFiles, strictnessLevel } = parsed.data;
     const balance = await CreditsService.getBalance(userId);
 
-    if (balance.plan === "free" && balance.credits <= 0) {
+    if (balance.plan === "free" && balance.credits <= 1) {
       return res.status(403).json({
         success: false,
         error_code: "DAILY_LIMIT_EXCEEDED",

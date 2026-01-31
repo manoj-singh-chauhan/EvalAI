@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { BillingAPI } from "../api/billing";
 import { Check, Zap, Crown, Star } from "lucide-react"; 
+import { RAZORPAY_KEY_ID } from "../config/env";
 
 declare global {
   interface Window {
@@ -85,7 +86,7 @@ const BillingPage = () => {
       const { order } = await BillingAPI.createOrder(planCode);
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID, 
+        key: RAZORPAY_KEY_ID, 
         amount: order.amount,
         currency: order.currency,
         order_id: order.id,

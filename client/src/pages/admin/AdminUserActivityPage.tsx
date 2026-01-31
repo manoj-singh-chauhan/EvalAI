@@ -220,7 +220,6 @@ const AdminUserActivityPage = () => {
               <FiArrowLeft size={18} />
             </button>
 
-            {/* Title + description */}
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
                 User Activity
