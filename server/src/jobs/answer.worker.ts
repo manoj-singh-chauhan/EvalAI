@@ -19,7 +19,7 @@ export const answerWorker = new Worker(
       return await AnswerService.processAnswerJob(
         recordId,
         questionPaperId,
-        []
+        [],
       );
     } catch (error: any) {
       io.emit(`answer-status-${recordId}`, {
@@ -32,7 +32,7 @@ export const answerWorker = new Worker(
   {
     connection: redisConnection,
     concurrency: 1,
-  }
+  },
 );
 
 answerWorker.on("completed", () => {

@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { AdminService } from "./admin.service";
+import logger from "../../config/logger";
+
 
 export class AdminController {
   static async getAllUsers(req: Request, res: Response) {
@@ -7,7 +9,7 @@ export class AdminController {
       const data = await AdminService.getAllUsers(req.query);
       res.json({ success: true, ...data });
     } catch (error) {
-      console.error(error);
+      logger.error({ err: error }, "Failed to fetch users");
       res.status(500).json({
         success: false,
         message: "Failed to fetch users",
@@ -36,7 +38,7 @@ export class AdminController {
         ...data,
       });
     } catch (error) {
-      console.error(error);
+      logger.error({ err: error }, "Failed to fetch user activity");
       res.status(500).json({
         success: false,
         message: "Failed to fetch user activity",
@@ -49,7 +51,7 @@ export class AdminController {
       const data = await AdminService.getAllUsers(req.query);
       res.json({ success: true, ...data });
     } catch (error) {
-      console.error(error);
+      logger.error({ err: error }, "Failed to search users");
       res.status(500).json({
         success: false,
         message: "Failed to search users",

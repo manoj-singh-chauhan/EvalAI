@@ -17,6 +17,14 @@ import {
   // FiFilter,
   // FiX,
 } from "react-icons/fi";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import { SubmissionAPI, type SubmissionRecord } from "../api/submission.api";
 import { QuestionAPI } from "../api/question.api";
 import { useNavigate } from "react-router-dom";
@@ -320,9 +328,9 @@ export default function SubmissionsPage() {
 
         <div className="mb-6">
           {showFilters && (
-            <div className="mt-4 bg-white rounded-lg shadow-sm border border-gray-200/60 p-6 space-y-4">
+            <div className="mt-4 bg-white rounded-md shadow-sm border border-gray-200/60 p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
+                {/* <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Submission Mode
                   </label>
@@ -340,9 +348,32 @@ export default function SubmissionsPage() {
                     <option value="typed">Typed Response</option>
                     <option value="upload">File Upload</option>
                   </select>
-                </div>
+                </div> */}
 
                 <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Submission Mode
+                  </label>
+
+                  <Select
+                    value={filters.mode || "all"}
+                    onValueChange={(value) =>
+                      handleFilterChange("mode", value === "all" ? "" : value)
+                    }
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="All Modes" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="all">All Modes</SelectItem>
+                      <SelectItem value="typed">Typed Response</SelectItem>
+                      <SelectItem value="upload">File Upload</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Status
                   </label>
@@ -367,6 +398,31 @@ export default function SubmissionsPage() {
                     <option value="completed">Completed</option>
                     <option value="failed">Failed</option>
                   </select>
+                </div> */}
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Status
+                  </label>
+
+                  <Select
+                    value={filters.status || "all"}
+                    onValueChange={(value) =>
+                      handleFilterChange("status", value === "all" ? "" : value)
+                    }
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="processing">Processing</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>

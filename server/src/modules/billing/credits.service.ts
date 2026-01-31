@@ -48,7 +48,6 @@ export class CreditsService {
       if (now > expiryDate) {
         credits.plan = "free";
         credits.planExpiresAt = null;
-        // console.log("plan expired Downgraded to free");
       }
     }
 

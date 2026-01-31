@@ -4,32 +4,29 @@ import logger from "../../config/logger";
 import { v2 as cloudinary } from "cloudinary";
 import QuestionPaper from "./question.model";
 import Question from "./questionDetail.model";
-// import path from "path";
 import {
   typedQuestionSchema,
   fileJobSchema,
   retrySchema,
 } from "./question.validation";
 import { CreditsService } from "../billing/credits.service";
-import { v4 as uuidv4 } from 'uuid';  
+import { v4 as uuidv4 } from "uuid";
+import { ActivityService } from "../activity/activity.service";
 
 export class QuestionController {
   static async getUploadSignature(req: Request, res: Response) {
     try {
       const { fileName, fileSize, mimeType } = req.body;
-      // console.log("this is request.body in backend signature ", req.body);
+      // logger.info({ body: req.body }, "Upload signature request received");
       const jobId = uuidv4();
 
-      if (!fileName || !fileSize || !mimeType ) {
+      if (!fileName || !fileSize || !mimeType) {
         return res.status(400).json({
           success: false,
           message: "fileName, fileSize, mimeType and customJobId are required.",
         });
       }
-      // return res.status(400).json({
-      //     success: false,
-      //     message: "fileName, fileSize, mimeType and customJobId are required.",
-      //   });
+
       const MAX_SIZE = 10 * 1024 * 1024;
       if (fileSize > MAX_SIZE) {
         return res.status(400).json({
@@ -53,7 +50,8 @@ export class QuestionController {
         { timestamp, folder },
         process.env.CLOUDINARY_API_SECRET!,
       );
-      // console.log("signature : ", signature);
+
+      // logger.info({ signature }, "Cloudinary upload signature generated");
 
       return res.status(200).json({
         success: true,
@@ -108,7 +106,7 @@ export class QuestionController {
         fileMimeType: mimeType,
       });
 
-      // console.log("now record create in submit file jbo : ", record);
+      // logger.info({ recordId: record.id }, "Question paper record created");
 
       await QuestionService.scheduleQuestionJob({
         type: "file",
@@ -171,6 +169,14 @@ export class QuestionController {
         recordId: record.id,
         data: text,
         userId,
+      });
+
+      await ActivityService.log(userId, {
+        type: "SUBMISSION",
+        status: "info",
+        title: "Text Submitted",
+        description: "Your typed questions are being analyzed by AI.",
+        linkId: record.id,
       });
 
       return res.status(202).json({

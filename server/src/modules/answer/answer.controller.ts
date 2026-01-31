@@ -37,7 +37,7 @@ export class AnswerController {
         process.env.CLOUDINARY_API_SECRET!,
       );
 
-      console.log("answer signature : ", signature);
+      // logger.info({ signature }, "Answer upload signature generated");
 
       res.status(200).json({
         success: true,

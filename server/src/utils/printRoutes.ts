@@ -1,4 +1,5 @@
 import type { Application } from "express";
+import logger from "../config/logger"; 
 
 export function printRoutes(app: Application) {
   const routes: { method: string; path: string }[] = [];
@@ -27,11 +28,12 @@ export function printRoutes(app: Application) {
 
   const root = (app as any)._router?.stack;
   if (!root) {
-    console.log("No routes found.");
+    logger.warn("No routes found.");
     return;
   }
 
   scan(root);
 
+  logger.info("Registered routes loaded");
   console.table(routes);
 }

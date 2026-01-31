@@ -58,7 +58,7 @@ export class AnswerService {
         },
       ],
     });
-    console.log("extraction", aiRes.response.usageMetadata);
+    logger.info({ usage: aiRes.response.usageMetadata },"Answer extraction usage metadata");
     const usage = aiRes.response.usageMetadata;
     const tokens = usage?.totalTokenCount || 0;
     const raw = aiRes.response.text().trim();
@@ -88,7 +88,7 @@ export class AnswerService {
         },
       ],
     });
-    console.log("evaluation : ", aiRes.response.usageMetadata);
+    logger.info({ usage: aiRes.response.usageMetadata },"Answer evaluation usage metadata");
     const usage = aiRes.response.usageMetadata;
     const tokens = usage?.totalTokenCount || 0;
     const raw = aiRes.response.text().trim();
@@ -109,13 +109,6 @@ export class AnswerService {
     });
 
     if (!record) return;
-
-    // await record.update({
-    //   status: "failed",
-    //   errorMessage: "SIMULATED_ERROR: Testing frontend retry logic."
-    // });
-    // this.emitStatus(recordId, "Failed: Simulated error for testing.");
-    // return;
 
     if (record.createdBy) {
       const balance = await CreditsService.getBalance(record.createdBy);
@@ -186,7 +179,7 @@ export class AnswerService {
       const evaluated = evalResult.data;
 
       console.log("Evaluation result:", evaluated);
-
+      logger.info(evaluated,"Evaluation result:");
       if (!evaluated.evaluated) {
         throw new Error("AI did not return evaluation output.");
       }

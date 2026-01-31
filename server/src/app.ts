@@ -14,6 +14,7 @@ import submissionRoutes from "./modules/submissions/submissions.routes";
 import { requireAuth } from "./middleware/auth.middleware";
 import adminRoutes from "./modules/admin/admin.routes";
 import billing from "./modules/billing/billing.routes"
+import activityRoutes from "./modules/activity/activity.routes";
 
 import "./config/cloudinaryUpload";
 import "./jobs/answer.worker";
@@ -96,6 +97,8 @@ app.use("/api/results", requireAuth, resultRoutes);
 app.use("/api/submissions", requireAuth, submissionRoutes);
 app.use("/api/admin",requireAuth, adminRoutes);
 app.use("/api/billing",billing),
+app.use("/api/activity", requireAuth,activityRoutes);
+
 
 printRoutes(app);
 

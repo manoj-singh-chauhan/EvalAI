@@ -1,5 +1,6 @@
 import { Plan } from "./plan.model";
 import { sequelize } from "../../config/db";
+import logger from "../../config/logger";
 
 const seed = async () => {
   await sequelize.authenticate();
@@ -13,7 +14,7 @@ const seed = async () => {
   for (const p of plans) {
     await Plan.findOrCreate({ where: { code: p.code }, defaults: p });
   }
-  console.log("Plans added to Database");
+  logger.info("Plans added to Database");
 };
 
 seed();

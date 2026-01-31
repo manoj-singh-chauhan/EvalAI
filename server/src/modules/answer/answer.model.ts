@@ -5,20 +5,6 @@ interface AnswerSheetAttributes {
   id: string;
   questionPaperId: string;
   strictnessLevel?: "lenient" | "moderate" | "strict";
-//   // answerSheetFiles: any | null;
-//   // answers: any | null;
-//   /*
-//     [
-//       {
-//         questionNumber: 1,
-//         questionText: "...",
-//         studentAnswer: "... long text ...",
-//         score: 4,
-//         maxScore: 5,
-//         feedback: "Good explanation, missing diagram."
-//       }
-//     ]
-//   */
 
   totalScore?: number | null;
   feedback?: string | null;

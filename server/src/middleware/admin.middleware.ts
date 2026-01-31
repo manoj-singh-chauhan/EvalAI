@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { clerkClient } from "@clerk/clerk-sdk-node";
+import logger from "../config/logger";
 
 export const requireAdmin = async (
   req: Request,
@@ -28,7 +29,10 @@ export const requireAdmin = async (
 
     next();
   } catch (error) {
-    console.error("Admin check error:", error);
+    logger.error(
+      { err: error, userId: req.auth?.sub },
+      "Admin check error"
+    );
     return res.status(500).json({
       success: false,
       message: "Error checking admin status",

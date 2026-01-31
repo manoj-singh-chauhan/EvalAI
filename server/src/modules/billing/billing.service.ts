@@ -37,11 +37,7 @@ export class BillingService {
       currency: "INR",
       receipt: `rcpt_${Date.now()}`,
     });
-    // setInterval(async () => {
-    //   const response = await razorpay.orders.fetch(rpOrder.id);
-    //   console.log("RP REsponse: ", response);
-    // }, 20_000);
-
+    
     await Order.create({
       userId,
       planId: planCode,
@@ -88,19 +84,6 @@ export class BillingService {
     expiryDate.setDate(now.getDate() + plan.duration);
     credits.planExpiresAt = expiryDate;
 
-    //   const now = new Date();
-
-    // // let expiryDate;
-    // let expiryDate: Date | null = null;
-
-    // //  TEST MODE → 5 min
-    // if (plan.durationMinutesTest) {
-    //   expiryDate = new Date(
-    //     now.getTime() + plan.durationMinutesTest * 60 * 1000
-    //   );
-    // }
-
-    // credits.planExpiresAt = expiryDate;
 
     await credits.save();
 

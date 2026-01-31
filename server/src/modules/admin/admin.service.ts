@@ -27,7 +27,8 @@ export class AdminService {
       const s = search.toLowerCase();
       cleanedUsers = cleanedUsers.filter(
         (u) =>
-          u.name.toLowerCase().includes(s) || u.email?.toLowerCase().includes(s)
+          u.name.toLowerCase().includes(s) ||
+          u.email?.toLowerCase().includes(s),
       );
     }
 
@@ -55,7 +56,7 @@ export class AdminService {
         order: [["createdAt", "DESC"]],
         limit,
         offset,
-      }
+      },
     );
 
     const paperIds = questionPapers.map((p) => p.id);
@@ -71,12 +72,12 @@ export class AdminService {
         .length,
       failedPapers: questionPapers.filter((p) => p.status === "failed").length,
       pendingPapers: questionPapers.filter(
-        (p) => p.status === "pending" || p.status === "processing"
+        (p) => p.status === "pending" || p.status === "processing",
       ).length,
 
       totalAnswerSheets: answerSheets.length,
       completedAnswerSheets: answerSheets.filter(
-        (a) => a.status === "completed"
+        (a) => a.status === "completed",
       ).length,
       failedAnswerSheets: answerSheets.filter((a) => a.status === "failed")
         .length,

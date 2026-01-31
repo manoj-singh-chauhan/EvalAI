@@ -35,7 +35,6 @@ AnswerSheetFile.init(
   }
 );
 
-
 AnswerSheet.hasMany(AnswerSheetFile, {
   foreignKey: "answerSheetId",
   as: "files",
