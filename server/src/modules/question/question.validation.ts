@@ -16,7 +16,6 @@ export const fileJobSchema = z.object({
     .min(3, "Invalid mimeType."),
 });
 
-
 export const retrySchema = z.object({
   id: z.string().uuid("Invalid ID format."),
 });

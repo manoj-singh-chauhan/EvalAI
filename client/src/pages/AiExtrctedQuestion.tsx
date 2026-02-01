@@ -54,7 +54,7 @@ export default function AiExtractedQuestion() {
         <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 transition shadow-sm"
+            className="p-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:text-teal-600 hover:bg-teal-50 hover:border-teal-200"
           >
             <FiArrowLeft size={20} />
           </button>

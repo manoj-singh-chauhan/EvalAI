@@ -124,9 +124,9 @@ export default function ReviewQuestionsPage() {
               bg-white
               border border-gray-300
               text-gray-600
-              hover:bg-indigo-50
-              hover:text-indigo-600
-              hover:border-indigo-300
+              hover:text-teal-600 
+              hover:bg-teal-50 
+              hover:border-teal-200
               transition
             "
                 >

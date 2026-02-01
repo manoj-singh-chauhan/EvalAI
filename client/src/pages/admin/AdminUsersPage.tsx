@@ -148,7 +148,7 @@ const AdminUsersPage = () => {
             <button
               onClick={() => navigate(-1)}
               className="p-2.5 rounded-lg bg-white border border-gray-200 text-gray-600 
-     hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 
+     hover:text-teal-600 hover:bg-teal-50 hover:border-teal-200
      transition-all duration-200"
             >
               <FiArrowLeft size={20} />
@@ -156,7 +156,7 @@ const AdminUsersPage = () => {
 
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
-                Users Management
+                Manage Users
               </h1>
               <p className="text-sm sm:text-base text-gray-600">
                 View all registered users and their details

@@ -73,6 +73,7 @@ export class BillingController {
   }
 
   static async handleWebhook(req: Request, res: Response) {
+    console.log("hook");
     try {
       const signature = req.headers["x-razorpay-signature"];
       const secret = process.env.RAZORPAY_WEBHOOK_SECRET;

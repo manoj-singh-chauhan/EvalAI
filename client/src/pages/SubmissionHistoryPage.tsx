@@ -314,7 +314,7 @@ export default function SubmissionsPage() {
             <button
               onClick={() => navigate(-1)}
               className="p-2.5 rounded-lg bg-white border border-gray-200 text-gray-600 
-               hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 
+               hover:text-teal-600 hover:bg-teal-50 hover:border-teal-200 
                transition-all duration-200"
             >
               <FiArrowLeft size={20} />
@@ -491,7 +491,7 @@ export default function SubmissionsPage() {
                   <thead>
                     <tr className="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
                       <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        #
+                      No.
                       </th>
                       <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Submission Mode
@@ -603,7 +603,7 @@ export default function SubmissionsPage() {
                               </button>
 
                               {openMenuId === s.id && (
-                                <div className="absolute right-full top-1/2 -translate-y-1/2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
+                                <div className="absolute right-full top-1/2 -translate-y-1/2 w-48 bg-white rounded-md shadow-md border border-gray-200 py-1 z-50">
                                   <button
                                     onClick={() =>
                                       navigate(`/submissions/${s.id}`)

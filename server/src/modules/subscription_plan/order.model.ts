@@ -17,12 +17,31 @@ Order.init(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    userId: { type: DataTypes.STRING, allowNull: false },
-    planId: { type: DataTypes.STRING, allowNull: false },
+    userId: { 
+      type: DataTypes.STRING, 
+      allowNull: false 
+    },
+    planId: { 
+      type: DataTypes.STRING, 
+      allowNull: false 
+    },
 
-    razorpayOrderId: { type: DataTypes.STRING, allowNull: false },
-    amount: { type: DataTypes.INTEGER, allowNull: false },
-    status: { type: DataTypes.STRING, defaultValue: "pending" },
+    razorpayOrderId: { 
+      type: DataTypes.STRING, 
+      allowNull: false 
+    },
+    amount: { 
+      type: DataTypes.INTEGER, 
+      allowNull: false 
+    },
+    status: { 
+      type: DataTypes.STRING, 
+      defaultValue: "pending" 
+    },
   },
-  { sequelize, tableName: "orders", timestamps: true },
+  { 
+    sequelize, 
+    tableName: "orders", 
+    timestamps: true 
+  },
 );

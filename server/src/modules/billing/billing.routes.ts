@@ -4,6 +4,8 @@ import { requireAuth } from "../../middleware/auth.middleware";
 
 const router = Router();
 
+router.post("/webhook", BillingController.handleWebhook);
+
 router.get(
     "/me", requireAuth,
     BillingController.getMe
@@ -17,5 +19,5 @@ router.post(
     BillingController.verifyPayment
 );
 
-router.post("/webhook", BillingController.handleWebhook);
+
 export default router;

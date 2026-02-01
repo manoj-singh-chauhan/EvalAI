@@ -28,9 +28,9 @@ const corsOptions = {
   origin: process.env.FRONTEND_URL!,
   credentials: true,
 };
-
-app.use(cors(corsOptions));
 app.use("/api/billing/webhook", express.raw({ type: "application/json" }));
+app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(morgan("dev"));
 
