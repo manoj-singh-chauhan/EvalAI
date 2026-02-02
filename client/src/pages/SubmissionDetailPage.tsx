@@ -498,9 +498,10 @@ export default function SubmissionDetailPage() {
                                 `/results/sheet/${sheet.id}?index=${index + 1}`,
                               )
                             }
-                            className="flex-1 md:flex-none px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm text-sm"
+                            // className="flex-1 md:flex-none px-4 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm text-sm"
+                            className="flex-1 md:flex-none px-5 py-2 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition shadow-sm flex items-center justify-center gap-2 text-sm"
                           >
-                            View
+                           <FiEye /> View
                           </button>
                           {/* <button
                             onClick={() => handleRetryAnswer(sheet.id)}

@@ -5,7 +5,7 @@ export class ActivityController {
   static async getMyActivity(req: Request, res: Response) {
     try {
       const userId = req.auth?.sub;
-    // const userId = "user_36EM71F3PBF3X71L0BI108mXB70";
+      // const userId = "user_36EM71F3PBF3X71L0BI108mXB70";
       if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
       const activities = await ActivityService.getAll(userId);

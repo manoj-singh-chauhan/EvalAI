@@ -13,31 +13,82 @@ interface SubmissionFilters {
 }
 
 export class SubmissionService {
+  // static async getAllSubmissions(
+  //   userId: string,
+  //   page: number,
+  //   limit: number,
+  //   filters?: SubmissionFilters
+  // ) {
+  //   const offset = (page - 1) * limit;
+  //   const where: any = { createdBy: userId };
 
+  //   if (filters?.mode) {
+  //     where.mode = filters.mode;
+  //   }
+
+  //   if (filters?.status) {
+  //     where.status = filters.status;
+  //   }
+
+  //   if (filters?.startDate || filters?.endDate) {
+  //     where.createdAt = {};
+
+  //     if (filters.startDate && !isNaN(Date.parse(filters.startDate))) {
+  //       where.createdAt[Op.gte] = new Date(filters.startDate);
+  //     }
+
+  //     if (filters.endDate && !isNaN(Date.parse(filters.endDate))) {
+  //       const endDate = new Date(filters.endDate);
+  //       endDate.setHours(23, 59, 59, 999);
+  //       where.createdAt[Op.lte] = endDate;
+  //     }
+  //   }
+
+  //   const result = await QuestionPaper.findAndCountAll({
+  //     where,
+  //     order: [["createdAt", "DESC"]],
+  //     limit,
+  //     offset,
+  //     attributes: [
+  //       "id",
+  //       "mode",
+  //       "totalMarks",
+  //       "status",
+  //       "errorMessage",
+  //       "createdAt",
+  //       "createdBy",
+  //     ],
+  //   });
+
+  //   return {
+  //     count: result.count,
+  //     rows: result.rows.map((p) => ({
+  //       id: p.id,
+  //       mode: p.mode,
+  //       status: p.status,
+  //       marks: p.totalMarks,
+  //       questions: undefined,
+  //       createdAt: p.createdAt,
+  //       createdBy: p.createdBy,
+  //     })),
+  //   };
+  // }
   static async getAllSubmissions(
     userId: string,
     page: number,
     limit: number,
-    filters?: SubmissionFilters
+    filters?: SubmissionFilters,
   ) {
     const offset = (page - 1) * limit;
     const where: any = { createdBy: userId };
 
-    if (filters?.mode) {
-      where.mode = filters.mode;
-    }
-
-    if (filters?.status) {
-      where.status = filters.status;
-    }
-
+    if (filters?.mode) where.mode = filters.mode;
+    if (filters?.status) where.status = filters.status;
     if (filters?.startDate || filters?.endDate) {
       where.createdAt = {};
-
       if (filters.startDate && !isNaN(Date.parse(filters.startDate))) {
         where.createdAt[Op.gte] = new Date(filters.startDate);
       }
-
       if (filters.endDate && !isNaN(Date.parse(filters.endDate))) {
         const endDate = new Date(filters.endDate);
         endDate.setHours(23, 59, 59, 999);
@@ -61,17 +112,36 @@ export class SubmissionService {
       ],
     });
 
+    const paperIds = result.rows.map((p) => p.id);
+
+    const sheetCounts = (await AnswerSheet.findAll({
+      where: { questionPaperId: paperIds },
+      attributes: [
+        "questionPaperId",
+        [
+          AnswerSheet.sequelize!.fn("COUNT", AnswerSheet.sequelize!.col("id")),
+          "totalSheets",
+        ],
+      ],
+      group: ["questionPaperId"],
+      raw: true,
+    })) as any[];
+
     return {
       count: result.count,
-      rows: result.rows.map((p) => ({
-        id: p.id,
-        mode: p.mode,
-        status: p.status,
-        marks: p.totalMarks,
-        questions: undefined,
-        createdAt: p.createdAt,
-        createdBy: p.createdBy,
-      })),
+      rows: result.rows.map((p) => {
+        const countData = sheetCounts.find((c) => c.questionPaperId === p.id);
+
+        return {
+          id: p.id,
+          mode: p.mode,
+          status: p.status,
+          marks: p.totalMarks,
+          createdAt: p.createdAt,
+          createdBy: p.createdBy,
+          answerSheetsCount: countData ? parseInt(countData.totalSheets) : 0,
+        };
+      }),
     };
   }
 
@@ -91,8 +161,14 @@ export class SubmissionService {
     const answers = await AnswerSheet.findAll({
       where: { questionPaperId: id },
       include: [
-        { model: AnswerSheetFile, as: "files" },
-        { model: EvaluatedAnswer, as: "evaluatedAnswers" },
+        { 
+          model: AnswerSheetFile, 
+          as: "files" 
+        },
+        { 
+          model: EvaluatedAnswer, 
+          as: "evaluatedAnswers" 
+        },
       ],
       order: [["id", "ASC"]],
     });

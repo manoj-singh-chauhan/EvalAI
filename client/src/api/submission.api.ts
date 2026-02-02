@@ -20,6 +20,7 @@ export interface SubmissionRecord {
   createdAt: string;
   questionsList?: ExtractedQuestion[];
   createdBy: string;
+  answerSheetsCount: number;
 }
 
 export interface AnswerSheetRecord {

@@ -491,7 +491,7 @@ export default function SubmissionsPage() {
                   <thead>
                     <tr className="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
                       <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      No.
+                        No.
                       </th>
                       <th className="py-4 px-6 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Submission Mode
@@ -502,12 +502,13 @@ export default function SubmissionsPage() {
                       <th className="py-4 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Status
                       </th>
-                      {/* <th className="py-4 px-6 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
-                        Date
-                      </th> */}
+                      <th className="py-4 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Sheets
+                      </th>
                       <th className="py-4 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Date
                       </th>
+
                       <th className="py-4 px-6 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">
                         Actions
                       </th>
@@ -582,6 +583,12 @@ export default function SubmissionsPage() {
                             {formatDate(s.createdAt)}
                           </span>
                         </td> */}
+
+                        <td className="py-5 px-6 text-center">
+                          <div className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200">
+                            {s.answerSheetsCount || 0} Sheets
+                          </div>
+                        </td>
                         <td className="py-5 px-6 text-center">
                           <span className="text-sm text-gray-700 font-semibold">
                             {formatDate(s.createdAt)}
@@ -735,11 +742,17 @@ export default function SubmissionsPage() {
                         <span className="font-semibold">
                           {formatDate(s.createdAt)}
                         </span>
-                        {s.marks !== undefined && s.marks !== null && (
-                          <div className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold shadow-sm border border-white">
-                            Total marks: {s.marks}
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span className="bg-teal-50 text-teal-700 px-2 py-0.5 rounded text-[10px] font-bold border border-teal-100">
+                            {s.answerSheetsCount || 0} Sheets
+                          </span>
+
+                          {s.marks !== undefined && s.marks !== null && (
+                            <div className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold shadow-sm border border-white">
+                              Total marks: {s.marks}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

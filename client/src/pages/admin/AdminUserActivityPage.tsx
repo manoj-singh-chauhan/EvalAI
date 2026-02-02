@@ -31,6 +31,7 @@ interface RecentSubmission {
   mode: string;
   totalMarks: number;
   createdAt: number;
+  answerSheetsCount?: number;
 }
 
 interface UserActivity {
@@ -262,14 +263,14 @@ const AdminUserActivityPage = () => {
                 <div className="flex gap-2 flex-wrap">
                   <span
                     className={`px-3 py-1 rounded-lg text-xs font-semibold ${getRoleColor(
-                      user.role
+                      user.role,
                     )}`}
                   >
                     {user.role.toUpperCase()}
                   </span>
                   <span
                     className={`px-3 py-1 rounded-lg text-xs font-semibold ${getStatusColor(
-                      user.status
+                      user.status,
                     )}`}
                   >
                     {user.status.toUpperCase()}
@@ -345,6 +346,9 @@ const AdminUserActivityPage = () => {
                   <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase">
                     Status
                   </th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase">
+                    Sheets
+                  </th>
                   <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase">
                     Date
                   </th>
@@ -375,7 +379,7 @@ const AdminUserActivityPage = () => {
                           (activity.pagination.page - 1) *
                             activity.pagination.limit +
                             idx +
-                            1
+                            1,
                         ).padStart(2, "0")}
                       </td>
                       <td className="px-6 py-5">
@@ -419,6 +423,11 @@ const AdminUserActivityPage = () => {
                       <td className="px-6 py-5 text-center">
                         {getStatusBadge(paper.status)}
                       </td>
+                      <td className="px-6 py-5 text-center">
+                        <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-bold border border-teal-100">
+                          {paper.answerSheetsCount || 0}
+                        </span>
+                      </td>
                       <td className="px-6 py-5 text-right">
                         <span className="text-sm text-gray-700 font-semibold">
                           {formatDate(paper.createdAt)}
@@ -456,7 +465,7 @@ const AdminUserActivityPage = () => {
                           (activity.pagination.page - 1) *
                             activity.pagination.limit +
                             idx +
-                            1
+                            1,
                         ).padStart(2, "0")}
                       </span>
                       <div
@@ -527,7 +536,7 @@ const AdminUserActivityPage = () => {
                 <div className="flex items-center gap-1">
                   {Array.from(
                     { length: activity.pagination.totalPages },
-                    (_, i) => i + 1
+                    (_, i) => i + 1,
                   ).map((page) => (
                     <button
                       key={page}
