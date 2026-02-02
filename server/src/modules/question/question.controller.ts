@@ -107,6 +107,14 @@ export class QuestionController {
       });
 
       // logger.info({ recordId: record.id }, "Question paper record created");
+      await ActivityService.log(userId, {
+        type: "SUBMISSION",
+        status: "info",
+        title: "File Analysis Started",
+        description:
+          "Your document is being processed by AI for question extraction.",
+        linkId: record.id,
+      });
 
       await QuestionService.scheduleQuestionJob({
         type: "file",
@@ -164,19 +172,20 @@ export class QuestionController {
         createdBy: userId,
       });
 
+      await ActivityService.log(userId, {
+        type: "SUBMISSION",
+        status: "info",
+        title: "Text Analysis Started",
+        description:
+          "The provided text is being analyzed to structure your questions.",
+        linkId: record.id,
+      });
+
       await QuestionService.scheduleQuestionJob({
         type: "text",
         recordId: record.id,
         data: text,
         userId,
-      });
-
-      await ActivityService.log(userId, {
-        type: "SUBMISSION",
-        status: "info",
-        title: "Text Submitted",
-        description: "Your typed questions are being analyzed by AI.",
-        linkId: record.id,
       });
 
       return res.status(202).json({
@@ -275,6 +284,14 @@ export class QuestionController {
         retryCount: record.retryCount + 1,
         status: "pending",
         errorMessage: null,
+      });
+
+      await ActivityService.log(record.createdBy, {
+        type: "SUBMISSION",
+        status: "info",
+        title: "Re-analysis Started",
+        description: "Retrying AI analysis for your question paper.",
+        linkId: record.id,
       });
 
       await QuestionService.scheduleQuestionJob({

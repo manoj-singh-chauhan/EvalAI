@@ -7,6 +7,7 @@ import { AnswerService } from "./answer.service";
 import logger from "../../config/logger";
 import EvaluatedAnswer from "./evaluatedAnswer.model";
 import { CreditsService } from "../billing/credits.service";
+import { ActivityService } from "../activity/activity.service";
 
 export class AnswerController {
   static async getUploadSignature(req: Request, res: Response) {
@@ -107,6 +108,16 @@ export class AnswerController {
         answerSheetFiles: [{ fileUrl: f.fileUrl, mimeType: f.mimeType }],
       });
 
+      await ActivityService.log(userId, {
+        type: "EVALUATION",
+        status: "info",
+        title: "Evaluation Queued",
+        description:
+          "A student answer sheet has been received and added to the processing queue.",
+        // linkId: sheet.id,
+        linkId : questionPaperId,
+      });
+
       createdIds.push(sheet.id);
     }
 
@@ -147,7 +158,6 @@ export class AnswerController {
       });
     }
   }
-
 
   static async retryJob(req: Request, res: Response) {
     try {
@@ -207,6 +217,16 @@ export class AnswerController {
       await sheet.update({
         status: "pending",
         errorMessage: null,
+      });
+
+      await ActivityService.log(userId, {
+        type: "EVALUATION",
+        status: "info",
+        title: "Retrying Evaluation",
+        description:
+          "Re-starting the AI grading process for this answer sheet.",
+        // linkId: sheet.id,
+        linkId: sheet.questionPaperId,
       });
 
       const files = sheet.files.map((f: any) => ({

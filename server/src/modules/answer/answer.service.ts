@@ -8,11 +8,9 @@ import { downloadFile } from "../../utils/fileDownloader";
 import { answerQueue } from "../../jobs/answer.queue";
 import logger from "../../config/logger";
 import { io } from "../../server";
-import {
-  ANSWER_EVAL_PROMPT,
-  ANSWER_EXTRACTION_PROMPT,
-} from "../../utils/prompt";
+import {ANSWER_EVAL_PROMPT,ANSWER_EXTRACTION_PROMPT,} from "../../utils/prompt";
 import { CreditsService } from "../billing/credits.service";
+import { ActivityService } from "../activity/activity.service";
 
 const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 // const model = ai.getGenerativeModel({ model: "gemini-2.5-pro" });
@@ -58,7 +56,10 @@ export class AnswerService {
         },
       ],
     });
-    logger.info({ usage: aiRes.response.usageMetadata },"Answer extraction usage metadata");
+    logger.info(
+      { usage: aiRes.response.usageMetadata },
+      "Answer extraction usage metadata",
+    );
     const usage = aiRes.response.usageMetadata;
     const tokens = usage?.totalTokenCount || 0;
     const raw = aiRes.response.text().trim();
@@ -88,7 +89,10 @@ export class AnswerService {
         },
       ],
     });
-    logger.info({ usage: aiRes.response.usageMetadata },"Answer evaluation usage metadata");
+    logger.info(
+      { usage: aiRes.response.usageMetadata },
+      "Answer evaluation usage metadata",
+    );
     const usage = aiRes.response.usageMetadata;
     const tokens = usage?.totalTokenCount || 0;
     const raw = aiRes.response.text().trim();
@@ -179,7 +183,7 @@ export class AnswerService {
       const evaluated = evalResult.data;
 
       console.log("Evaluation result:", evaluated);
-      logger.info(evaluated,"Evaluation result:");
+      logger.info(evaluated, "Evaluation result:");
       if (!evaluated.evaluated) {
         throw new Error("AI did not return evaluation output.");
       }
@@ -218,6 +222,15 @@ export class AnswerService {
         status: "completed",
       });
 
+      await ActivityService.log(record.createdBy, {
+        type: "EVALUATION",
+        status: "success",
+        title: "Grading Complete",
+        description: `Evaluation finished successfully. Student scored ${evaluated.totalScore} marks.`,
+        linkId: recordId,
+        // linkId: questionPaperId,
+      });
+
       this.emitStatus(recordId, "Completed successfully!");
       return record;
     } catch (err: any) {
@@ -226,6 +239,15 @@ export class AnswerService {
       await record.update({
         status: "failed",
         errorMessage: err.message,
+      });
+
+      await ActivityService.log(record.createdBy, {
+        type: "EVALUATION",
+        status: "failed",
+        title: "Grading Failed",
+        description: `AI encountered an issue during evaluation: ${err.message}`,
+        // linkId: recordId,
+        linkId: questionPaperId,
       });
 
       this.emitStatus(recordId, "Failed: " + err.message);

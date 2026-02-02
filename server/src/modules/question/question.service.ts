@@ -108,7 +108,10 @@ export class QuestionService {
             },
           ],
         });
-        logger.info({ usage: aiRes.response.usageMetadata },"Gemini usage metadata");
+        logger.info(
+          { usage: aiRes.response.usageMetadata },
+          "Gemini usage metadata",
+        );
         const usage = aiRes.response.usageMetadata;
         totalTokens = usage?.totalTokenCount || 0;
 
@@ -128,7 +131,10 @@ export class QuestionService {
             },
           ],
         });
-        logger.info({ usage: aiRes.response.usageMetadata },"Gemini usage metadata");
+        logger.info(
+          { usage: aiRes.response.usageMetadata },
+          "Gemini usage metadata",
+        );
         const usage = aiRes.response.usageMetadata;
         totalTokens = usage?.totalTokenCount || 0;
         parsedData = JSON.parse(aiRes.response.text());
@@ -139,7 +145,7 @@ export class QuestionService {
       }
 
       const cleanedQuestions = this.normalizeQuestions(parsedData.questions);
-      logger.info(cleanedQuestions,"Questions extracted successfully");
+      logger.info(cleanedQuestions, "Questions extracted successfully");
 
       await Question.destroy({
         where: { questionPaperId: recordId },
@@ -179,8 +185,8 @@ export class QuestionService {
       await ActivityService.log(record.createdBy, {
         type: "SUBMISSION",
         status: "success",
-        title: "Extraction Ready",
-        description: `AI successfully extracted ${cleanedQuestions.length} questions from your paper.`,
+        title: "Extraction Complete",
+        description: `AI has successfully extracted ${cleanedQuestions.length} questions. You can now review and evaluate them.`,
         linkId: recordId,
       });
 
@@ -191,6 +197,14 @@ export class QuestionService {
       await record.update({
         status: "failed",
         errorMessage: err.message,
+      });
+
+      await ActivityService.log(record.createdBy, {
+        type: "SUBMISSION",
+        status: "failed",
+        title: "Extraction Failed",
+        description: `AI was unable to process the paper. Error: ${err.message}`,
+        linkId: recordId,
       });
 
       this.emitStatus(recordId, "failed: " + err.message);

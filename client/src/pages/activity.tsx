@@ -31,7 +31,7 @@ export default function ActivityPage() {
       const data = await ActivityAPI.getAll();
       setActivities(data);
     } catch (error) {
-      console.error("Failed to load activities",error);
+      console.error("Failed to load activities", error);
     } finally {
       setLoading(false);
     }
@@ -41,8 +41,8 @@ export default function ActivityPage() {
     if (!user) return;
 
     fetchActivities();
-    const channel = `activity-update-${user.id}`; 
-    
+    const channel = `activity-update-${user.id}`;
+
     socket.on(channel, (newLog: ActivityRecord) => {
       setActivities((prev) => [newLog, ...prev]);
     });
@@ -69,7 +69,7 @@ export default function ActivityPage() {
       case "processing":
         return {
           color: "text-blue-500",
-          bg: "bg-blue-50",
+          bg: "bg-blue-50 animate-pulse",
           icon: <FiClock className="animate-spin" />,
         };
       default:
@@ -94,7 +94,7 @@ export default function ActivityPage() {
     }
   };
 
- return (
+  return (
     <div className="bg-transparent">
       <div className="max-w-full px-4 sm:px-6 lg:px-10 py-6">
         <div className="flex items-center gap-4 mb-10">
@@ -123,8 +123,12 @@ export default function ActivityPage() {
             {activities.length === 0 && !loading ? (
               <div className="bg-white border border-dashed border-gray-300 rounded-md p-16 text-center ml-12">
                 <FiActivity className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                <p className="text-gray-500 font-medium">No activity recorded yet.</p>
-                <p className="text-gray-400 text-xs mt-1">Your AI interactions will appear here.</p>
+                <p className="text-gray-500 font-medium">
+                  No activity recorded yet.
+                </p>
+                <p className="text-gray-400 text-xs mt-1">
+                  Your AI interactions will appear here.
+                </p>
               </div>
             ) : (
               activities.map((item) => {
@@ -141,8 +145,10 @@ export default function ActivityPage() {
                       {config.icon}
                     </div>
 
-                    <div className="flex-grow bg-white border border-gray-200 rounded-lg p-5 shadow-sm 
-                      hover:border-teal-200 transition-all duration-200">
+                    <div
+                      className="flex-grow bg-white border border-gray-200 rounded-lg p-5 shadow-sm 
+                      hover:border-teal-200 transition-all duration-200"
+                    >
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-2">
                           <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-100 text-gray-500 text-[10px] font-bold uppercase tracking-wider">
@@ -156,28 +162,62 @@ export default function ActivityPage() {
                         </span>
                       </div>
 
-                      <h3 className="font-bold text-gray-900 text-base leading-tight">
+                      <h3 className="font-bold text-gray-900 text-base leading-tight flex items-center gap-2">
                         {item.title}
+                        {item.type === "EVALUATION" &&
+                          item.status === "success" && (
+                            <span className="bg-teal-100 text-teal-700 text-[9px] px-1.5 py-0.5 rounded-full uppercase tracking-tighter">
+                              Graded
+                            </span>
+                          )}
                       </h3>
+
                       <p className="text-gray-600 text-sm leading-relaxed mt-1.5">
                         {item.description}
                       </p>
 
                       {item.linkId && (
                         <div className="mt-4 pt-4 border-t border-gray-50">
-                          <button
-                            onClick={() =>
-                              navigate(
-                                item.type === "SUBMISSION"
-                                  ? `/submissions/${item.linkId}`
-                                  : `/results/${item.linkId}`,
-                              )
-                            }
+                          {/* <button
+                            onClick={() => {
+                              if (item.type === "SUBMISSION") {
+                                navigate(`/submissions/${item.linkId}`);
+                              } else if (item.type === "EVALUATION") {
+                                navigate(`/results/${item.linkId}`);
+                              } else {
+                                navigate(`/activity`);
+                              }
+                            }}
                             className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-700 transition-colors"
                           >
-                            <FiExternalLink size={14} /> 
+                            <FiExternalLink size={14} />
                             VIEW DETAILS
-                          </button>
+                          </button> */}
+                          <button
+  onClick={() => {
+    if (item.type === "SUBMISSION") {
+      navigate(`/submissions/${item.linkId}`);
+    } 
+    else if (item.type === "EVALUATION") {
+      // If the job is finished, go to the specific sheet
+      if (item.status === "success") {
+        navigate(`/results/sheet/${item.linkId}`);
+      } 
+      // If it's still processing or queued, go to the dashboard
+      // Note: This requires the linkId to be the PaperID for 'info' status
+      else {
+        navigate(`/results/${item.linkId}`);
+      }
+    } 
+    else {
+      navigate(`/activity`);
+    }
+  }}
+  className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-700 transition-colors"
+>
+  <FiExternalLink size={14} />
+  VIEW DETAILS
+</button>
                         </div>
                       )}
                     </div>
