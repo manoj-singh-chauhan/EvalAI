@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { CreditsService } from "./credits.service";
 import Transaction from "./transaction.model";
 import { Order } from "../subscription_plan/order.model";
+import { ActivityService } from "../activity/activity.service";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
@@ -88,6 +89,14 @@ export class BillingService {
     await credits.save();
 
     await order.update({ status: "paid" });
+
+    await ActivityService.log(userId, {
+      type: "PAYMENT",
+      status: "success",
+      title: "Plan Upgraded",
+      description: `Success! You have been upgraded to the ${plan.name} plan.`,
+      linkId: orderId,
+    });
 
     await Transaction.create({
       userId,

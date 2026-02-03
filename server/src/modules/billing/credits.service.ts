@@ -2,6 +2,7 @@ import { Transaction as SequelizeTransaction } from "sequelize";
 import { sequelize } from "../../config/db";
 import UserCredits from "./userCredits.model";
 import Transaction from "./transaction.model";
+import { ActivityService } from "../activity/activity.service";
 
 const SIGNUP_BONUS = 50;
 const FREE_DAILY_LIMIT = 25;
@@ -36,6 +37,12 @@ export class CreditsService {
         },
         { transaction: t },
       );
+      await ActivityService.log(userId, {
+        type: "SYSTEM",
+        status: "success",
+        title: "Welcome Bonus!",
+        description: `You've received ${SIGNUP_BONUS} credits to start evaluating papers. Welcome to AI Eval!`,
+      });
     }
     return credits;
   }
@@ -87,25 +94,16 @@ export class CreditsService {
         },
         { transaction: t },
       );
+      await ActivityService.log(userId, {
+        type: "SYSTEM",
+        status: "info",
+        title: "Daily Credits Refilled",
+        description: `Your daily credits have been reset to ${dailyLimit}. Happy evaluating!`,
+      });
     }
 
     return credits;
   }
-
-  // static async getBalance(userId: string) {
-  //   await this.refillDailyCredits(userId);
-  //   const credits = await UserCredits.findOne({ where: { userId } });
-
-  //   if (!credits) {
-  //     return { credits: 0, plan: "free" };
-  //   }
-
-  //   return {
-  //     credits: credits.credits,
-  //     plan: credits.plan,
-  //     planExpiresAt: credits.planExpiresAt,
-  //   };
-  // }
 
   static async getBalance(userId: string) {
     await this.refillDailyCredits(userId);

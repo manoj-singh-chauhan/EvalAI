@@ -4,7 +4,7 @@ import { ResultAPI } from "../api/result.api";
 import Loader from "../components/Loader";
 import {
   FiArrowLeft,
-  FiDownload,
+  FiEye,
   FiFileText,
   FiCheckCircle,
 } from "react-icons/fi";
@@ -140,7 +140,7 @@ export default function AnswerSheetPage() {
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded text-sm font-medium"
               >
-                <FiDownload size={16} />
+                <FiEye size={16} />
                 View File {index + 1}
               </a>
             ))}

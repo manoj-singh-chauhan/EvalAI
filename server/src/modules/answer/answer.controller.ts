@@ -113,7 +113,7 @@ export class AnswerController {
         status: "info",
         title: "Evaluation Queued",
         description:
-          "A student answer sheet has been received and added to the processing queue.",
+          "A student answer sheet has been received and added for the processing.",
         // linkId: sheet.id,
         linkId : questionPaperId,
       });

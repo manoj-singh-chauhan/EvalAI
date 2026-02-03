@@ -194,30 +194,24 @@ export default function ActivityPage() {
                             VIEW DETAILS
                           </button> */}
                           <button
-  onClick={() => {
-    if (item.type === "SUBMISSION") {
-      navigate(`/submissions/${item.linkId}`);
-    } 
-    else if (item.type === "EVALUATION") {
-      // If the job is finished, go to the specific sheet
-      if (item.status === "success") {
-        navigate(`/results/sheet/${item.linkId}`);
-      } 
-      // If it's still processing or queued, go to the dashboard
-      // Note: This requires the linkId to be the PaperID for 'info' status
-      else {
-        navigate(`/results/${item.linkId}`);
-      }
-    } 
-    else {
-      navigate(`/activity`);
-    }
-  }}
-  className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-700 transition-colors"
->
-  <FiExternalLink size={14} />
-  VIEW DETAILS
-</button>
+                            onClick={() => {
+                              if (item.type === "SUBMISSION") {
+                                navigate(`/submissions/${item.linkId}`);
+                              } else if (item.type === "EVALUATION") {
+                                if (item.status === "success") {
+                                  navigate(`/results/sheet/${item.linkId}`);
+                                } else {
+                                  navigate(`/results/${item.linkId}`);
+                                }
+                              } else {
+                                navigate(`/activity`);
+                              }
+                            }}
+                            className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-700 transition-colors"
+                          >
+                            <FiExternalLink size={14} />
+                            VIEW DETAILS
+                          </button>
                         </div>
                       )}
                     </div>
