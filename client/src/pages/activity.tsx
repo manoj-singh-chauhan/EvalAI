@@ -23,13 +23,24 @@ const socket = io(SOCKET_URL);
 export default function ActivityPage() {
   const [activities, setActivities] = useState<ActivityRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   const navigate = useNavigate();
   const { user } = useUser();
 
-  const fetchActivities = async () => {
+  const fetchActivities = async (pageNum: number) => {
+    setLoading(true);
     try {
-      const data = await ActivityAPI.getAll();
-      setActivities(data);
+      const response = await ActivityAPI.getAll(pageNum);
+      
+      if (Array.isArray(response)) {
+        setActivities(response);
+      } else {
+        setActivities(response.activities);
+        setTotalPages(response.totalPages);
+      }
     } catch (error) {
       console.error("Failed to load activities", error);
     } finally {
@@ -40,17 +51,19 @@ export default function ActivityPage() {
   useEffect(() => {
     if (!user) return;
 
-    fetchActivities();
+    fetchActivities(page);
     const channel = `activity-update-${user.id}`;
 
     socket.on(channel, (newLog: ActivityRecord) => {
-      setActivities((prev) => [newLog, ...prev]);
+      if (page === 1) {
+        setActivities((prev) => [newLog, ...prev]);
+      }
     });
 
     return () => {
       socket.off(channel);
     };
-  }, [user]);
+  }, [user, page]);
 
   const getStatusConfig = (status: string, type: string) => {
     switch (status) {
@@ -116,6 +129,8 @@ export default function ActivityPage() {
           </div>
         </div>
 
+        
+
         <div className="relative">
           <div className="absolute left-6 top-2 bottom-2 w-0.5 bg-gray-200" />
 
@@ -178,21 +193,6 @@ export default function ActivityPage() {
 
                       {item.linkId && (
                         <div className="mt-4 pt-4 border-t border-gray-50">
-                          {/* <button
-                            onClick={() => {
-                              if (item.type === "SUBMISSION") {
-                                navigate(`/submissions/${item.linkId}`);
-                              } else if (item.type === "EVALUATION") {
-                                navigate(`/results/${item.linkId}`);
-                              } else {
-                                navigate(`/activity`);
-                              }
-                            }}
-                            className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-700 transition-colors"
-                          >
-                            <FiExternalLink size={14} />
-                            VIEW DETAILS
-                          </button> */}
                           <button
                             onClick={() => {
                               if (item.type === "SUBMISSION") {
@@ -220,6 +220,30 @@ export default function ActivityPage() {
               })
             )}
           </div>
+
+          {activities.length > 0 && (
+            <div className="mt-12 mb-6 flex items-center justify-between border-t border-gray-100 pt-8 ml-12">
+              <p className="text-xs text-gray-500 font-medium">
+                Showing page <span className="text-gray-900 font-bold">{page}</span> of {totalPages}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1 || loading}
+                  className="px-5 py-2 text-xs font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 transition-all shadow-sm"
+                >
+                  PREVIOUS
+                </button>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages || loading}
+                  className="px-5 py-2 text-xs font-bold text-white bg-teal-600 rounded-xl hover:bg-teal-700 disabled:opacity-50 transition-all shadow-sm"
+                >
+                  NEXT
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

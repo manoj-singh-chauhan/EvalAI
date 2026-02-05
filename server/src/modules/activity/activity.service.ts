@@ -19,11 +19,28 @@ export class ActivityService {
     }
   }
 
-  static async getAll(userId: string) {
-    return await Activity.findAll({
-      where: { userId },
-      order: [['createdAt', 'DESC']],
-      limit: 50
-    });
-  }
+  // static async getAll(userId: string) {
+  //   return await Activity.findAll({
+  //     where: { userId },
+  //     order: [['createdAt', 'DESC']],
+  //     limit: 50
+  //   });
+  // }
+
+  static async getAll(userId: string, page: number = 1, limit: number = 5) {
+  const offset = (page - 1) * limit;
+  const { count, rows } = await Activity.findAndCountAll({
+    where: { userId },
+    order: [['createdAt', 'DESC']],
+    limit: limit,
+    offset: offset
+  });
+
+  return {
+    activities: rows,
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page
+  };
+}
 }

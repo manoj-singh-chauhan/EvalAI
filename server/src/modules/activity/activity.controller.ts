@@ -8,11 +8,14 @@ export class ActivityController {
       // const userId = "user_36EM71F3PBF3X71L0BI108mXB70";
       if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
 
-      const activities = await ActivityService.getAll(userId);
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 5;
+
+      const result = await ActivityService.getAll(userId, page, limit);
 
       return res.status(200).json({
         success: true,
-        activities
+        ...result
       });
     } catch (err: any) {
       return res.status(500).json({ success: false, message: err.message });
