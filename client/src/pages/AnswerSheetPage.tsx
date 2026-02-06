@@ -7,11 +7,11 @@ import {
   FiEye,
   FiFileText,
   FiCheckCircle,
+  FiDownload,
 } from "react-icons/fi";
 
 type UploadedFile = {
   fileUrl: string;
-  mimeType?: string;
 };
 
 type EvaluatedAnswer = {
@@ -25,13 +25,10 @@ type EvaluatedAnswer = {
 
 type AnswerSheetRecord = {
   id: string;
-  questionPaperId: string;
   answerSheetFiles: UploadedFile[];
   answers: EvaluatedAnswer[];
   totalScore: number;
   feedback?: string | null;
-  status: string;
-  errorMessage?: string | null;
 };
 
 export default function AnswerSheetPage() {
@@ -43,47 +40,38 @@ export default function AnswerSheetPage() {
 
   const [loading, setLoading] = useState(true);
   const [sheet, setSheet] = useState<AnswerSheetRecord | null>(null);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!answerId) return;
 
     const fetchSheet = async () => {
-      try {
-        const res = await ResultAPI.getAnswerSheet(answerId);
-        setSheet(res);
-      } catch {
-        setError("Failed to load answer sheet.");
-      }
+      const res = await ResultAPI.getAnswerSheet(answerId);
+      setSheet(res);
       setLoading(false);
     };
 
     fetchSheet();
   }, [answerId]);
 
-  if (loading) {
-    return <Loader text="Loading..." />;
-  }
+  const handleDownload = () => {
+    window.scrollTo(0, 0);
+    setTimeout(() => window.print(), 200);
+  };
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <p className="p-6 text-center bg-white text-red-700 border border-red-200 rounded-lg shadow-sm max-w-md w-full">
-          {error}
-        </p>
-      </div>
-    );
-  }
-
+  if (loading) return <Loader text="Loading..." />;
   if (!sheet) return null;
 
-  const evaluatedAnswers = sheet.answers || [];
-
   return (
-    <div className="h-screen  bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
       <div className="max-w-1350pxl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-        <div className="flex items-center gap-4 mb-8">
-
+        {/* <div className="flex items-center gap-4 mb-8"> */}
+        <div className="flex items-center justify-between mb-8 gap-4">
+          {/* <button
+            onClick={handleDownload}
+            className="p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm"
+          >
+            <FiFileText size={20} />
+          </button>
 
           <button
             onClick={() => navigate(-1)}
@@ -91,6 +79,7 @@ export default function AnswerSheetPage() {
           >
             <FiArrowLeft size={20} />
           </button>
+
           <div>
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
               Answer Sheet {displayIndex}
@@ -98,111 +87,112 @@ export default function AnswerSheetPage() {
             <p className="text-gray-600 text-sm mt-1">
               Detailed evaluation and feedback
             </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white border border-gray-200 shadow-sm p-6 rounded flex flex-col justify-center">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Total Score
-            </h2>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-green-600">
-                {sheet.totalScore}
-              </span>
-              <span className="text-sm text-gray-400 font-medium">Marks Achived</span>
+          </div> */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 transition shadow-sm"
+            >
+              <FiArrowLeft size={20} />
+            </button>
+
+            <div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
+                Answer Sheet {displayIndex}
+              </h1>
+              <p className="text-gray-600 text-sm mt-1">
+                Detailed evaluation and feedback
+              </p>
             </div>
           </div>
 
+          {/* Right Side: Download Button */}
+          <button
+            onClick={handleDownload}
+            className="group flex items-center gap-3 transition-all duration-200"
+          >
+            <span className="text-gray-700 font-medium text-lg group-hover:text-emerald-600 transition-colors">
+              Download record
+            </span>
+            <div className="p-2 rounded-xl bg-emerald-600 text-white shadow-md group-hover:bg-emerald-700 group-hover:scale-105 transition-all">
+              <FiDownload size={22} />
+            </div>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white border border-gray-200 shadow-sm p-6 rounded">
+            <h2 className="text-sm font-semibold text-gray-500 mb-2">
+              Total Score
+            </h2>
+            <span className="text-4xl font-bold text-green-600">
+              {sheet.totalScore}
+            </span>
+          </div>
+
           <div className="bg-white border border-gray-200 shadow-sm p-6 rounded md:col-span-2">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+            <h2 className="text-sm font-semibold text-gray-500 mb-3">
               Overall Feedback
             </h2>
-            {sheet.feedback ? (
-              <p className="text-gray-700 text-sm leading-relaxed">
-                {sheet.feedback}
-              </p>
-            ) : (
-              <p className="text-gray-400 text-sm italic">
-                No feedback provided.
-              </p>
-            )}
+            <p className="text-gray-700 text-sm">
+              {sheet.feedback || "No feedback provided."}
+            </p>
           </div>
         </div>
 
         <div className="bg-white border border-gray-200 shadow-sm p-6 rounded mb-8">
-          <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
             <FiFileText className="text-blue-600" /> Uploaded Submission
           </h2>
-          <div className="flex flex-wrap gap-3">
-            {sheet.answerSheetFiles.map((file, index) => (
-              <a
-                key={index}
-                href={file.fileUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded text-sm font-medium"
-              >
-                <FiEye size={16} />
-                View File {index + 1}
-              </a>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-gray-900">
-            Evaluated Questions
-          </h2>
-
-          {evaluatedAnswers.map((ans) => (
-            <div
-              key={ans.questionNumber}
-              className="bg-white border border-gray-200 shadow-sm rounded p-6 "
+          {sheet.answerSheetFiles.map((file, index) => (
+            <a
+              key={index}
+              href={file.fileUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border rounded text-sm"
             >
-              <div className="flex flex-col sm:flex-row gap-4 justify-between items-start mb-4 border-b border-gray-100 pb-4">
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
-                    Q{ans.questionNumber}
-                  </div>
-                  <p className="font-medium text-gray-900 whitespace-pre-line leading-relaxed">
-                    {ans.questionText}
-                  </p>
-                </div>
-
-                <div className="flex-shrink-0 inline-flex items-center px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-100 text-sm font-bold whitespace-nowrap">
-                  {ans.score} / {ans.maxScore} Marks
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                  <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
-                    Student Answer
-                  </p>
-                  <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed font-sans">
-                    {ans.studentAnswer && ans.studentAnswer.trim() !== "" ? (
-                      ans.studentAnswer
-                    ) : (
-                      <span className="text-gray-400 italic">
-                        (No answer provided)
-                      </span>
-                    )}
-                  </p>
-                </div>
-                {ans.feedback && (
-                  <div className="bg-yellow-50/50 rounded-lg p-4 border border-yellow-100">
-                    <p className="text-xs font-semibold text-yellow-700 uppercase mb-2 flex items-center gap-1">
-                      <FiCheckCircle /> AI Feedback
-                    </p>
-                    <p className="text-sm text-gray-700 leading-relaxed">
-                      {ans.feedback}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+              <FiEye size={16} />
+              View File {index + 1}
+            </a>
           ))}
         </div>
+
+        <h2 className="text-xl font-bold mb-6">Evaluated Questions</h2>
+
+        {sheet.answers.map((ans) => (
+          <div
+            key={ans.questionNumber}
+            className="bg-white border border-gray-200 shadow-sm rounded p-6 mb-6"
+          >
+            <div className="flex justify-between mb-4 border-b pb-3">
+              <p className="font-bold">
+                Q{ans.questionNumber}. {ans.questionText}
+              </p>
+              <span className="font-bold text-green-600">
+                {ans.score}/{ans.maxScore}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-gray-50 p-4 rounded border">
+                <p className="text-xs font-semibold mb-2">STUDENT ANSWER</p>
+                <p className="text-sm whitespace-pre-wrap">
+                  {ans.studentAnswer || "(No answer)"}
+                </p>
+              </div>
+
+              {ans.feedback && (
+                <div className="bg-yellow-50 p-4 rounded border">
+                  <p className="text-xs font-semibold mb-2 flex items-center gap-1">
+                    <FiCheckCircle /> AI FEEDBACK
+                  </p>
+                  <p className="text-sm">{ans.feedback}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
