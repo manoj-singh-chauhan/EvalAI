@@ -16,7 +16,7 @@ import adminRoutes from "./modules/admin/admin.routes";
 import billing from "./modules/billing/billing.routes"
 import activityRoutes from "./modules/activity/activity.routes";
 
-import "./config/cloudinaryUpload";
+// import "./config/cloudinaryUpload";
 import "./jobs/answer.worker";
 import "./jobs/question.worker";
 
