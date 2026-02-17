@@ -16,22 +16,20 @@ import adminRoutes from "./modules/admin/admin.routes";
 import billing from "./modules/billing/billing.routes"
 import activityRoutes from "./modules/activity/activity.routes";
 
-// import "./config/cloudinaryUpload";
+import "./config/cloudinaryUpload";
 import "./jobs/answer.worker";
 import "./jobs/question.worker";
 
 dotenv.config({ path: ".env.development" });
 const app = express();
 connectDB();
-
+app.use("/api/billing/webhook", express.raw({ type: "application/json" }));
 const corsOptions = {
   origin: process.env.FRONTEND_URL!,
   credentials: true,
 };
-app.use("/api/billing/webhook", express.raw({ type: "application/json" }));
-app.use(cors(corsOptions));
-
 app.use(express.json());
+app.use(cors(corsOptions));
 app.use(morgan("dev"));
 
 app.get("/api/health", async (_req, res) => {
@@ -96,7 +94,7 @@ app.use("/api/answers", requireAuth, answerRoutes);
 app.use("/api/results", requireAuth, resultRoutes);
 app.use("/api/submissions", requireAuth, submissionRoutes);
 app.use("/api/admin",requireAuth, adminRoutes);
-app.use("/api/billing",billing),
+app.use("/api/billing",billing);
 app.use("/api/activity", requireAuth,activityRoutes);
 
 

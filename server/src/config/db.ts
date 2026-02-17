@@ -36,7 +36,7 @@ export const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASS, {
 export const connectDB = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
-    await sequelize.sync({ alter: true });
+    // await sequelize.sync({ alter: true });
     logger.info("Database connected successfully!");
   } catch (error: any) {
     logger.error("Database connection failed!");
