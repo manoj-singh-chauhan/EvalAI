@@ -1,3 +1,6 @@
+/* ===== LANDING PAGE ===== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,6 +9,15 @@ html {
   scroll-behavior: smooth;
 }
 
+
+@layer components {
+  .glass {
+    @apply bg-white/10 border border-white/20;
+  }
+  .btn {
+    @apply cursor-pointer rounded-full px-8 py-2.5 font-medium text-white transition hover:opacity-90 active:scale-95;
+  }
+}
 
 .animate-fade {
   animation: fadeIn 0.3s ease-out;

@@ -22,6 +22,7 @@ import AdminUserActivityPage from "../pages/admin/AdminUserActivityPage";
 import NotFoundPage from "../pages/NotFoundPage";
 import BillingPage from "../pages/BillingPage";
 import ActivityPage from "../pages/activity";
+import Landing from "@/pages/Landing";
 
 const WithTitle = ({
   title,
@@ -52,23 +53,14 @@ const MainLayout = () => (
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* <Route
-        path="/sign-in"
+      <Route
+        path="/"
         element={
-          <WithTitle title="Login | AI Eval">
-            <SignInPage />
+          <WithTitle title="AI Eval">
+            <Landing />
           </WithTitle>
         }
       />
-
-      <Route
-        path="/sign-up"
-        element={
-          <WithTitle title="Join | AI Eval">
-            <SignUpPage />
-          </WithTitle>
-        }
-      /> */}
 
       <Route
         path="/sign-in/*"
@@ -105,7 +97,7 @@ const AppRoutes = () => {
       >
         <Route element={<StepperWrapper />}>
           <Route
-            path="/"
+            path="/question"
             element={
               <WithTitle title="AI Eval | Question Extraction">
                 <QuestionPage />
